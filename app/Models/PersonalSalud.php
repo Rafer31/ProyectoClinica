@@ -9,7 +9,7 @@ class PersonalSalud extends Authenticatable
 {
     use Notifiable;
 
-    protected $table = 'PersonalSalud'; // Tu tabla
+    protected $table = 'PersonalSalud';
     protected $primaryKey = 'codPer';
     public $timestamps = false;
 
