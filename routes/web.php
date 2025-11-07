@@ -1,20 +1,50 @@
 <?php
 
-use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
 
+// Página inicial -> redirige al login
 Route::get('/', function () {
-    return view('welcome');
+    return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Rutas públicas (no autenticadas)
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
+    Route::post('/login', [AuthenticatedSessionController::class, 'store']);
+});
 
+// Rutas protegidas (autenticadas)
 Route::middleware('auth')->group(function () {
-    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
-    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-});
+    // Panel del supervisor
+    Route::get('/supervisor/home', function () {
+        return view('supervisor.home');
+    })->name('supervisor.home');
 
-require __DIR__.'/auth.php';
+    // Panel del personal de imagen
+    Route::get('/personal/home', function () {
+        return view('personal.home');
+    })->name('personal.home');
+
+    // Cerrar sesión
+    Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
+});
+Route::fallback(function () {
+    if (!Auth::check()) {
+        // No autenticado → redirige al login
+        return redirect()->route('login');
+    }
+
+    // Usuario autenticado → redirige según rol
+    $user = Auth::user();
+
+    if ($user->codRol == 1) {
+        return redirect()->route('supervisor.home');
+    } elseif ($user->codRol == 2) {
+        return redirect()->route('personal.home');
+    }
+
+    // Si no tiene rol válido, cerrar sesión
+    Auth::logout();
+    return redirect()->route('login');
+});

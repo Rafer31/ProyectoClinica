@@ -3,16 +3,15 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Http\Requests\Auth\LoginRequest;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
     /**
-     * Display the login view.
+     * Mostrar el formulario de login.
      */
     public function create(): View
     {
@@ -20,28 +19,48 @@ class AuthenticatedSessionController extends Controller
     }
 
     /**
-     * Handle an incoming authentication request.
+     * Procesar la autenticación del usuario.
      */
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(Request $request): RedirectResponse
     {
-        $request->authenticate();
+        $credentials = $request->validate([
+            'usuarioPer' => ['required', 'string'],
+            'clavePer' => ['required', 'string'],
+        ]);
 
-        $request->session()->regenerate();
+        if (
+            Auth::attempt([
+                'usuarioPer' => $credentials['usuarioPer'],
+                'password' => $credentials['clavePer']
+            ])
+        ) {
+            $request->session()->regenerate();
 
-        return redirect()->intended(route('dashboard', absolute: false));
+            $user = Auth::user();
+
+            if ($user->codRol == 1) {
+                return redirect()->route('supervisor.home');
+            } elseif ($user->codRol == 2) {
+                return redirect()->route('personal.home');
+            }
+
+            Auth::logout();
+            return back()->withErrors(['usuarioPer' => 'Rol no válido o sin asignar.']);
+        }
+
+        return back()->withErrors([
+            'usuarioPer' => 'Las credenciales no coinciden con nuestros registros.',
+        ])->onlyInput('usuarioPer');
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
+
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }
