@@ -220,7 +220,7 @@ $breadcrumbs = [
                         </label>
                         <input type="text" name="nomPa" id="nomPa"
                             value="{{ old('nomPa', $paciente->nomPa ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150"
                             placeholder="Ej: Juan"
@@ -234,7 +234,7 @@ $breadcrumbs = [
                         </label>
                         <input type="text" name="paternoPa" id="paternoPa"
                             value="{{ old('paternoPa', $paciente->paternoPa ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150"
                             placeholder="Ej: Pérez">
@@ -247,7 +247,7 @@ $breadcrumbs = [
                         </label>
                         <input type="text" name="maternoPa" id="maternoPa"
                             value="{{ old('maternoPa', $paciente->maternoPa ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150"
                             placeholder="Ej: García">
@@ -259,11 +259,10 @@ $breadcrumbs = [
                             Sexo <span class="text-red-600">*</span>
                         </label>
                         <select name="sexo" id="sexo"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150"
                             required>
-                            <option value="">Seleccione...</option>
                             <option value="M" {{ old('sexo', $paciente->sexo ?? '') === 'M' ? 'selected' : '' }}>
                                 Masculino
                             </option>
@@ -281,7 +280,7 @@ $breadcrumbs = [
                         <input type="date" name="fechaNac" id="fechaNac"
                             value="{{ old('fechaNac', isset($paciente->fechaNac) ? \Carbon\Carbon::parse($paciente->fechaNac)->format('Y-m-d') : '') }}"
                             max="{{ date('Y-m-d') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150">
                         <span id="edadCalculada" class="text-xs text-gray-600 mt-1 hidden"></span>
@@ -304,7 +303,7 @@ $breadcrumbs = [
                         </label>
                         <input type="text" name="nroHCI" id="nroHCI"
                             value="{{ old('nroHCI', $paciente->nroHCI ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150"
                             placeholder="Ej: HCI-2024-001">
@@ -317,11 +316,11 @@ $breadcrumbs = [
                             Tipo de Paciente <span class="text-red-600">*</span>
                         </label>
                         <select name="tipoPac" id="tipoPac"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg 
+                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
                                    focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5
                                    transition duration-150"
                             required>
-                            <option value="">Seleccione...</option>
+
                             <option value="SUS" {{ old('tipoPac', $paciente->tipoPac ?? '') === 'SUS' ? 'selected' : '' }}>
                                 SUS (Seguro Universal de Salud)
                             </option>
