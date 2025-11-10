@@ -92,25 +92,10 @@
 
                 <!-- Pacientes -->
                 <li>
-                    <button type="button" class="flex items-center w-full p-2 text-base transition duration-75 rounded-lg group hover:bg-gray-100 {{ request()->routeIs('personal.pacientes.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}" aria-controls="dropdown-pacientes" data-collapse-toggle="dropdown-pacientes">
+                    <a href="{{ route('personal.pacientes.pacientes') }}" class="flex items-center p-2 rounded-lg hover:bg-gray-100 group {{ request()->routeIs('personal.pacientes.*') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
                         <span class="material-icons">people</span>
-                        <span class="flex-1 ms-3 text-left rtl:text-right whitespace-nowrap">Pacientes</span>
-                        <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 10 6">
-                            <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 4 4 4-4"/>
-                        </svg>
-                    </button>
-                    <ul id="dropdown-pacientes" class="hidden py-2 space-y-2">
-                        <li>
-                            <a href="{{ route('personal.pacientes.pacientes') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 {{ request()->routeIs('personal.pacientes.pacientes') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
-                                Lista de Pacientes
-                            </a>
-                        </li>
-                        <li>
-                            <a href="{{ route('personal.pacientes.agregar') }}" class="flex items-center w-full p-2 transition duration-75 rounded-lg pl-11 group hover:bg-gray-100 {{ request()->routeIs('personal.pacientes.agregar') ? 'bg-blue-50 text-blue-600' : 'text-gray-900' }}">
-                                Agregar Paciente
-                            </a>
-                        </li>
-                    </ul>
+                        <span class="ms-3">Pacientes</span>
+                    </a>
                 </li>
 
                 <!-- Servicios -->

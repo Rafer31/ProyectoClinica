@@ -64,10 +64,13 @@ class MedicoController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'nomMed' => 'required|string|max:100',
-            'paternoMed' => 'nullable|string|max:100',
-            'tipoMed' => 'nullable|string|max:50'
+            'paternoMed' => 'required|string|max:100',
+            'tipoMed' => 'required|in:Interno,Externo'
         ], [
-            'nomMed.required' => 'El nombre es obligatorio'
+            'nomMed.required' => 'El nombre es obligatorio',
+            'paternoMed.required' => 'El apellido es obligatorio',
+            'tipoMed.required' => 'El tipo de médico es obligatorio',
+            'tipoMed.in' => 'El tipo de médico debe ser Interno o Externo'
         ]);
 
         if ($validator->fails()) {
@@ -118,13 +121,15 @@ class MedicoController extends Controller
                 $rules['nomMed'] = 'string|max:100';
             }
             if ($request->has('paternoMed')) {
-                $rules['paternoMed'] = 'nullable|string|max:100';
+                $rules['paternoMed'] = 'string|max:100';
             }
             if ($request->has('tipoMed')) {
-                $rules['tipoMed'] = 'nullable|string|max:50';
+                $rules['tipoMed'] = 'in:Interno,Externo';
             }
 
-            $validator = Validator::make($request->all(), $rules);
+            $validator = Validator::make($request->all(), $rules, [
+                'tipoMed.in' => 'El tipo de médico debe ser Interno o Externo'
+            ]);
 
             if ($validator->fails()) {
                 return response()->json([
@@ -205,6 +210,51 @@ class MedicoController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener los médicos: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    public function entreFechas(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'fechaInicio' => 'required|date',
+            'fechaFin' => 'required|date|after_or_equal:fechaInicio'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Errores de validación',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        try {
+            $cronogramas = CronogramaAtencion::with('personal')
+                ->entreFechas($request->fechaInicio, $request->fechaFin)
+                ->orderBy('fechaCrono')
+                ->get();
+
+            // Formatear las fechas correctamente
+            $cronogramas = $cronogramas->map(function ($cronograma) {
+                return [
+                    'fechaCrono' => $cronograma->fechaCrono->format('Y-m-d'),
+                    'cantDispo' => $cronograma->cantDispo,
+                    'cantFijo' => $cronograma->cantFijo,
+                    'estado' => $cronograma->estado,
+                    'codPer' => $cronograma->codPer,
+                    'personal' => $cronograma->personal
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $cronogramas,
+                'message' => 'Cronogramas obtenidos correctamente'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener los cronogramas: ' . $e->getMessage()
             ], 500);
         }
     }

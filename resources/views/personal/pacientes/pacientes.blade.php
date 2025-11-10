@@ -115,21 +115,24 @@
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">
-                                    <div class="flex items-center space-x-3">
+                                    <div class="flex items-center gap-2">
                                         <button onclick="verDetalle(${p.codPa})"
-                                            class="text-blue-600 hover:text-blue-900 flex items-center"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 border border-blue-200"
                                             title="Ver detalles">
-                                            <span class="material-icons text-sm">visibility</span>
+                                            <span class="material-icons text-base mr-1">visibility</span>
+                                            Ver
                                         </button>
                                         <a href="/personal/pacientes/editar/${p.codPa}"
-                                            class="text-green-600 hover:text-green-900 flex items-center"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-200 border border-green-200"
                                             title="Editar">
-                                            <span class="material-icons text-sm">edit</span>
+                                            <span class="material-icons text-base mr-1">edit</span>
+                                            Editar
                                         </a>
                                         <button onclick="cambiarEstado(${p.codPa}, '${p.estado}')"
-                                            class="text-orange-600 hover:text-orange-900 flex items-center"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-medium ${p.estado === 'activo' ? 'text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg transition-colors duration-200 border"
                                             title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
-                                            <span class="material-icons text-sm">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
+                                            <span class="material-icons text-base mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
+                                            ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
                                         </button>
                                     </div>
                                 </td>
@@ -168,12 +171,53 @@
             }
 
             async function cambiarEstado(id, estadoActual) {
+                const paciente = pacientesData.find(p => p.codPa === id);
+                if (!paciente) return;
+
+                const nombreCompleto = `${paciente.nomPa || ''} ${paciente.paternoPa || ''} ${paciente.maternoPa || ''}`.trim();
                 const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
                 const accion = nuevoEstado === 'activo' ? 'activar' : 'desactivar';
 
-                if (!confirm(`¿Estás seguro de ${accion} este paciente?`)) {
-                    return;
+                // Mostrar modal de confirmación
+                const modal = document.getElementById('modalCambiarEstado');
+                document.getElementById('nombrePacienteEstado').textContent = nombreCompleto;
+                document.getElementById('accionEstado').textContent = accion;
+                document.getElementById('estadoActualPaciente').textContent = estadoActual;
+                document.getElementById('estadoNuevoPaciente').textContent = nuevoEstado;
+
+                const iconoEstado = document.getElementById('iconoEstadoModal');
+                const headerModal = document.getElementById('headerModalEstado');
+
+                if (nuevoEstado === 'activo') {
+                    iconoEstado.textContent = 'check_circle';
+                    iconoEstado.className = 'material-icons text-white text-4xl';
+                    headerModal.className = 'bg-gradient-to-r from-green-500 to-green-600 rounded-t-lg p-4';
+                } else {
+                    iconoEstado.textContent = 'block';
+                    iconoEstado.className = 'material-icons text-white text-4xl';
+                    headerModal.className = 'bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-lg p-4';
                 }
+
+                modal.classList.remove('hidden');
+
+                // Guardar el ID en el modal
+                modal.dataset.pacienteId = id;
+            }
+
+            function cerrarModalEstado() {
+                const modal = document.getElementById('modalCambiarEstado');
+                modal.classList.add('hidden');
+                delete modal.dataset.pacienteId;
+            }
+
+            async function confirmarCambioEstado() {
+                const modal = document.getElementById('modalCambiarEstado');
+                const id = modal.dataset.pacienteId;
+
+                if (!id) return;
+
+                modal.classList.add('hidden');
+                mostrarLoader(true);
 
                 try {
                     const response = await fetch(`/api/personal/pacientes/${id}`, {
@@ -196,6 +240,9 @@
                 } catch (error) {
                     console.error('Error:', error);
                     mostrarAlerta('error', 'Error al cambiar el estado del paciente');
+                } finally {
+                    mostrarLoader(false);
+                    delete modal.dataset.pacienteId;
                 }
             }
 
@@ -245,10 +292,12 @@
                         </div>
 
                         <div class="flex justify-end space-x-3 pt-4 border-t">
-                            <button onclick="cerrarModal()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
+                            <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                                <span class="material-icons text-base mr-1">close</span>
                                 Cerrar
                             </button>
-                            <a href="/personal/pacientes/${id}/editar" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <a href="/personal/pacientes/editar/${paciente.codPa}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
+                                <span class="material-icons text-base mr-1">edit</span>
                                 Editar
                             </a>
                         </div>
@@ -360,7 +409,7 @@
                     <p class="text-gray-600" id="resultados-count">Cargando...</p>
                 </div>
                 <a href="{{ route('personal.pacientes.agregar') }}"
-                    class="mt-4 md:mt-0 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md">
+                    class="mt-4 md:mt-0 inline-flex items-center px-5 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-md hover:shadow-lg font-medium">
                     <span class="material-icons mr-2">add</span>
                     Agregar Paciente
                 </a>
@@ -399,7 +448,7 @@
             </div>
 
             <div class="mt-4">
-                <button onclick="limpiarFiltros()" class="text-sm text-blue-600 hover:text-blue-800 flex items-center">
+                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium">
                     <span class="material-icons text-sm mr-1">clear</span>
                     Limpiar filtros
                 </button>
@@ -407,7 +456,7 @@
         </div>
 
         <!-- Loader -->
-        <div id="loader" class=" flex justify-center items-center py-12">
+        <div id="loader" class="flex justify-center items-center py-12">
             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
 
@@ -417,11 +466,6 @@
                 <span class="material-icons text-gray-300" style="font-size: 120px;">folder_open</span>
                 <p class="text-gray-600 text-lg mt-4 font-medium">No hay pacientes registrados</p>
                 <p class="text-gray-500 text-sm mt-2">Comienza agregando tu primer paciente</p>
-                <a href="{{ route('personal.pacientes.agregar') }}"
-                    class="mt-6 flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
-                    <span class="material-icons mr-2">add</span>
-                    Agregar Paciente
-                </a>
             </div>
         </div>
 
@@ -454,6 +498,68 @@
                 </button>
             </div>
             <div id="modalContenido"></div>
+        </div>
+    </div>
+
+    <!-- Modal Cambiar Estado -->
+    <div id="modalCambiarEstado" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-0 border w-full max-w-md shadow-xl rounded-lg bg-white">
+            <!-- Header -->
+            <div id="headerModalEstado" class="bg-gradient-to-r from-orange-500 to-orange-600 rounded-t-lg p-4">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <span id="iconoEstadoModal" class="material-icons text-white text-4xl">sync</span>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-xl font-bold text-white">Confirmar Cambio de Estado</h3>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6">
+                <p class="text-gray-700 mb-4">
+                    ¿Estás seguro de que deseas <strong id="accionEstado"></strong> al siguiente paciente?
+                </p>
+
+                <div class="bg-gray-50 rounded-lg p-4 mb-4 border-l-4 border-orange-500">
+                    <div class="flex items-center mb-2">
+                        <span class="material-icons text-orange-600 mr-2">person</span>
+                        <p class="font-semibold text-gray-900" id="nombrePacienteEstado"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 mt-3">
+                        <div>
+                            <p class="text-xs text-gray-500">Estado actual</p>
+                            <p class="text-sm font-medium text-gray-900" id="estadoActualPaciente"></p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500">Nuevo estado</p>
+                            <p class="text-sm font-medium text-gray-900" id="estadoNuevoPaciente"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-orange-50 border border-orange-200 rounded-lg p-3">
+                    <p class="text-sm text-orange-800 flex items-start">
+                        <span class="material-icons text-orange-600 mr-2 text-lg">info</span>
+                        <span>Este cambio modificará el estado del paciente en el sistema.</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 px-6 py-4 rounded-b-lg flex gap-3">
+                <button onclick="cerrarModalEstado()"
+                    class="flex-1 inline-flex justify-center items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    <span class="material-icons text-base mr-1">close</span>
+                    Cancelar
+                </button>
+                <button onclick="confirmarCambioEstado()"
+                    class="flex-1 inline-flex justify-center items-center px-4 py-2.5 text-sm font-medium text-white bg-orange-600 rounded-lg hover:bg-orange-700 transition-colors duration-200 shadow-sm">
+                    <span class="material-icons text-base mr-1">check</span>
+                    Confirmar
+                </button>
+            </div>
         </div>
     </div>
 

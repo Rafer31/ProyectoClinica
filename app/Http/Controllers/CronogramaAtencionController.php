@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\CronogramaAtencion;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class CronogramaAtencionController extends Controller
 {
@@ -61,24 +62,21 @@ class CronogramaAtencionController extends Controller
 
     /**
      * Registrar nuevo cronograma
+     * - El codPer se obtiene del usuario autenticado automáticamente
+     * - El estado se calcula automáticamente según la fecha
      */
     public function store(Request $request)
     {
+        // Validación inicial
         $validator = Validator::make($request->all(), [
-            'fechaCrono' => 'required|date|unique:CronogramaAtencion,fechaCrono',
+            'fechaCrono' => 'required|date',
             'cantDispo' => 'required|integer|min:0',
             'cantFijo' => 'required|integer|min:0',
-            'estado' => 'required|in:activo,inactivoPas,inactivoFut',
-            'codPer' => 'required|exists:PersonalSalud,codPer'
         ], [
             'fechaCrono.required' => 'La fecha es obligatoria',
-            'fechaCrono.unique' => 'Ya existe un cronograma para esta fecha',
+            'fechaCrono.date' => 'La fecha no es válida',
             'cantDispo.required' => 'La cantidad disponible es obligatoria',
             'cantFijo.required' => 'La cantidad fija es obligatoria',
-            'estado.required' => 'El estado es obligatorio',
-            'estado.in' => 'El estado debe ser: activo, inactivoPas o inactivoFut',
-            'codPer.required' => 'El personal es obligatorio',
-            'codPer.exists' => 'El personal seleccionado no existe'
         ]);
 
         if ($validator->fails()) {
@@ -90,12 +88,45 @@ class CronogramaAtencionController extends Controller
         }
 
         try {
+            // Obtener el código del usuario autenticado
+            $user = Auth::user();
+            if (!$user || !$user->codPer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado o sin código de personal'
+                ], 401);
+            }
+
+            $codPer = $user->codPer;
+            $fechaCrono = $request->fechaCrono;
+
+            // Verificar si ya existe un cronograma para esta fecha
+            $existe = CronogramaAtencion::where('fechaCrono', $fechaCrono)->exists();
+            if ($existe) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Ya existe un cronograma para esta fecha'
+                ], 422);
+            }
+
+            // Calcular el estado automáticamente según la fecha
+            $hoy = date('Y-m-d');
+
+            if ($fechaCrono == $hoy) {
+                $estado = 'activo';
+            } elseif ($fechaCrono > $hoy) {
+                $estado = 'inactivoFut';
+            } else {
+                $estado = 'inactivoPas';
+            }
+
+            // Crear el cronograma
             $cronograma = CronogramaAtencion::create([
-                'fechaCrono' => $request->fechaCrono,
+                'fechaCrono' => $fechaCrono,
                 'cantDispo' => $request->cantDispo,
                 'cantFijo' => $request->cantFijo,
-                'estado' => $request->estado,
-                'codPer' => $request->codPer
+                'estado' => $estado,
+                'codPer' => $codPer
             ]);
 
             $cronograma->load('personal');
@@ -103,18 +134,24 @@ class CronogramaAtencionController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $cronograma,
-                'message' => 'Cronograma registrado exitosamente'
+                'message' => "Cronograma registrado exitosamente con estado: {$estado}"
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al registrar el cronograma: ' . $e->getMessage()
+                'message' => 'Error al registrar el cronograma: ' . $e->getMessage(),
+                'debug' => [
+                    'fecha' => $request->fechaCrono,
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], 500);
         }
     }
 
     /**
      * Actualizar cronograma
+     * Solo permite actualizar cantDispo, cantFijo y estado manualmente si es necesario
      */
     public function update(Request $request, $fecha)
     {
@@ -138,13 +175,9 @@ class CronogramaAtencionController extends Controller
             if ($request->has('estado')) {
                 $rules['estado'] = 'in:activo,inactivoPas,inactivoFut';
             }
-            if ($request->has('codPer')) {
-                $rules['codPer'] = 'exists:PersonalSalud,codPer';
-            }
 
             $validator = Validator::make($request->all(), $rules, [
                 'estado.in' => 'El estado debe ser: activo, inactivoPas o inactivoFut',
-                'codPer.exists' => 'El personal seleccionado no existe'
             ]);
 
             if ($validator->fails()) {
@@ -164,9 +197,6 @@ class CronogramaAtencionController extends Controller
             if ($request->has('estado')) {
                 $cronograma->estado = $request->estado;
             }
-            if ($request->has('codPer')) {
-                $cronograma->codPer = $request->codPer;
-            }
 
             $cronograma->save();
             $cronograma->load('personal');
@@ -185,7 +215,7 @@ class CronogramaAtencionController extends Controller
     }
 
     /**
-     * Cambiar estado del cronograma
+     * Cambiar estado del cronograma manualmente
      */
     public function cambiarEstado(Request $request, $fecha)
     {

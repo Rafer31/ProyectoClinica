@@ -3,8 +3,8 @@
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PacienteController;
+use App\Http\Controllers\MedicoController;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
 
 // Página inicial -> redirige al login
 Route::get('/', function () {
@@ -40,14 +40,34 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/home', function () {
             return view('personal.home');
         })->name('home');
-        Route::get('/medicos', function () {
-            return view('personal.medicos.medicos');
-        })->name('medicos.medicos');
+
+        // ==========================================
+        // RUTAS DE MÉDICOS
+        // ==========================================
+        Route::prefix('medicos')->name('medicos.')->group(function () {
+            Route::get('/', function () {
+                return view('personal.medicos.medicos');
+            })->name('medicos');
+            Route::get('/agregar', function () {
+                return view('personal.medicos.form-medicos')
+                    ->with('medico', null);
+            })->name('agregar');
+            Route::get('/editar/{id}', function ($id) {
+                $medico = App\Models\Medico::findOrFail($id);
+                return view('personal.medicos.form-medicos', compact('medico'));
+            })->name('editar');
+        });
+
+        // ==========================================
+        // RUTAS DE CRONOGRAMAS (SOLO VISTAS)
+        // ==========================================
         Route::get('/cronogramas', function () {
             return view('personal.cronogramas.cronogramas');
         })->name('cronogramas.cronogramas');
 
-        // Rutas de pacientes
+        // ==========================================
+        // RUTAS DE PACIENTES
+        // ==========================================
         Route::prefix('pacientes')->name('pacientes.')->group(function () {
             Route::get('/', function () {
                 return view('personal.pacientes.pacientes');
@@ -67,15 +87,60 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         })->name('servicios.servicios');
     });
 
+    // ==========================================
+    // API ROUTES (IMPORTANTES: Estas son las que usa el JavaScript)
+    // ==========================================
     Route::prefix('api')->name('api.')->group(function () {
-        Route::prefix(('supervisor'))->name('supervisor.')->group(function () {});
-        Route::prefix(('personal'))->name('personal.')->group(function () {
-            Route::prefix(('pacientes'))->name('pacientes.')->group(function () {
+        Route::prefix('supervisor')->name('supervisor.')->group(function () {
+            // Rutas para el supervisor
+        });
+        Route::get('/usuario-actual', function () {
+            $user = Auth::user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No autenticado'
+                ], 401);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $user
+            ]);
+        })->name('usuario-actual');
+        Route::prefix('personal')->name('personal.')->group(function () {
+            // API de Pacientes
+            Route::prefix('pacientes')->name('pacientes.')->group(function () {
                 Route::get('/', [PacienteController::class, 'index'])->name('index');
                 Route::post('/', [PacienteController::class, 'store'])->name('store');
                 Route::get('/{id}', [PacienteController::class, 'show'])->name('show');
                 Route::put('/{id}', [PacienteController::class, 'update'])->name('update');
                 Route::delete('/{id}', [PacienteController::class, 'cambiarEstado'])->name('cambiarEstado');
+            });
+
+            // API de Médicos
+            Route::prefix('medicos')->name('medicos.')->group(function () {
+                Route::get('/', [MedicoController::class, 'index'])->name('index');
+                Route::post('/', [MedicoController::class, 'store'])->name('store');
+                Route::get('/{id}', [MedicoController::class, 'show'])->name('show');
+                Route::put('/{id}', [MedicoController::class, 'update'])->name('update');
+                Route::delete('/{id}', [MedicoController::class, 'destroy'])->name('destroy');
+            });
+
+            // API de Cronogramas - MOVIDAS AQUÍ
+            Route::prefix('cronogramas')->name('cronogramas.')->group(function () {
+                // Rutas especiales PRIMERO (antes de las rutas con parámetros)
+                Route::get('/activos', [App\Http\Controllers\CronogramaAtencionController::class, 'activos'])->name('activos');
+                Route::get('/entre-fechas', [App\Http\Controllers\CronogramaAtencionController::class, 'entreFechas'])->name('entreFechas');
+                Route::get('/personal/{codPer}', [App\Http\Controllers\CronogramaAtencionController::class, 'porPersonal'])->name('porPersonal');
+
+                // Rutas CRUD estándar
+                Route::get('/', [App\Http\Controllers\CronogramaAtencionController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\CronogramaAtencionController::class, 'store'])->name('store');
+                Route::get('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'show'])->name('show');
+                Route::put('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'update'])->name('update');
+                Route::patch('/{fecha}/estado', [App\Http\Controllers\CronogramaAtencionController::class, 'cambiarEstado'])->name('cambiarEstado');
+                Route::delete('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'destroy'])->name('destroy');
             });
         });
     });
@@ -83,166 +148,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
     // Cerrar sesión - Solo POST, no GET
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
-// ===========================
-// RUTAS DE PRUEBA (BACKEND) - PUEDES ELIMINARLAS EN PRODUCCIÓN
-// ===========================
-Route::prefix('test')->group(function () {
 
-    // ===== PRUEBAS DE PACIENTE =====
-    Route::get('/paciente/registrar', function () {
-        $paciente = App\Models\Paciente::create([
-            'nomPa' => 'Test',
-            'paternoPa' => 'Usuario',
-            'maternoPa' => 'Prueba',
-            'fechaNac' => '1990-01-01',
-            'sexo' => 'M',
-            'nroHCI' => 'TEST' . time(),
-            'tipoPac' => 'SUS',
-            'estado' => 'activo'
-        ]);
-
-        return response()->json([
-            'mensaje' => 'Paciente creado',
-            'data' => $paciente
-        ]);
-    });
-
-    Route::get('/paciente/listar', function () {
-        $pacientes = App\Models\Paciente::all();
-
-        return response()->json([
-            'total' => $pacientes->count(),
-            'data' => $pacientes
-        ]);
-    });
-
-    Route::get('/paciente/actualizar/{id}', function ($id) {
-        $paciente = App\Models\Paciente::find($id);
-
-        if (!$paciente) {
-            return response()->json(['error' => 'Paciente no encontrado']);
-        }
-
-        $antes = [
-            'nombre' => $paciente->nomPa,
-            'tipo' => $paciente->tipoPac,
-            'estado' => $paciente->estado
-        ];
-
-        $paciente->nomPa = 'Nombre Actualizado';
-        $paciente->tipoPac = 'SINSUS';
-        $paciente->save();
-
-        return response()->json([
-            'mensaje' => 'Paciente actualizado',
-            'antes' => $antes,
-            'despues' => [
-                'nombre' => $paciente->nomPa,
-                'tipo' => $paciente->tipoPac,
-                'estado' => $paciente->estado
-            ]
-        ]);
-    });
-
-    Route::get('/paciente/estado/{id}', function ($id) {
-        $paciente = App\Models\Paciente::find($id);
-
-        if (!$paciente) {
-            return response()->json(['error' => 'Paciente no encontrado']);
-        }
-
-        $estadoAnterior = $paciente->estado;
-        $paciente->estado = $paciente->estado === 'activo' ? 'inactivo' : 'activo';
-        $paciente->save();
-
-        return response()->json([
-            'mensaje' => 'Estado cambiado',
-            'nombre' => "{$paciente->nomPa} {$paciente->paternoPa}",
-            'estado_anterior' => $estadoAnterior,
-            'estado_nuevo' => $paciente->estado
-        ]);
-    });
-
-    // ===== PRUEBAS DE PERSONAL DE SALUD =====
-    Route::get('/personal/registrar', function () {
-        // Primero crear rol si no existe
-        $rol = App\Models\Rol::firstOrCreate(
-            ['codRol' => 1],
-            ['nombreRol' => 'Personal Imagen']
-        );
-
-        $personal = App\Models\PersonalSalud::create([
-            'usuarioPer' => 'test_' . time(),
-            'clavePer' => Hash::make('password123'),
-            'nomPer' => 'Test',
-            'paternoPer' => 'Usuario',
-            'maternoPer' => 'Prueba',
-            'codRol' => $rol->codRol,
-            'estado' => 'activo'
-        ]);
-
-        return response()->json([
-            'mensaje' => 'Personal creado',
-            'data' => $personal
-        ]);
-    });
-
-    Route::get('/personal/listar', function () {
-        $personal = App\Models\PersonalSalud::with('rol')->get();
-
-        return response()->json([
-            'total' => $personal->count(),
-            'data' => $personal
-        ]);
-    });
-
-    Route::get('/personal/actualizar/{id}', function ($id) {
-        $personal = App\Models\PersonalSalud::find($id);
-
-        if (!$personal) {
-            return response()->json(['error' => 'Personal no encontrado']);
-        }
-
-        $antes = [
-            'nombre' => $personal->nomPer,
-            'usuario' => $personal->usuarioPer,
-            'estado' => $personal->estado
-        ];
-
-        $personal->nomPer = 'Nombre Actualizado';
-        $personal->usuarioPer = 'usuario_' . time();
-        $personal->save();
-
-        return response()->json([
-            'mensaje' => 'Personal actualizado',
-            'antes' => $antes,
-            'despues' => [
-                'nombre' => $personal->nomPer,
-                'usuario' => $personal->usuarioPer,
-                'estado' => $personal->estado
-            ]
-        ]);
-    });
-
-    Route::get('/personal/estado/{id}', function ($id) {
-        $personal = App\Models\PersonalSalud::find($id);
-
-        if (!$personal) {
-            return response()->json(['error' => 'Personal no encontrado']);
-        }
-
-        $estadoAnterior = $personal->estado;
-        $personal->estado = $personal->estado === 'activo' ? 'inactivo' : 'activo';
-        $personal->save();
-
-        return response()->json([
-            'mensaje' => 'Estado cambiado',
-            'nombre' => "{$personal->nomPer} {$personal->paternoPer}",
-            'estado_anterior' => $estadoAnterior,
-            'estado_nuevo' => $personal->estado
-        ]);
-    });
-});
 
 // Ruta fallback - Maneja URLs no encontradas
 Route::fallback(function () {

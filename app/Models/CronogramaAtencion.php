@@ -12,7 +12,7 @@ class CronogramaAtencion extends Model
     protected $table = 'CronogramaAtencion';
     protected $primaryKey = 'fechaCrono';
     public $incrementing = false;
-    protected $keyType = 'date';
+    protected $keyType = 'string';
     public $timestamps = false;
 
     protected $fillable = [
@@ -24,25 +24,32 @@ class CronogramaAtencion extends Model
     ];
 
     protected $casts = [
-        'fechaCrono' => 'date',
         'cantDispo' => 'integer',
         'cantFijo' => 'integer',
-        'estado' => 'string'
     ];
 
-    // Relación con PersonalSalud
+    // NO usar cast de 'date' para fechaCrono porque causa problemas con timezone
+    // Laravel lo manejará como string en formato Y-m-d
+
+    /**
+     * Relación con PersonalSalud (quien creó el cronograma)
+     */
     public function personal()
     {
         return $this->belongsTo(PersonalSalud::class, 'codPer', 'codPer');
     }
 
-    // Relación con Servicio
+    /**
+     * Relación con Servicio
+     */
     public function servicios()
     {
         return $this->hasMany(Servicio::class, 'fechaCrono', 'fechaCrono');
     }
 
-    // Scopes útiles
+    /**
+     * Scopes útiles
+     */
     public function scopeActivos($query)
     {
         return $query->where('estado', 'activo');
