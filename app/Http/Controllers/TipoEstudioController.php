@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\TipoEstudio;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -164,6 +165,47 @@ class TipoEstudioController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Error al eliminar el tipo de estudio: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    public function exportarPDF($id)
+    {
+        try {
+            $tipoEstudio = TipoEstudio::with('requisitos')->find($id);
+
+            if (!$tipoEstudio) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tipo de estudio no encontrado'
+                ], 404);
+            }
+
+            // Obtener la observación principal
+            $observacionPrincipal = 'Sin observaciones adicionales';
+            if ($tipoEstudio->requisitos->isNotEmpty() && $tipoEstudio->requisitos[0]->pivot->observacion) {
+                $observacionPrincipal = $tipoEstudio->requisitos[0]->pivot->observacion;
+            }
+
+            // Preparar datos para la vista
+            $datos = [
+                'tipoEstudio' => $tipoEstudio,
+                'observacion' => $observacionPrincipal,
+                'fecha' => now()->format('d/m/Y'),
+                'hora' => now()->format('H:i')
+            ];
+
+            // Generar PDF
+            $pdf = Pdf::loadView('personal.tipos-estudio.pdf-ficha', $datos);
+            $pdf->setPaper('letter', 'portrait');
+
+            // Nombre del archivo
+            $nombreArchivo = 'Ficha_' . str_replace(' ', '_', $tipoEstudio->descripcion) . '_' . date('Ymd') . '.pdf';
+
+            return $pdf->download($nombreArchivo);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al generar el PDF: ' . $e->getMessage()
             ], 500);
         }
     }

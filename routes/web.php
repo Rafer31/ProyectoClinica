@@ -81,7 +81,19 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 return view('personal.pacientes.form-paciente', compact('paciente'));
             })->name('editar');
         });
+        Route::get('/tipos-estudio', function () {
+            return view('personal.tipos-estudio.tipos-estudio');
+        })->name('tipos-estudio.index');
 
+        Route::get('/tipos-estudio/crear', function () {
+            return view('personal.tipos-estudio.form-tipo-estudio')
+                ->with('tipoEstudio', null);
+        })->name('tipos-estudio.crear');
+
+        Route::get('/tipos-estudio/editar/{id}', function ($id) {
+            $tipoEstudio = App\Models\TipoEstudio::with('requisitos')->findOrFail($id);
+            return view('personal.tipos-estudio.form-tipo-estudio', compact('tipoEstudio'));
+        })->name('tipos-estudio.editar');
         Route::get('/servicios', function () {
             return view('personal.servicios.servicios');
         })->name('servicios.servicios');
@@ -117,7 +129,37 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::put('/{id}', [PacienteController::class, 'update'])->name('update');
                 Route::delete('/{id}', [PacienteController::class, 'cambiarEstado'])->name('cambiarEstado');
             });
+            Route::prefix('requisitos')->name('requisitos.')->group(function () {
+                Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('store');
+                Route::get('/{id}', [App\Http\Controllers\RequisitoController::class, 'show'])->name('show');
+                Route::put('/{id}', [App\Http\Controllers\RequisitoController::class, 'update'])->name('update');
+                Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('destroy');
+            });
+            Route::prefix('requisitos')->name('requisitos.')->group(function () {
+                Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('index');
+                Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('store');
+                Route::get('/{id}', [App\Http\Controllers\RequisitoController::class, 'show'])->name('show');
+                Route::put('/{id}', [App\Http\Controllers\RequisitoController::class, 'update'])->name('update');
+                Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('destroy');
+            });
+            Route::prefix('tipos-estudio')->name('tipos-estudio.')->group(function () {
+                Route::get('/', [App\Http\Controllers\TipoEstudioController::class, 'index'])->name('index');
+                Route::post('/con-requisitos', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'crearConRequisitos'])->name('crearConRequisitos');
+                Route::get('/exportar-pdf/{id}', [App\Http\Controllers\TipoEstudioController::class, 'exportarPDF'])->name('exportarPDF');
+                Route::get('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'show'])->name('show');
+                Route::put('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'update'])->name('update');
+                Route::delete('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'destroy'])->name('destroy');
 
+                // Gestión de requisitos
+                Route::prefix('{codTest}/requisitos')->group(function () {
+                    Route::get('/', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'listarRequisitos'])->name('requisitos.index');
+                    Route::post('/asignar', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'asignarRequisitos'])->name('requisitos.asignar');
+                    Route::post('/agregar', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'agregarRequisito'])->name('requisitos.agregar');
+                    Route::put('/{codRequisito}/observacion', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'actualizarObservacion'])->name('requisitos.actualizarObservacion');
+                    Route::delete('/{codRequisito}', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'eliminarRequisito'])->name('requisitos.eliminar');
+                });
+            });
             // API de Médicos
             Route::prefix('medicos')->name('medicos.')->group(function () {
                 Route::get('/', [MedicoController::class, 'index'])->name('index');
@@ -141,6 +183,19 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::put('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'update'])->name('update');
                 Route::patch('/{fecha}/estado', [App\Http\Controllers\CronogramaAtencionController::class, 'cambiarEstado'])->name('cambiarEstado');
                 Route::delete('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'destroy'])->name('destroy');
+            });
+            Route::prefix('servicios')->name('servicios.')->group(function () {
+                Route::get('/', [App\Http\Controllers\ServicioController::class, 'index'])->name('index');
+                Route::get('/datos-formulario', [App\Http\Controllers\ServicioController::class, 'datosFormulario'])->name('datosFormulario');
+                Route::get('/estadisticas', [App\Http\Controllers\ServicioController::class, 'estadisticas'])->name('estadisticas');
+                Route::get('/paciente/{codPa}', [App\Http\Controllers\ServicioController::class, 'porPaciente'])->name('porPaciente');
+                Route::get('/estado/{estado}', [App\Http\Controllers\ServicioController::class, 'porEstado'])->name('porEstado');
+                Route::post('/', [App\Http\Controllers\ServicioController::class, 'store'])->name('store');
+                Route::get('/{id}', [App\Http\Controllers\ServicioController::class, 'show'])->name('show');
+                Route::put('/{id}', [App\Http\Controllers\ServicioController::class, 'update'])->name('update');
+                Route::patch('/{id}/estado', [App\Http\Controllers\ServicioController::class, 'cambiarEstado'])->name('cambiarEstado');
+                Route::post('/{id}/diagnosticos', [App\Http\Controllers\ServicioController::class, 'asociarDiagnosticos'])->name('asociarDiagnosticos');
+                Route::delete('/{id}', [App\Http\Controllers\ServicioController::class, 'destroy'])->name('destroy');
             });
         });
     });

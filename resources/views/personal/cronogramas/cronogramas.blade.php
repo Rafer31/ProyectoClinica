@@ -582,8 +582,8 @@
             }
             document.getElementById('detalleInfo').textContent = infoTexto;
 
-            if (cronograma.personal) {
-                const nombreCompleto = `${cronograma.personal.nomPer || ''} ${cronograma.personal.paternoPer || ''}`.trim();
+            if (cronograma.personal_salud) {
+                const nombreCompleto = `${cronograma.personal_salud.nomPer || ''} ${cronograma.personal_salud.paternoPer || ''}`.trim();
                 document.getElementById('detalleCreador').textContent = nombreCompleto || 'No disponible';
             } else {
                 document.getElementById('detalleCreador').textContent = 'No disponible';

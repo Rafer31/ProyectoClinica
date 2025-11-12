@@ -10,7 +10,7 @@ return new class extends Migration {
             $table->engine = 'InnoDB';
             $table->unsignedInteger('codTest');
             $table->unsignedInteger('codRequisito');
-            $table->string('observacion', 200)->nullable();
+            $table->text('observacion')->nullable();
 
             $table->primary(['codTest', 'codRequisito']);
             $table->foreign('codTest')->references('codTest')->on('TipoEstudio')->onDelete('cascade');

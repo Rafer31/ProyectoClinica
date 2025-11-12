@@ -15,7 +15,7 @@ class CronogramaAtencionController extends Controller
     public function index()
     {
         try {
-            $cronogramas = CronogramaAtencion::with('personal')
+            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
                 ->orderBy('fechaCrono', 'desc')
                 ->get();
 
@@ -38,7 +38,7 @@ class CronogramaAtencionController extends Controller
     public function show($fecha)
     {
         try {
-            $cronograma = CronogramaAtencion::with('personal')->find($fecha);
+            $cronograma = CronogramaAtencion::with('personalSalud')->find($fecha);  // CAMBIADO AQUÍ
 
             if (!$cronograma) {
                 return response()->json([
@@ -129,7 +129,7 @@ class CronogramaAtencionController extends Controller
                 'codPer' => $codPer
             ]);
 
-            $cronograma->load('personal');
+            $cronograma->load('personalSalud');  // CAMBIADO AQUÍ
 
             return response()->json([
                 'success' => true,
@@ -199,7 +199,7 @@ class CronogramaAtencionController extends Controller
             }
 
             $cronograma->save();
-            $cronograma->load('personal');
+            $cronograma->load('personalSalud');  // CAMBIADO AQUÍ
 
             return response()->json([
                 'success' => true,
@@ -266,7 +266,7 @@ class CronogramaAtencionController extends Controller
     public function activos()
     {
         try {
-            $cronogramas = CronogramaAtencion::with('personal')
+            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
                 ->activos()
                 ->orderBy('fechaCrono')
                 ->get();
@@ -290,7 +290,7 @@ class CronogramaAtencionController extends Controller
     public function porPersonal($codPer)
     {
         try {
-            $cronogramas = CronogramaAtencion::with('personal')
+            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
                 ->porPersonal($codPer)
                 ->orderBy('fechaCrono', 'desc')
                 ->get();
@@ -327,7 +327,7 @@ class CronogramaAtencionController extends Controller
         }
 
         try {
-            $cronogramas = CronogramaAtencion::with('personal')
+            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
                 ->entreFechas($request->fechaInicio, $request->fechaFin)
                 ->orderBy('fechaCrono')
                 ->get();

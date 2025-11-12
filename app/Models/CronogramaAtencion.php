@@ -28,13 +28,11 @@ class CronogramaAtencion extends Model
         'cantFijo' => 'integer',
     ];
 
-    // NO usar cast de 'date' para fechaCrono porque causa problemas con timezone
-    // Laravel lo manejará como string en formato Y-m-d
 
     /**
      * Relación con PersonalSalud (quien creó el cronograma)
      */
-    public function personal()
+    public function personalSalud()
     {
         return $this->belongsTo(PersonalSalud::class, 'codPer', 'codPer');
     }

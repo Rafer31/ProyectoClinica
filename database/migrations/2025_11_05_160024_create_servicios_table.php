@@ -16,7 +16,7 @@ return new class extends Migration {
             $table->time('horaAten')->nullable();
             $table->date('fechaEnt')->nullable();
             $table->time('horaEnt')->nullable();
-            $table->enum('tipoSeg', ['AsegEmergencia','AsegRegular','NoAsegEmergencia','NoAsegRegular'])->nullable();
+            $table->enum('tipoAseg', ['AsegEmergencia','AsegRegular','NoAsegEmergencia','NoAsegRegular'])->nullable();
             $table->string('nroFicha', 50)->nullable();
             $table->enum('estado', ['Programado','Atendido','Entregado','EnProceso'])->nullable();
 
