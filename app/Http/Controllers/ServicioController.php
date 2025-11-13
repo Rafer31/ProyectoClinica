@@ -81,7 +81,56 @@ class ServicioController extends Controller
     }
 
     /**
-     * Registrar nuevo servicio
+     * NUEVO: Calcular número de ficha automáticamente
+     */
+    public function calcularNumeroFicha($fechaCrono)
+    {
+        try {
+            $cronograma = CronogramaAtencion::find($fechaCrono);
+
+            if (!$cronograma) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cronograma no encontrado'
+                ], 404);
+            }
+
+            // Obtener cantidad de servicios ya registrados para esta fecha
+            $serviciosRegistrados = Servicio::where('fechaCrono', $fechaCrono)->count();
+
+            // Calcular el número de ficha (servicios registrados + 1)
+            $nroFicha = $serviciosRegistrados + 1;
+
+            // Calcular fichas restantes
+            $fichasRestantes = $cronograma->cantDispo - $serviciosRegistrados;
+
+            // Verificar si aún hay fichas disponibles
+            if ($fichasRestantes <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No hay fichas disponibles para esta fecha'
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'nroFicha' => $nroFicha,
+                    'fichasRestantes' => $fichasRestantes,
+                    'cantTotal' => $cronograma->cantDispo
+                ],
+                'message' => 'Número de ficha calculado correctamente'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al calcular número de ficha: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Registrar nuevo servicio - MODIFICADO
      */
     public function store(Request $request)
     {
@@ -91,22 +140,19 @@ class ServicioController extends Controller
             'nroServ' => 'nullable|string|max:50|unique:Servicio,nroServ',
             'tipoAseg' => 'required|in:AsegEmergencia,AsegRegular,NoAsegEmergencia,NoAsegRegular',
             'nroFicha' => 'nullable|string|max:50',
-            'estado' => 'required|in:Programado,Atendido,Entregado,EnProceso',
+            // REMOVIDO: validación de 'estado', siempre será 'Programado' al crear
             'codPa' => 'required|exists:Paciente,codPa',
             'codMed' => 'required|exists:Medico,codMed',
             'codTest' => 'required|exists:TipoEstudio,codTest',
             'fechaCrono' => 'required|exists:CronogramaAtencion,fechaCrono',
-            'diagnosticos' => 'nullable|array',
-            'diagnosticos.*.codDiag' => 'required|exists:Diagnostico,codDiag',
-            'diagnosticos.*.tipo' => 'required|in:sol,eco'
+            'diagnosticoTexto' => 'nullable|string|max:500',
+            'tipoDiagnostico' => 'nullable|in:sol,eco' // NUEVO: tipo de diagnóstico
         ], [
             'fechaSol.required' => 'La fecha de solicitud es obligatoria',
             'horaSol.required' => 'La hora de solicitud es obligatoria',
             'nroServ.unique' => 'El número de servicio ya existe',
             'tipoAseg.required' => 'El tipo de seguro es obligatorio',
             'tipoAseg.in' => 'El tipo de seguro no es válido',
-            'estado.required' => 'El estado es obligatorio',
-            'estado.in' => 'El estado no es válido',
             'codPa.required' => 'El paciente es obligatorio',
             'codPa.exists' => 'El paciente seleccionado no existe',
             'codMed.required' => 'El médico es obligatorio',
@@ -114,7 +160,9 @@ class ServicioController extends Controller
             'codTest.required' => 'El tipo de estudio es obligatorio',
             'codTest.exists' => 'El tipo de estudio seleccionado no existe',
             'fechaCrono.required' => 'La fecha del cronograma es obligatoria',
-            'fechaCrono.exists' => 'El cronograma seleccionado no existe'
+            'fechaCrono.exists' => 'El cronograma seleccionado no existe',
+            'diagnosticoTexto.max' => 'El diagnóstico no puede exceder 500 caracteres',
+            'tipoDiagnostico.in' => 'El tipo de diagnóstico debe ser "sol" o "eco"'
         ]);
 
         if ($validator->fails()) {
@@ -134,36 +182,46 @@ class ServicioController extends Controller
                 ]);
             }
 
-            $data = $request->only([
-                'fechaSol', 'horaSol', 'nroServ', 'tipoAseg', 'nroFicha', 'estado',
-                'codPa', 'codMed', 'codTest', 'fechaCrono'
-            ]);
-
-            // Establecer fechas automáticamente según el estado inicial
-            if ($request->estado === 'Atendido') {
-                $data['fechaAten'] = Carbon::now()->toDateString();
-                $data['horaAten'] = Carbon::now()->toTimeString();
+            // NUEVO: Calcular número de ficha si no se proporciona
+            if (!$request->nroFicha) {
+                $serviciosRegistrados = Servicio::where('fechaCrono', $request->fechaCrono)->count();
+                $nroFicha = $serviciosRegistrados + 1;
+            } else {
+                $nroFicha = $request->nroFicha;
             }
 
-            if ($request->estado === 'Entregado') {
-                // Si se marca como entregado, debe tener fecha de atención
-                if (!isset($data['fechaAten'])) {
-                    $data['fechaAten'] = Carbon::now()->toDateString();
-                    $data['horaAten'] = Carbon::now()->toTimeString();
-                }
-                $data['fechaEnt'] = Carbon::now()->toDateString();
-                $data['horaEnt'] = Carbon::now()->toTimeString();
-            }
+            $data = [
+                'fechaSol' => $request->fechaSol,
+                'horaSol' => $request->horaSol,
+                'nroServ' => $request->nroServ,
+                'tipoAseg' => $request->tipoAseg,
+                'nroFicha' => $nroFicha,
+                'estado' => 'Programado', // SIEMPRE PROGRAMADO AL CREAR
+                'codPa' => $request->codPa,
+                'codMed' => $request->codMed,
+                'codTest' => $request->codTest,
+                'fechaCrono' => $request->fechaCrono
+            ];
 
             $servicio = Servicio::create($data);
 
-            // Asociar diagnósticos si existen
-            if ($request->has('diagnosticos') && is_array($request->diagnosticos)) {
-                $diagnosticos = [];
-                foreach ($request->diagnosticos as $diag) {
-                    $diagnosticos[$diag['codDiag']] = ['tipo' => $diag['tipo']];
+            // MODIFICADO: Crear/asociar diagnóstico con tipo
+            if ($request->filled('diagnosticoTexto')) {
+                $diagnosticoTexto = trim($request->diagnosticoTexto);
+                $tipoDiagnostico = $request->tipoDiagnostico ?? 'sol'; // Por defecto 'sol'
+
+                // Buscar si ya existe un diagnóstico con ese texto
+                $diagnostico = Diagnostico::where('descripDiag', $diagnosticoTexto)->first();
+
+                // Si no existe, crearlo
+                if (!$diagnostico) {
+                    $diagnostico = Diagnostico::create([
+                        'descripDiag' => $diagnosticoTexto
+                    ]);
                 }
-                $servicio->diagnosticos()->attach($diagnosticos);
+
+                // Asociar el diagnóstico al servicio con el tipo especificado
+                $servicio->diagnosticos()->attach($diagnostico->codDiag, ['tipo' => $tipoDiagnostico]);
             }
 
             $servicio->load(['paciente', 'medico', 'tipoEstudio', 'cronograma', 'diagnosticos']);
@@ -172,7 +230,7 @@ class ServicioController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $servicio,
-                'message' => 'Servicio registrado exitosamente'
+                'message' => 'Servicio registrado exitosamente con estado Programado'
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -184,7 +242,7 @@ class ServicioController extends Controller
     }
 
     /**
-     * Actualizar servicio
+     * Actualizar servicio - MODIFICADO
      */
     public function update(Request $request, $id)
     {
@@ -207,6 +265,8 @@ class ServicioController extends Controller
             if ($request->has('codMed')) $rules['codMed'] = 'exists:Medico,codMed';
             if ($request->has('codTest')) $rules['codTest'] = 'exists:TipoEstudio,codTest';
             if ($request->has('fechaCrono')) $rules['fechaCrono'] = 'exists:CronogramaAtencion,fechaCrono';
+            if ($request->has('diagnosticoTexto')) $rules['diagnosticoTexto'] = 'nullable|string|max:500';
+            if ($request->has('tipoDiagnostico')) $rules['tipoDiagnostico'] = 'nullable|in:sol,eco'; // NUEVO
 
             $validator = Validator::make($request->all(), $rules);
 
@@ -250,13 +310,29 @@ class ServicioController extends Controller
                 }
             }
 
-            // Actualizar diagnósticos si se proporcionan
-            if ($request->has('diagnosticos') && is_array($request->diagnosticos)) {
-                $diagnosticos = [];
-                foreach ($request->diagnosticos as $diag) {
-                    $diagnosticos[$diag['codDiag']] = ['tipo' => $diag['tipo']];
+            // NUEVO: Actualizar diagnóstico si se proporciona texto
+            if ($request->has('diagnosticoTexto')) {
+                $diagnosticoTexto = trim($request->diagnosticoTexto);
+                $tipoDiagnostico = $request->tipoDiagnostico ?? 'sol'; // Por defecto 'sol'
+
+                if (!empty($diagnosticoTexto)) {
+                    // Buscar o crear diagnóstico
+                    $diagnostico = Diagnostico::where('descripDiag', $diagnosticoTexto)->first();
+
+                    if (!$diagnostico) {
+                        $diagnostico = Diagnostico::create([
+                            'descripDiag' => $diagnosticoTexto
+                        ]);
+                    }
+
+                    // Sincronizar (reemplazar el diagnóstico anterior) con el tipo especificado
+                    $servicio->diagnosticos()->sync([
+                        $diagnostico->codDiag => ['tipo' => $tipoDiagnostico]
+                    ]);
+                } else {
+                    // Si el texto está vacío, eliminar todos los diagnósticos
+                    $servicio->diagnosticos()->detach();
                 }
-                $servicio->diagnosticos()->sync($diagnosticos);
             }
 
             $servicio->save();
@@ -431,6 +507,7 @@ class ServicioController extends Controller
                 ->get();
 
             $cronogramas = CronogramaAtencion::where('estado', 'activo')
+                ->orWhere('estado', 'inactivoFut') // AGREGADO: Permitir cronogramas futuros
                 ->where('cantDispo', '>', 0)
                 ->where('fechaCrono', '>=', date('Y-m-d'))
                 ->with('personalSalud:codPer,nomPer,paternoPer')
@@ -467,7 +544,7 @@ class ServicioController extends Controller
     {
         try {
             $servicios = Servicio::with(['medico', 'tipoEstudio', 'diagnosticos'])
-                ->porPaciente($codPa)
+                ->where('codPa', $codPa)
                 ->orderBy('fechaSol', 'desc')
                 ->get();
 

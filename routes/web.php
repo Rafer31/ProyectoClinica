@@ -1,16 +1,18 @@
 <?php
 
+use App\Http\Controllers\HomeController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\MedicoController;
+use App\Http\Controllers\ServicioController;
 use Illuminate\Support\Facades\Auth;
 
 // Página inicial -> redirige al login
 Route::get('/', function () {
     return redirect()->route('login');
 });
-
+Route::get('/home/estadisticas', [HomeController::class, 'estadisticas']);
 // Rutas públicas (no autenticadas)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -89,7 +91,9 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('personal.tipos-estudio.form-tipo-estudio')
                 ->with('tipoEstudio', null);
         })->name('tipos-estudio.crear');
-
+Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('reportes.dia');
+    Route::get('/reportes/semana', [HomeController::class, 'reporteSemana'])->name('reportes.semana');
+    Route::get('/reportes/mes', [HomeController::class, 'reporteMes'])->name('reportes.mes');
         Route::get('/tipos-estudio/editar/{id}', function ($id) {
             $tipoEstudio = App\Models\TipoEstudio::with('requisitos')->findOrFail($id);
             return view('personal.tipos-estudio.form-tipo-estudio', compact('tipoEstudio'));
@@ -97,6 +101,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/servicios', function () {
             return view('personal.servicios.servicios');
         })->name('servicios.servicios');
+        Route::get('/servicios/calcular-ficha/{fechaCrono}', [ServicioController::class, 'calcularNumeroFicha']);
     });
 
     // ==========================================

@@ -94,12 +94,12 @@
             }
 
 
-        .step-circle .material-icons {
+            .step-circle .material-icons {
                 font-size: 16px;
             }
 
 
-        .step-line {
+            .step-line {
                 margin-left: 4px;
                 margin-right: 4px;
             }
@@ -310,7 +310,6 @@
                 </div>
 
                 <form id="form-servicio" class="space-y-6">
-                    <!-- Step 1: Información Básica -->
                     <div class="form-step active" data-step="1">
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4">
                             <div class="flex items-center">
@@ -361,24 +360,32 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Estado <span class="text-red-500">*</span>
                                 </label>
-                                <select id="estado" required
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                    <option value="Programado">Programado</option>
+                                <select id="estado" required disabled
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed">
+                                    <option value="Programado" selected>Programado</option>
                                     <option value="EnProceso">En Proceso</option>
                                     <option value="Atendido">Atendido</option>
                                     <option value="Entregado">Entregado</option>
                                 </select>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <span class="material-icons text-xs align-middle">info</span>
+                                    El estado inicial siempre es "Programado"
+                                </p>
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Nro. Ficha
                                 </label>
-                                <input type="text" id="nroFicha"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <input type="text" id="nroFicha" readonly
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-50 text-gray-500 cursor-not-allowed"
+                                    placeholder="Se asigna automáticamente">
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <span class="material-icons text-xs align-middle">info</span>
+                                    Se asigna según el cronograma seleccionado
+                                </p>
                             </div>
                         </div>
                     </div>
-
                     <!-- Step 2: Paciente y Médico -->
                     <div class="form-step hidden" data-step="2">
                         <div class="bg-green-50 border-l-4 border-green-500 p-4 mb-4">
@@ -442,43 +449,63 @@
                         </div>
                     </div>
 
-                    <!-- Step 4: Diagnósticos -->
                     <div class="form-step hidden" data-step="4">
                         <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
                             <div class="flex items-center">
                                 <span class="material-icons text-red-600 mr-2">medical_services</span>
-                                <p class="text-sm text-red-800 font-medium">Agregue los diagnósticos relacionados (opcional)
-                                </p>
+                                <p class="text-sm text-red-800 font-medium">Ingrese el diagnóstico (opcional)</p>
                             </div>
                         </div>
 
                         <div class="space-y-4">
-                            <div class="flex gap-2">
-                                <div class="flex-1">
-                                    <select id="diagnostico-temp"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="">Seleccione un diagnóstico</option>
-                                    </select>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Diagnóstico
+                                </label>
+                                <textarea id="diagnostico-texto" rows="5" maxlength="500"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                    placeholder="Ingrese el diagnóstico del paciente. Este campo es opcional pero recomendado para un mejor seguimiento del caso médico..."></textarea>
+                                <div class="flex items-center justify-between mt-2">
+                                    <p class="text-xs text-gray-500">
+                                        <span class="material-icons text-xs align-middle">info</span>
+                                        Máximo 500 caracteres
+                                    </p>
+                                    <p class="text-xs text-gray-500" id="contador-caracteres">
+                                        <span id="caracteres-actuales">0</span>/500
+                                    </p>
                                 </div>
-                                <div class="w-40">
-                                    <select id="tipo-diag-temp"
-                                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                                        <option value="">Tipo</option>
-                                        <option value="sol">Solicitado</option>
-                                        <option value="eco">Ecográfico</option>
-                                    </select>
-                                </div>
-                                <button type="button" id="btn-agregar-diagnostico"
-                                    class="flex items-center gap-2 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-all hover:shadow-lg">
-                                    <span class="material-icons">add</span>
-                                    <span>Agregar</span>
-                                </button>
                             </div>
-                            <div id="diagnosticos-seleccionados" class="space-y-2 min-h-[100px]">
-                                <!-- Diagnósticos agregados dinámicamente -->
-                                <div class="text-sm text-gray-500 italic text-center py-8" id="diagnosticos-vacio">
-                                    No hay diagnósticos agregados
-                                </div>
+
+                            <!-- Select de Tipo de Diagnóstico -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    Tipo de Diagnóstico <span class="text-red-500">*</span>
+                                </label>
+                                <select id="tipo-diagnostico" required
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">Seleccione el tipo</option>
+                                    <option value="sol">Solicitado</option>
+                                    <option value="eco">Ecográfico</option>
+                                </select>
+                                <p class="text-xs text-gray-500 mt-1">
+                                    <span class="material-icons text-xs align-middle">info</span>
+                                    Indique si es un diagnóstico solicitado o ecográfico
+                                </p>
+                            </div>
+
+                            <!-- Área de ayuda -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <h4 class="text-sm font-semibold text-blue-900 mb-2 flex items-center">
+                                    <span class="material-icons text-sm mr-1">help_outline</span>
+                                    Consejos para el diagnóstico:
+                                </h4>
+                                <ul class="text-xs text-blue-800 space-y-1 ml-5 list-disc">
+                                    <li>Sea claro y conciso en la descripción</li>
+                                    <li>Incluya síntomas relevantes si es necesario</li>
+                                    <li>Seleccione el tipo correcto de diagnóstico</li>
+                                    <li>Puede actualizar este campo posteriormente si es necesario</li>
+                                    <li>El diagnóstico será guardado automáticamente en el sistema</li>
+                                </ul>
                             </div>
                         </div>
                     </div>
@@ -630,5 +657,31 @@
         @push('scripts')
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
             <script src="{{ asset('js/servicios.js') }}"></script>
+            <script>
+                document.addEventListener('DOMContentLoaded', function () {
+                    const textarea = document.getElementById('diagnostico-texto');
+                    const contador = document.getElementById('caracteres-actuales');
+                    const maxCaracteres = 500;
+
+                    textarea.addEventListener('input', function () {
+                        const longitud = this.value.length;
+                        contador.textContent = longitud;
+
+                        if (longitud > maxCaracteres) {
+                            this.value = this.value.substring(0, maxCaracteres);
+                            contador.textContent = maxCaracteres;
+                        }
+
+                        // Cambiar color según la longitud
+                        if (longitud > maxCaracteres * 0.9) {
+                            contador.parentElement.classList.add('text-red-600');
+                            contador.parentElement.classList.remove('text-gray-500');
+                        } else {
+                            contador.parentElement.classList.add('text-gray-500');
+                            contador.parentElement.classList.remove('text-red-600');
+                        }
+                    });
+                });
+            </script>
         @endpush
 @endsection

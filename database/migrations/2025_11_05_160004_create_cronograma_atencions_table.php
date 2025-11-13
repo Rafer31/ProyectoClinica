@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->date('fechaCrono')->primary();
             $table->integer('cantDispo')->nullable();
             $table->integer('cantFijo')->nullable();
+            $table->integer('cantEmergencia')->nullable();
             $table->enum('estado', ['activo','inactivoPas','inactivoFut'])->nullable();
             $table->unsignedInteger('codPer')->nullable();
 
