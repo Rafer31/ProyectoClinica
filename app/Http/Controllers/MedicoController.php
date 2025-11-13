@@ -213,49 +213,5 @@ class MedicoController extends Controller
             ], 500);
         }
     }
-    public function entreFechas(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'fechaInicio' => 'required|date',
-            'fechaFin' => 'required|date|after_or_equal:fechaInicio'
-        ]);
 
-        if ($validator->fails()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Errores de validación',
-                'errors' => $validator->errors()
-            ], 422);
-        }
-
-        try {
-            $cronogramas = CronogramaAtencion::with('personal')
-                ->entreFechas($request->fechaInicio, $request->fechaFin)
-                ->orderBy('fechaCrono')
-                ->get();
-
-            // Formatear las fechas correctamente
-            $cronogramas = $cronogramas->map(function ($cronograma) {
-                return [
-                    'fechaCrono' => $cronograma->fechaCrono->format('Y-m-d'),
-                    'cantDispo' => $cronograma->cantDispo,
-                    'cantFijo' => $cronograma->cantFijo,
-                    'estado' => $cronograma->estado,
-                    'codPer' => $cronograma->codPer,
-                    'personal' => $cronograma->personal
-                ];
-            });
-
-            return response()->json([
-                'success' => true,
-                'data' => $cronogramas,
-                'message' => 'Cronogramas obtenidos correctamente'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener los cronogramas: ' . $e->getMessage()
-            ], 500);
-        }
-    }
 }

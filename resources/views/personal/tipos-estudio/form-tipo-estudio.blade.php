@@ -234,7 +234,8 @@
                         </button>
                     </div>
 
-                    <form id="form-nuevo-requisito" onsubmit="guardarNuevoRequisito(event)">
+                    <!-- CORREGIDO: Eliminado el id="form-nuevo-requisito" y usando solo onsubmit -->
+                    <form onsubmit="guardarNuevoRequisito(event); return false;">
                         <div class="space-y-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -271,431 +272,502 @@
 @endsection
 
         @push('scripts')
-                <script>
-                    let requisitosDisponibles = [];
-                    let requisitosAgregados = [];
-                    const esEdicion = {{ $esEdicion ? 'true' : 'false' }};
-                    const tipoEstudioId = {{ $esEdicion ? $tipoEstudio->codTest : 'null' }};
+            <script>
+                let requisitosDisponibles = [];
+                let requisitosAgregados = [];
+                const esEdicion = {{ $esEdicion ? 'true' : 'false' }};
+                const tipoEstudioId = {{ $esEdicion ? $tipoEstudio->codTest : 'null' }};
 
-                    document.addEventListener('DOMContentLoaded', async function () {
-                        await cargarRequisitos();
+                document.addEventListener('DOMContentLoaded', async function () {
+                    await cargarRequisitos();
 
-                        if (esEdicion) {
-                            cargarDatosEdicion();
+                    if (esEdicion) {
+                        cargarDatosEdicion();
+                    }
+
+                    // Actualizar vista previa en tiempo real
+                    document.getElementById('descripcion').addEventListener('input', actualizarVistaPrevia);
+                    document.getElementById('observacion-principal').addEventListener('input', actualizarVistaPrevia);
+                });
+
+                async function cargarRequisitos() {
+                    try {
+                        const response = await fetch('/api/personal/requisitos');
+                        const data = await response.json();
+
+                        if (data.success) {
+                            requisitosDisponibles = data.data;
+                            const select = document.getElementById('select-requisito');
+
+                            data.data.forEach(req => {
+                                const option = document.createElement('option');
+                                option.value = req.codRequisito;
+                                option.textContent = req.descripRequisito;
+                                select.appendChild(option);
+                            });
                         }
+                    } catch (error) {
+                        console.error('Error al cargar requisitos:', error);
+                    }
+                }
 
-                        // Actualizar vista previa en tiempo real
-                        document.getElementById('descripcion').addEventListener('input', actualizarVistaPrevia);
-                        document.getElementById('observacion-principal').addEventListener('input', actualizarVistaPrevia);
+                async function cargarDatosEdicion() {
+                    try {
+                        const response = await fetch(`/api/personal/tipos-estudio/${tipoEstudioId}`);
+                        const data = await response.json();
+
+                        if (data.success && data.data.requisitos) {
+                            requisitosAgregados = data.data.requisitos.map(req => ({
+                                codRequisito: req.codRequisito,
+                                descripRequisito: req.descripRequisito
+                            }));
+
+                            renderizarRequisitos();
+                            actualizarVistaPrevia();
+                        }
+                    } catch (error) {
+                        console.error('Error al cargar datos:', error);
+                    }
+                }
+
+                function siguientePaso(paso) {
+                    // Validar paso actual
+                    const pasoActual = paso - 1;
+                    if (pasoActual === 1) {
+                        const descripcion = document.getElementById('descripcion').value.trim();
+                        if (!descripcion) {
+                            mostrarNotificacion('Por favor ingrese el título del tipo de estudio', 'error');
+                            return;
+                        }
+                    } else if (pasoActual === 2) {
+                        const observacion = document.getElementById('observacion-principal').value.trim();
+                        if (!observacion) {
+                            mostrarNotificacion('Por favor ingrese las observaciones', 'error');
+                            return;
+                        }
+                    }
+
+                    // Ocultar paso actual y mostrar siguiente
+                    document.getElementById(`paso-${pasoActual}`).classList.add('hidden');
+                    document.getElementById(`paso-${paso}`).classList.remove('hidden');
+
+                    // Actualizar indicadores
+                    actualizarIndicadores(paso);
+                    actualizarVistaPrevia();
+                }
+
+                function anteriorPaso(paso) {
+                    const pasoActual = paso + 1;
+                    document.getElementById(`paso-${pasoActual}`).classList.add('hidden');
+                    document.getElementById(`paso-${paso}`).classList.remove('hidden');
+                    actualizarIndicadores(paso);
+                }
+
+                function actualizarIndicadores(pasoActivo) {
+                    // Resetear todos
+                    for (let i = 1; i <= 3; i++) {
+                        const indicator = document.getElementById(`paso-${i}-indicator`);
+                        if (i < pasoActivo) {
+                            indicator.classList.remove('bg-gray-300', 'text-gray-600', 'bg-purple-600', 'text-white');
+                            indicator.classList.add('bg-green-500', 'text-white');
+                            indicator.innerHTML = '<span class="material-icons">check</span>';
+                        } else if (i === pasoActivo) {
+                            indicator.classList.remove('bg-gray-300', 'text-gray-600', 'bg-green-500');
+                            indicator.classList.add('bg-purple-600', 'text-white');
+                            indicator.textContent = i;
+                        } else {
+                            indicator.classList.remove('bg-purple-600', 'text-white', 'bg-green-500');
+                            indicator.classList.add('bg-gray-300', 'text-gray-600');
+                            indicator.textContent = i;
+                        }
+                    }
+
+                    // Actualizar barras de progreso
+                    document.getElementById('progreso-1').style.width = pasoActivo >= 2 ? '100%' : '0%';
+                    document.getElementById('progreso-2').style.width = pasoActivo >= 3 ? '100%' : '0%';
+                }
+
+                function agregarRequisitoSeleccionado() {
+                    const select = document.getElementById('select-requisito');
+                    const codRequisito = parseInt(select.value);
+
+                    if (!codRequisito) {
+                        mostrarNotificacion('Seleccione un requisito', 'error');
+                        return;
+                    }
+
+                    // Verificar si ya está agregado
+                    if (requisitosAgregados.some(r => r.codRequisito === codRequisito)) {
+                        mostrarNotificacion('Este requisito ya fue agregado', 'error');
+                        return;
+                    }
+
+                    const requisito = requisitosDisponibles.find(r => r.codRequisito === codRequisito);
+                    requisitosAgregados.push({
+                        codRequisito: requisito.codRequisito,
+                        descripRequisito: requisito.descripRequisito
                     });
 
-                    async function cargarRequisitos() {
-                        try {
-                            const response = await fetch('/api/personal/requisitos');
+                    renderizarRequisitos();
+                    actualizarVistaPrevia();
+                    select.value = '';
+                }
+
+                function eliminarRequisito(codRequisito) {
+                    requisitosAgregados = requisitosAgregados.filter(r => r.codRequisito !== codRequisito);
+                    renderizarRequisitos();
+                    actualizarVistaPrevia();
+                }
+
+                function renderizarRequisitos() {
+                    const container = document.getElementById('requisitos-agregados');
+                    const mensaje = document.getElementById('mensaje-sin-requisitos');
+
+                    if (requisitosAgregados.length === 0) {
+                        mensaje.classList.remove('hidden');
+                        container.innerHTML = '<p class="text-sm text-gray-500 text-center" id="mensaje-sin-requisitos">No hay requisitos agregados. Seleccione requisitos de la lista superior.</p>';
+                        return;
+                    }
+
+                    container.innerHTML = requisitosAgregados.map(req => `
+                                            <div class="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
+                                                <div class="flex items-center">
+                                                    <span class="material-icons text-purple-600 mr-2">check_circle</span>
+                                                    <span class="text-sm font-medium text-gray-800">${req.descripRequisito}</span>
+                                                </div>
+                                                <button type="button" onclick="eliminarRequisito(${req.codRequisito})"
+                                                    class="text-red-600 hover:text-red-800">
+                                                    <span class="material-icons">close</span>
+                                                </button>
+                                            </div>
+                                        `).join('');
+                }
+
+                function actualizarVistaPrevia() {
+                    const titulo = document.getElementById('descripcion').value || '-';
+                    const observacion = document.getElementById('observacion-principal').value || '-';
+                    const requisitos = requisitosAgregados.length > 0
+                        ? requisitosAgregados.map(r => r.descripRequisito).join(', ')
+                        : 'Sin requisitos';
+
+                    document.getElementById('preview-titulo').textContent = titulo;
+                    document.getElementById('preview-observacion').textContent = observacion.substring(0, 150) + (observacion.length > 150 ? '...' : '');
+                    document.getElementById('preview-requisitos').textContent = requisitos;
+                }
+
+                document.getElementById('form-tipo-estudio').addEventListener('submit', async function (e) {
+                    e.preventDefault();
+
+                    const descripcion = document.getElementById('descripcion').value.trim();
+                    const observacionPrincipal = document.getElementById('observacion-principal').value.trim();
+
+                    if (!descripcion || !observacionPrincipal) {
+                        mostrarNotificacion('Complete todos los campos requeridos', 'error');
+                        return;
+                    }
+
+                    if (requisitosAgregados.length === 0) {
+                        mostrarNotificacion('Debe agregar al menos un requisito', 'error');
+                        return;
+                    }
+
+                    try {
+                        if (esEdicion) {
+                            // EDICIÓN: Dos pasos separados
+
+                            // 1. Actualizar el tipo de estudio
+                            const responseUpdate = await fetch(`/api/personal/tipos-estudio/${tipoEstudioId}`, {
+                                method: 'PUT',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({ descripcion: descripcion })
+                            });
+
+                            if (!responseUpdate.ok) {
+                                const errorText = await responseUpdate.text();
+                                console.error('Error response:', errorText);
+                                mostrarNotificacion('Error al actualizar el tipo de estudio', 'error');
+                                return;
+                            }
+
+                            const dataUpdate = await responseUpdate.json();
+
+                            if (!dataUpdate.success) {
+                                mostrarNotificacion(dataUpdate.message || 'Error al actualizar', 'error');
+                                return;
+                            }
+
+                            // 2. Asignar los requisitos
+                            const datosRequisitos = {
+                                requisitos: requisitosAgregados.map((req, index) => ({
+                                    codRequisito: req.codRequisito,
+                                    observacion: index === 0 ? observacionPrincipal : null
+                                }))
+                            };
+
+                            console.log('Enviando requisitos:', JSON.stringify(datosRequisitos, null, 2));
+
+                            const responseRequisitos = await fetch(`/api/personal/tipos-estudio/${tipoEstudioId}/requisitos/asignar`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify(datosRequisitos)
+                            });
+
+                            if (!responseRequisitos.ok) {
+                                const errorText = await responseRequisitos.text();
+                                console.error('Error al asignar requisitos:', errorText);
+                                console.error('Status:', responseRequisitos.status);
+                                mostrarNotificacion('Error al asignar requisitos. Revisa la consola para más detalles.', 'error');
+                                return;
+                            }
+
+                            const dataRequisitos = await responseRequisitos.json();
+
+                            if (dataRequisitos.success) {
+                                mostrarNotificacion('Tipo de estudio actualizado exitosamente', 'success');
+                                setTimeout(() => {
+                                    window.location.href = '/personal/tipos-estudio';
+                                }, 1500);
+                            } else {
+                                mostrarNotificacion(dataRequisitos.message || 'Error al asignar requisitos', 'error');
+                            }
+
+                        } else {
+                            // CREACIÓN: Un solo paso
+                            const datos = {
+                                descripcion: descripcion,
+                                requisitos: requisitosAgregados.map((req, index) => ({
+                                    codRequisito: req.codRequisito,
+                                    observacion: index === 0 ? observacionPrincipal : null
+                                }))
+                            };
+
+                            console.log('Creando tipo de estudio:', JSON.stringify(datos, null, 2));
+
+                            const response = await fetch('/api/personal/tipos-estudio/con-requisitos', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify(datos)
+                            });
+
+                            if (!response.ok) {
+                                const errorText = await response.text();
+                                console.error('Error response:', errorText);
+                                console.error('Status:', response.status);
+                                mostrarNotificacion('Error al crear. Revisa la consola para más detalles.', 'error');
+                                return;
+                            }
+
                             const data = await response.json();
 
                             if (data.success) {
-                                requisitosDisponibles = data.data;
-                                const select = document.getElementById('select-requisito');
-
-                                data.data.forEach(req => {
-                                    const option = document.createElement('option');
-                                    option.value = req.codRequisito;
-                                    option.textContent = req.descripRequisito;
-                                    select.appendChild(option);
-                                });
-                            }
-                        } catch (error) {
-                            console.error('Error al cargar requisitos:', error);
-                        }
-                    }
-
-                    async function cargarDatosEdicion() {
-                        try {
-                            const response = await fetch(`/api/personal/tipos-estudio/${tipoEstudioId}`);
-                            const data = await response.json();
-
-                            if (data.success && data.data.requisitos) {
-                                requisitosAgregados = data.data.requisitos.map(req => ({
-                                    codRequisito: req.codRequisito,
-                                    descripRequisito: req.descripRequisito
-                                }));
-
-                                renderizarRequisitos();
-                                actualizarVistaPrevia();
-                            }
-                        } catch (error) {
-                            console.error('Error al cargar datos:', error);
-                        }
-                    }
-
-                    function siguientePaso(paso) {
-                        // Validar paso actual
-                        const pasoActual = paso - 1;
-                        if (pasoActual === 1) {
-                            const descripcion = document.getElementById('descripcion').value.trim();
-                            if (!descripcion) {
-                                mostrarNotificacion('Por favor ingrese el título del tipo de estudio', 'error');
-                                return;
-                            }
-                        } else if (pasoActual === 2) {
-                            const observacion = document.getElementById('observacion-principal').value.trim();
-                            if (!observacion) {
-                                mostrarNotificacion('Por favor ingrese las observaciones', 'error');
-                                return;
-                            }
-                        }
-
-                        // Ocultar paso actual y mostrar siguiente
-                        document.getElementById(`paso-${pasoActual}`).classList.add('hidden');
-                        document.getElementById(`paso-${paso}`).classList.remove('hidden');
-
-                        // Actualizar indicadores
-                        actualizarIndicadores(paso);
-                        actualizarVistaPrevia();
-                    }
-
-                    function anteriorPaso(paso) {
-                        const pasoActual = paso + 1;
-                        document.getElementById(`paso-${pasoActual}`).classList.add('hidden');
-                        document.getElementById(`paso-${paso}`).classList.remove('hidden');
-                        actualizarIndicadores(paso);
-                    }
-
-                    function actualizarIndicadores(pasoActivo) {
-                        // Resetear todos
-                        for (let i = 1; i <= 3; i++) {
-                            const indicator = document.getElementById(`paso-${i}-indicator`);
-                            if (i < pasoActivo) {
-                                indicator.classList.remove('bg-gray-300', 'text-gray-600', 'bg-purple-600', 'text-white');
-                                indicator.classList.add('bg-green-500', 'text-white');
-                                indicator.innerHTML = '<span class="material-icons">check</span>';
-                            } else if (i === pasoActivo) {
-                                indicator.classList.remove('bg-gray-300', 'text-gray-600', 'bg-green-500');
-                                indicator.classList.add('bg-purple-600', 'text-white');
-                                indicator.textContent = i;
+                                mostrarNotificacion('Tipo de estudio creado exitosamente', 'success');
+                                setTimeout(() => {
+                                    window.location.href = '/personal/tipos-estudio';
+                                }, 1500);
                             } else {
-                                indicator.classList.remove('bg-purple-600', 'text-white', 'bg-green-500');
-                                indicator.classList.add('bg-gray-300', 'text-gray-600');
-                                indicator.textContent = i;
+                                mostrarNotificacion(data.message || 'Error al guardar', 'error');
                             }
                         }
+                    } catch (error) {
+                        console.error('Error completo:', error);
+                        console.error('Error stack:', error.stack);
+                        mostrarNotificacion('Error al procesar la solicitud: ' + error.message, 'error');
+                    }
+                });
 
-                        // Actualizar barras de progreso
-                        document.getElementById('progreso-1').style.width = pasoActivo >= 2 ? '100%' : '0%';
-                        document.getElementById('progreso-2').style.width = pasoActivo >= 3 ? '100%' : '0%';
+                function mostrarNotificacion(mensaje, tipo = 'success') {
+                    const colores = {
+                        success: 'bg-green-500',
+                        error: 'bg-red-500',
+                        info: 'bg-blue-500'
+                    };
+
+                    const notificacion = document.createElement('div');
+                    notificacion.className = `fixed top-4 right-4 ${colores[tipo]} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2`;
+                    notificacion.innerHTML = `
+                                            <span class="material-icons">${tipo === 'success' ? 'check_circle' : 'error'}</span>
+                                            <span>${mensaje}</span>
+                                        `;
+
+                    document.body.appendChild(notificacion);
+
+                    setTimeout(() => {
+                        notificacion.remove();
+                    }, 3000);
+                }
+                function abrirModalRequisito() {
+                    const modal = document.getElementById('modal-nuevo-requisito');
+                    const input = document.getElementById('descripcion-requisito');
+
+                    if (modal) {
+                        modal.classList.remove('hidden');
                     }
 
-                    function agregarRequisitoSeleccionado() {
-                        const select = document.getElementById('select-requisito');
-                        const codRequisito = parseInt(select.value);
+                    if (input) {
+                        input.value = '';
+                        setTimeout(() => input.focus(), 100);
+                    }
+                }
 
-                        if (!codRequisito) {
-                            mostrarNotificacion('Seleccione un requisito', 'error');
-                            return;
-                        }
+                function cerrarModalRequisito() {
+                    const modal = document.getElementById('modal-nuevo-requisito');
+                    const input = document.getElementById('descripcion-requisito');
 
-                        // Verificar si ya está agregado
-                        if (requisitosAgregados.some(r => r.codRequisito === codRequisito)) {
-                            mostrarNotificacion('Este requisito ya fue agregado', 'error');
-                            return;
-                        }
+                    if (modal) {
+                        modal.classList.add('hidden');
+                    }
 
-                        const requisito = requisitosDisponibles.find(r => r.codRequisito === codRequisito);
-                        requisitosAgregados.push({
-                            codRequisito: requisito.codRequisito,
-                            descripRequisito: requisito.descripRequisito
+                    // Limpiar el input manualmente (NO usar reset())
+                    if (input) {
+                        input.value = '';
+                    }
+                }
+
+                async function guardarNuevoRequisito(event) {
+                    event.preventDefault();
+
+                    const descripcion = document.getElementById('descripcion-requisito').value.trim();
+
+                    if (!descripcion) {
+                        mostrarNotificacion('Ingrese una descripción para el requisito', 'error');
+                        return;
+                    }
+
+                    // Obtener el token CSRF
+                    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+                    if (!csrfToken) {
+                        mostrarNotificacion('Error: Token CSRF no encontrado', 'error');
+                        console.error('No se encontró el meta tag csrf-token en el HTML');
+                        return;
+                    }
+
+                    console.log('=== GUARDANDO REQUISITO ===');
+                    console.log('Descripción:', descripcion);
+                    console.log('URL:', '/api/personal/requisitos');
+
+                    try {
+                        const response = await fetch('/api/personal/requisitos', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'Accept': 'application/json'
+                            },
+                            body: JSON.stringify({
+                                descripRequisito: descripcion
+                            })
                         });
 
-                        renderizarRequisitos();
-                        actualizarVistaPrevia();
-                        select.value = '';
-                    }
+                        console.log('Response status:', response.status);
+                        console.log('Response OK:', response.ok);
 
-                    function eliminarRequisito(codRequisito) {
-                        requisitosAgregados = requisitosAgregados.filter(r => r.codRequisito !== codRequisito);
-                        renderizarRequisitos();
-                        actualizarVistaPrevia();
-                    }
+                        // Leer el texto de la respuesta
+                        const responseText = await response.text();
+                        console.log('Response text:', responseText);
 
-                    function renderizarRequisitos() {
-                        const container = document.getElementById('requisitos-agregados');
-                        const mensaje = document.getElementById('mensaje-sin-requisitos');
-
-                        if (requisitosAgregados.length === 0) {
-                            mensaje.classList.remove('hidden');
-                            container.innerHTML = '<p class="text-sm text-gray-500 text-center" id="mensaje-sin-requisitos">No hay requisitos agregados. Seleccione requisitos de la lista superior.</p>';
-                            return;
-                        }
-
-                        container.innerHTML = requisitosAgregados.map(req => `
-                <div class="flex items-center justify-between p-3 bg-purple-50 border border-purple-200 rounded-lg">
-                    <div class="flex items-center">
-                        <span class="material-icons text-purple-600 mr-2">check_circle</span>
-                        <span class="text-sm font-medium text-gray-800">${req.descripRequisito}</span>
-                    </div>
-                    <button type="button" onclick="eliminarRequisito(${req.codRequisito})"
-                        class="text-red-600 hover:text-red-800">
-                        <span class="material-icons">close</span>
-                    </button>
-                </div>
-            `).join('');
-                    }
-
-                    function actualizarVistaPrevia() {
-                        const titulo = document.getElementById('descripcion').value || '-';
-                        const observacion = document.getElementById('observacion-principal').value || '-';
-                        const requisitos = requisitosAgregados.length > 0
-                            ? requisitosAgregados.map(r => r.descripRequisito).join(', ')
-                            : 'Sin requisitos';
-
-                        document.getElementById('preview-titulo').textContent = titulo;
-                        document.getElementById('preview-observacion').textContent = observacion.substring(0, 150) + (observacion.length > 150 ? '...' : '');
-                        document.getElementById('preview-requisitos').textContent = requisitos;
-                    }
-
-                    document.getElementById('form-tipo-estudio').addEventListener('submit', async function (e) {
-                        e.preventDefault();
-
-                        const descripcion = document.getElementById('descripcion').value.trim();
-                        const observacionPrincipal = document.getElementById('observacion-principal').value.trim();
-
-                        if (!descripcion || !observacionPrincipal) {
-                            mostrarNotificacion('Complete todos los campos requeridos', 'error');
-                            return;
-                        }
-
-                        if (requisitosAgregados.length === 0) {
-                            mostrarNotificacion('Debe agregar al menos un requisito', 'error');
-                            return;
-                        }
-
+                        // Intentar parsear como JSON
+                        let data;
                         try {
-                            if (esEdicion) {
-                                // EDICIÓN: Dos pasos separados
+                            data = JSON.parse(responseText);
+                            console.log('Response data:', data);
+                        } catch (e) {
+                            console.error('Error al parsear JSON:', e);
+                            console.error('Respuesta recibida:', responseText);
+                            throw new Error('La respuesta del servidor no es JSON válido');
+                        }
 
-                                // 1. Actualizar el tipo de estudio
-                                const responseUpdate = await fetch(`/api/personal/tipos-estudio/${tipoEstudioId}`, {
-                                    method: 'PUT',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    },
-                                    body: JSON.stringify({ descripcion: descripcion })
-                                });
+                        if (response.ok && data.success) {
+                            console.log('✓ Requisito creado exitosamente:', data.data);
 
-                                if (!responseUpdate.ok) {
-                                    const errorText = await responseUpdate.text();
-                                    console.error('Error response:', errorText);
-                                    mostrarNotificacion('Error al actualizar el tipo de estudio', 'error');
-                                    return;
-                                }
+                            // Agregar el nuevo requisito a la lista disponible
+                            requisitosDisponibles.push(data.data);
 
-                                const dataUpdate = await responseUpdate.json();
+                            // Agregar la opción al select
+                            const select = document.getElementById('select-requisito');
+                            if (select) {
+                                const option = document.createElement('option');
+                                option.value = data.data.codRequisito;
+                                option.textContent = data.data.descripRequisito;
+                                select.appendChild(option);
 
-                                if (!dataUpdate.success) {
-                                    mostrarNotificacion(dataUpdate.message || 'Error al actualizar', 'error');
-                                    return;
-                                }
+                                // Seleccionar automáticamente el nuevo requisito
+                                select.value = data.data.codRequisito;
 
-                                // 2. Asignar los requisitos
-                                const datosRequisitos = {
-                                    requisitos: requisitosAgregados.map((req, index) => ({
-                                        codRequisito: req.codRequisito,
-                                        observacion: index === 0 ? observacionPrincipal : null
-                                    }))
-                                };
-
-                                console.log('Enviando requisitos:', JSON.stringify(datosRequisitos, null, 2));
-
-                                const responseRequisitos = await fetch(`/api/personal/tipos-estudio/${tipoEstudioId}/requisitos/asignar`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    },
-                                    body: JSON.stringify(datosRequisitos)
-                                });
-
-                                if (!responseRequisitos.ok) {
-                                    const errorText = await responseRequisitos.text();
-                                    console.error('Error al asignar requisitos:', errorText);
-                                    console.error('Status:', responseRequisitos.status);
-                                    mostrarNotificacion('Error al asignar requisitos. Revisa la consola para más detalles.', 'error');
-                                    return;
-                                }
-
-                                const dataRequisitos = await responseRequisitos.json();
-
-                                if (dataRequisitos.success) {
-                                    mostrarNotificacion('Tipo de estudio actualizado exitosamente', 'success');
-                                    setTimeout(() => {
-                                        window.location.href = '/personal/tipos-estudio';
-                                    }, 1500);
-                                } else {
-                                    mostrarNotificacion(dataRequisitos.message || 'Error al asignar requisitos', 'error');
-                                }
-
-                            } else {
-                                // CREACIÓN: Un solo paso
-                                const datos = {
-                                    descripcion: descripcion,
-                                    requisitos: requisitosAgregados.map((req, index) => ({
-                                        codRequisito: req.codRequisito,
-                                        observacion: index === 0 ? observacionPrincipal : null
-                                    }))
-                                };
-
-                                console.log('Creando tipo de estudio:', JSON.stringify(datos, null, 2));
-
-                                const response = await fetch('/api/personal/tipos-estudio/con-requisitos', {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    },
-                                    body: JSON.stringify(datos)
-                                });
-
-                                if (!response.ok) {
-                                    const errorText = await response.text();
-                                    console.error('Error response:', errorText);
-                                    console.error('Status:', response.status);
-                                    mostrarNotificacion('Error al crear. Revisa la consola para más detalles.', 'error');
-                                    return;
-                                }
-
-                                const data = await response.json();
-
-                                if (data.success) {
-                                    mostrarNotificacion('Tipo de estudio creado exitosamente', 'success');
-                                    setTimeout(() => {
-                                        window.location.href = '/personal/tipos-estudio';
-                                    }, 1500);
-                                } else {
-                                    mostrarNotificacion(data.message || 'Error al guardar', 'error');
-                                }
+                                console.log('✓ Requisito agregado al select con ID:', data.data.codRequisito);
                             }
-                        } catch (error) {
-                            console.error('Error completo:', error);
-                            console.error('Error stack:', error.stack);
-                            mostrarNotificacion('Error al procesar la solicitud: ' + error.message, 'error');
+
+                            // Cerrar modal
+                            cerrarModalRequisito();
+
+                            // Mostrar notificación de éxito
+                            mostrarNotificacion('✓ Requisito creado exitosamente. Presione el botón "+" para agregarlo.', 'success');
+
+                            // Hacer foco en el botón de agregar
+                            setTimeout(() => {
+                                const botonAgregar = document.querySelector('button[onclick="agregarRequisitoSeleccionado()"]');
+                                if (botonAgregar) {
+                                    botonAgregar.focus();
+                                }
+                            }, 100);
+                        } else {
+                            console.error('✗ Error en la respuesta:', data);
+                            mostrarNotificacion(data.message || 'Error al crear el requisito', 'error');
                         }
-                    });
-
-                    function mostrarNotificacion(mensaje, tipo = 'success') {
-                        const colores = {
-                            success: 'bg-green-500',
-                            error: 'bg-red-500',
-                            info: 'bg-blue-500'
-                        };
-
-                        const notificacion = document.createElement('div');
-                        notificacion.className = `fixed top-4 right-4 ${colores[tipo]} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2`;
-                        notificacion.innerHTML = `
-                <span class="material-icons">${tipo === 'success' ? 'check_circle' : 'error'}</span>
-                <span>${mensaje}</span>
-            `;
-
-                        document.body.appendChild(notificacion);
-
-                        setTimeout(() => {
-                            notificacion.remove();
-                        }, 3000);
+                    } catch (error) {
+                        console.error('✗ ERROR COMPLETO:', error);
+                        console.error('Stack trace:', error.stack);
+                        mostrarNotificacion('Error al crear el requisito: ' + error.message, 'error');
                     }
-                    function abrirModalRequisito() {
-    document.getElementById('modal-nuevo-requisito').classList.remove('hidden');
-    document.getElementById('descripcion-requisito').value = '';
-    document.getElementById('descripcion-requisito').focus();
-}
+                }
 
-function cerrarModalRequisito() {
-    document.getElementById('modal-nuevo-requisito').classList.add('hidden');
-    document.getElementById('form-nuevo-requisito').reset();
-}
-
-async function guardarNuevoRequisito(event) {
-    event.preventDefault();
-
-    const descripcion = document.getElementById('descripcion-requisito').value.trim();
-
-    if (!descripcion) {
-        mostrarNotificacion('Ingrese una descripción para el requisito', 'error');
-        return;
-    }
-
-    try {
-        const response = await fetch('/api/personal/requisitos', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({
-                descripRequisito: descripcion
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            // Agregar el nuevo requisito a la lista disponible
-            requisitosDisponibles.push(data.data);
-
-            // Agregar la opción al select
-            const select = document.getElementById('select-requisito');
-            const option = document.createElement('option');
-            option.value = data.data.codRequisito;
-            option.textContent = data.data.descripRequisito;
-            select.appendChild(option);
-
-            // Seleccionar automáticamente el nuevo requisito
-            select.value = data.data.codRequisito;
-
-            // Cerrar modal
-            cerrarModalRequisito();
-
-            // Mostrar notificación
-            mostrarNotificacion('Requisito creado exitosamente. Ahora puede agregarlo al estudio.', 'success');
-        } else {
-            mostrarNotificacion(data.message || 'Error al crear el requisito', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarNotificacion('Error al crear el requisito', 'error');
-    }
-}
-
-// Cerrar modal al presionar ESC
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        cerrarModalRequisito();
-    }
-});
-
-// Cerrar modal al hacer clic fuera
-document.getElementById('modal-nuevo-requisito')?.addEventListener('click', function(e) {
-    if (e.target === this) {
-        cerrarModalRequisito();
-    }
-});
-                </script>
-
-                <style>
-                    .paso {
-                        animation: fadeIn 0.3s ease-in;
-                    }
-
-                    @keyframes fadeIn {
-                        from {
-                            opacity: 0;
-                            transform: translateY(10px);
-                        }
-
-                        to {
-                            opacity: 1;
-                            transform: translateY(0);
+                // Cerrar modal al presionar ESC
+                document.addEventListener('keydown', function (e) {
+                    if (e.key === 'Escape') {
+                        const modal = document.getElementById('modal-nuevo-requisito');
+                        if (modal && !modal.classList.contains('hidden')) {
+                            cerrarModalRequisito();
                         }
                     }
-                </style>
+                });
+
+                // Cerrar modal al hacer clic fuera del contenido
+                document.addEventListener('DOMContentLoaded', function () {
+                    const modal = document.getElementById('modal-nuevo-requisito');
+                    if (modal) {
+                        modal.addEventListener('click', function (e) {
+                            if (e.target === this) {
+                                cerrarModalRequisito();
+                            }
+                        });
+                    }
+                });
+            </script>
+
+            <style>
+                .paso {
+                    animation: fadeIn 0.3s ease-in;
+                }
+
+                @keyframes fadeIn {
+                    from {
+                        opacity: 0;
+                        transform: translateY(10px);
+                    }
+
+                    to {
+                        opacity: 1;
+                        transform: translateY(0);
+                    }
+                }
+            </style>
         @endpush
