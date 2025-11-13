@@ -4,97 +4,168 @@
     <meta charset="UTF-8">
     <title>{{ $titulo }}</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            font-size: 12px;
+        * {
             margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Helvetica', 'Arial', sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #000;
             padding: 20px;
         }
+
         .header {
             text-align: center;
-            margin-bottom: 30px;
-            border-bottom: 2px solid #333;
+            margin-bottom: 25px;
             padding-bottom: 15px;
+            border-bottom: 2px solid #000;
         }
+
         .header h1 {
-            margin: 0;
-            color: #2563eb;
-            font-size: 24px;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
-        .header p {
-            margin: 5px 0;
-            color: #666;
+
+        .header-info {
+            font-size: 10px;
+            margin: 4px 0;
         }
-        .info-box {
-            background: #f3f4f6;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 5px;
+
+        .header-info strong {
+            font-weight: bold;
         }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: bold;
+            margin: 15px 0 8px 0;
+            padding-bottom: 4px;
+            border-bottom: 1px solid #000;
+            text-transform: uppercase;
+        }
+
+        .info-grid {
+            margin: 15px 0;
+            border: 1px solid #000;
+            padding: 10px;
+        }
+
         .info-row {
             margin: 5px 0;
+            font-size: 10px;
         }
+
         .info-row strong {
-            color: #374151;
+            font-weight: bold;
         }
+
+        .summary-box {
+            text-align: center;
+            border: 2px solid #000;
+            padding: 15px;
+            margin: 20px auto;
+            max-width: 300px;
+        }
+
+        .summary-box .numero {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 5px 0;
+        }
+
+        .summary-box .label {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
-            margin-top: 20px;
+            margin-top: 15px;
+            font-size: 10px;
         }
+
         th {
-            background: #2563eb;
-            color: white;
-            padding: 10px;
+            background: #000;
+            color: #fff;
+            padding: 8px 6px;
             text-align: left;
             font-weight: bold;
+            font-size: 9px;
+            text-transform: uppercase;
+            border: 1px solid #000;
         }
+
         td {
-            padding: 8px;
-            border-bottom: 1px solid #e5e7eb;
+            padding: 6px;
+            border: 1px solid #000;
+            vertical-align: top;
         }
+
         tr:nth-child(even) {
-            background: #f9fafb;
+            background: #f5f5f5;
         }
+
         .badge {
             display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 10px;
+            padding: 2px 6px;
+            border: 1px solid #000;
+            font-size: 8px;
             font-weight: bold;
+            text-transform: uppercase;
         }
-        .badge-programado { background: #fef3c7; color: #92400e; }
-        .badge-proceso { background: #dbeafe; color: #1e40af; }
-        .badge-atendido { background: #d1fae5; color: #065f46; }
-        .badge-entregado { background: #e9d5ff; color: #6b21a8; }
+
         .footer {
             margin-top: 30px;
-            text-align: center;
-            font-size: 10px;
-            color: #666;
-            border-top: 1px solid #e5e7eb;
             padding-top: 15px;
-        }
-        .resumen {
-            display: flex;
-            justify-content: space-around;
-            margin: 20px 0;
-            padding: 15px;
-            background: #eff6ff;
-            border-radius: 5px;
-        }
-        .resumen-item {
+            border-top: 1px solid #000;
             text-align: center;
+            font-size: 9px;
         }
-        .resumen-item .numero {
-            font-size: 28px;
+
+        .footer-line {
+            margin: 3px 0;
+        }
+
+        .page-number {
+            position: fixed;
+            bottom: 10px;
+            right: 20px;
+            font-size: 9px;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-45deg);
+            font-size: 80px;
+            color: #f0f0f0;
+            opacity: 0.3;
+            z-index: -1;
             font-weight: bold;
-            color: #2563eb;
         }
-        .resumen-item .label {
-            font-size: 11px;
+
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            font-style: italic;
             color: #666;
-            margin-top: 5px;
+            border: 1px dashed #000;
+            margin: 20px 0;
+        }
+
+        small {
+            font-size: 8px;
+            color: #666;
         }
     </style>
 </head>
@@ -102,72 +173,73 @@
     <!-- Encabezado -->
     <div class="header">
         <h1>{{ $titulo }}</h1>
-        <p><strong>Personal:</strong> {{ $personal }}</p>
-        <p><strong>Período:</strong> {{ $periodo }}</p>
-        <p><strong>Fecha de Generación:</strong> {{ $fecha }}</p>
+        <div class="header-info"><strong>Hospital:</strong> Centro de Salud - Servicio de Imagenología</div>
+        <div class="header-info"><strong>Personal:</strong> {{ $personal }}</div>
+        <div class="header-info"><strong>Período:</strong> {{ $periodo }}</div>
+        <div class="header-info"><strong>Fecha de Generación:</strong> {{ $fecha }}</div>
     </div>
 
     <!-- Resumen -->
-    <div class="resumen">
-        <div class="resumen-item">
-            <div class="numero">{{ $total }}</div>
-            <div class="label">Total de Pacientes Atendidos</div>
-        </div>
+    <div class="summary-box">
+        <div class="numero">{{ $total }}</div>
+        <div class="label">Total de Pacientes Atendidos</div>
     </div>
 
-    <!-- Información General -->
-    <div class="info-box">
-        <div class="info-row">
-            <strong>Hospital:</strong> Centro de Salud - Servicio de Imagenología
-        </div>
-        <div class="info-row">
-            <strong>Generado por:</strong> {{ $personal }}
-        </div>
+    <!-- Información del Reporte -->
+    <div class="info-grid">
+        <div class="info-row"><strong>Tipo de Reporte:</strong> {{ $titulo }}</div>
+        <div class="info-row"><strong>Generado por:</strong> {{ $personal }}</div>
+        <div class="info-row"><strong>Fecha y Hora:</strong> {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</div>
     </div>
+
+    <!-- Título de Tabla -->
+    <div class="section-title">Detalle de Servicios</div>
 
     <!-- Tabla de Servicios -->
     @if($servicios->count() > 0)
         <table>
             <thead>
                 <tr>
-                    <th style="width: 10%;">Nro. Servicio</th>
-                    <th style="width: 25%;">Paciente</th>
+                    <th style="width: 8%;">Nro.</th>
+                    <th style="width: 22%;">Paciente / HCI</th>
                     <th style="width: 20%;">Tipo de Estudio</th>
-                    <th style="width: 15%;">Fecha Atención</th>
-                    <th style="width: 10%;">Estado</th>
-                    <th style="width: 20%;">Diagnóstico</th>
+                    <th style="width: 12%;">Fecha</th>
+                    <th style="width: 8%;">Estado</th>
+                    <th style="width: 15%;">Médico</th>
+                    <th style="width: 15%;">Diagnóstico</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($servicios as $servicio)
                     <tr>
-                        <td>{{ $servicio->nroServ }}</td>
+                        <td style="text-align: center; font-weight: bold;">{{ $servicio->nroServ }}</td>
                         <td>
-                            {{ $servicio->paciente->nomPa ?? '' }}
-                            {{ $servicio->paciente->paternoPa ?? '' }}
-                            {{ $servicio->paciente->maternoPa ?? '' }}
+                            <strong>
+                                {{ $servicio->paciente->nomPa ?? '' }}
+                                {{ $servicio->paciente->paternoPa ?? '' }}
+                                {{ $servicio->paciente->maternoPa ?? '' }}
+                            </strong>
                             <br>
-                            <small style="color: #666;">HCI: {{ $servicio->paciente->nroHCI ?? 'N/A' }}</small>
+                            <small>HCI: {{ $servicio->paciente->nroHCI ?? 'N/A' }}</small>
                         </td>
                         <td>{{ $servicio->tipoEstudio->descripcion ?? 'N/A' }}</td>
-                        <td>
+                        <td style="text-align: center;">
                             {{ $servicio->fechaAten ? \Carbon\Carbon::parse($servicio->fechaAten)->format('d/m/Y') : 'N/A' }}
                             <br>
-                            <small style="color: #666;">{{ $servicio->horaAten ?? '' }}</small>
+                            <small>{{ $servicio->horaAten ?? '' }}</small>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="badge">{{ $servicio->estado }}</span>
                         </td>
                         <td>
-                            @php
-                                $badgeClass = '';
-                                if($servicio->estado === 'Programado') $badgeClass = 'badge-programado';
-                                elseif($servicio->estado === 'EnProceso') $badgeClass = 'badge-proceso';
-                                elseif($servicio->estado === 'Atendido') $badgeClass = 'badge-atendido';
-                                elseif($servicio->estado === 'Entregado') $badgeClass = 'badge-entregado';
-                            @endphp
-                            <span class="badge {{ $badgeClass }}">{{ $servicio->estado }}</span>
+                            <small>
+                                {{ $servicio->medico->nomMed ?? '' }}
+                                {{ $servicio->medico->paternoMed ?? '' }}
+                            </small>
                         </td>
-                        <td style="font-size: 10px;">
+                        <td style="font-size: 9px;">
                             @if($servicio->diagnosticos->count() > 0)
-                                {{ Str::limit($servicio->diagnosticos->first()->descripDiag, 50) }}
+                                {{ Str::limit($servicio->diagnosticos->first()->descripDiag, 60) }}
                             @else
                                 <em style="color: #999;">Sin diagnóstico</em>
                             @endif
@@ -177,15 +249,22 @@
             </tbody>
         </table>
     @else
-        <div style="text-align: center; padding: 40px; color: #666;">
-            <p>No hay servicios registrados en este período</p>
+        <div class="no-data">
+            <p><strong>No hay servicios registrados en este período</strong></p>
+            <p>{{ $periodo }}</p>
         </div>
     @endif
 
     <!-- Footer -->
     <div class="footer">
-        <p>Documento generado el {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</p>
-        <p>Sistema de Gestión de Imagenología - Hospital</p>
+        <div class="footer-line"><strong>Sistema de Gestión de Imagenología</strong></div>
+        <div class="footer-line">Documento generado el {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</div>
+        <div class="footer-line">Este documento es de uso interno y confidencial</div>
+    </div>
+
+    <!-- Número de página -->
+    <div class="page-number">
+        Página 1
     </div>
 </body>
 </html>

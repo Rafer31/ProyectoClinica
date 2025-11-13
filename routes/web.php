@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 Route::get('/', function () {
     return redirect()->route('login');
 });
-Route::get('/home/estadisticas', [HomeController::class, 'estadisticas']);
+
 // Rutas públicas (no autenticadas)
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthenticatedSessionController::class, 'create'])->name('login');
@@ -42,6 +42,13 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/home', function () {
             return view('personal.home');
         })->name('home');
+
+        // ==========================================
+        // REPORTES PDF - AGREGADOS AQUÍ
+        // ==========================================
+        Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('reportes.dia');
+        Route::get('/reportes/semana', [HomeController::class, 'reporteSemana'])->name('reportes.semana');
+        Route::get('/reportes/mes', [HomeController::class, 'reporteMes'])->name('reportes.mes');
 
         // ==========================================
         // RUTAS DE MÉDICOS
@@ -83,6 +90,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 return view('personal.pacientes.form-paciente', compact('paciente'));
             })->name('editar');
         });
+
         Route::get('/tipos-estudio', function () {
             return view('personal.tipos-estudio.tipos-estudio');
         })->name('tipos-estudio.index');
@@ -91,17 +99,15 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('personal.tipos-estudio.form-tipo-estudio')
                 ->with('tipoEstudio', null);
         })->name('tipos-estudio.crear');
-Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('reportes.dia');
-    Route::get('/reportes/semana', [HomeController::class, 'reporteSemana'])->name('reportes.semana');
-    Route::get('/reportes/mes', [HomeController::class, 'reporteMes'])->name('reportes.mes');
+
         Route::get('/tipos-estudio/editar/{id}', function ($id) {
             $tipoEstudio = App\Models\TipoEstudio::with('requisitos')->findOrFail($id);
             return view('personal.tipos-estudio.form-tipo-estudio', compact('tipoEstudio'));
         })->name('tipos-estudio.editar');
+
         Route::get('/servicios', function () {
             return view('personal.servicios.servicios');
         })->name('servicios.servicios');
-        Route::get('/servicios/calcular-ficha/{fechaCrono}', [ServicioController::class, 'calcularNumeroFicha']);
     });
 
     // ==========================================
@@ -111,6 +117,7 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
         Route::prefix('supervisor')->name('supervisor.')->group(function () {
             // Rutas para el supervisor
         });
+
         Route::get('/usuario-actual', function () {
             $user = Auth::user();
             if (!$user) {
@@ -125,7 +132,13 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
                 'data' => $user
             ]);
         })->name('usuario-actual');
+
         Route::prefix('personal')->name('personal.')->group(function () {
+            // ==========================================
+            // ESTADÍSTICAS HOME - MOVIDO AQUÍ
+            // ==========================================
+            Route::get('/home/estadisticas', [HomeController::class, 'estadisticas']);
+
             // API de Pacientes
             Route::prefix('pacientes')->name('pacientes.')->group(function () {
                 Route::get('/', [PacienteController::class, 'index'])->name('index');
@@ -134,6 +147,7 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
                 Route::put('/{id}', [PacienteController::class, 'update'])->name('update');
                 Route::delete('/{id}', [PacienteController::class, 'cambiarEstado'])->name('cambiarEstado');
             });
+
             Route::prefix('requisitos')->name('requisitos.')->group(function () {
                 Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('index');
                 Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('store');
@@ -141,13 +155,7 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
                 Route::put('/{id}', [App\Http\Controllers\RequisitoController::class, 'update'])->name('update');
                 Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('destroy');
             });
-            Route::prefix('requisitos')->name('requisitos.')->group(function () {
-                Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('index');
-                Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('store');
-                Route::get('/{id}', [App\Http\Controllers\RequisitoController::class, 'show'])->name('show');
-                Route::put('/{id}', [App\Http\Controllers\RequisitoController::class, 'update'])->name('update');
-                Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('destroy');
-            });
+
             Route::prefix('tipos-estudio')->name('tipos-estudio.')->group(function () {
                 Route::get('/', [App\Http\Controllers\TipoEstudioController::class, 'index'])->name('index');
                 Route::post('/con-requisitos', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'crearConRequisitos'])->name('crearConRequisitos');
@@ -165,6 +173,7 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
                     Route::delete('/{codRequisito}', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'eliminarRequisito'])->name('requisitos.eliminar');
                 });
             });
+
             // API de Médicos
             Route::prefix('medicos')->name('medicos.')->group(function () {
                 Route::get('/', [MedicoController::class, 'index'])->name('index');
@@ -174,9 +183,9 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
                 Route::delete('/{id}', [MedicoController::class, 'destroy'])->name('destroy');
             });
 
-            // API de Cronogramas - MOVIDAS AQUÍ
+            // API de Cronogramas
             Route::prefix('cronogramas')->name('cronogramas.')->group(function () {
-                // Rutas especiales PRIMERO (antes de las rutas con parámetros)
+                // Rutas especiales PRIMERO
                 Route::get('/activos', [App\Http\Controllers\CronogramaAtencionController::class, 'activos'])->name('activos');
                 Route::get('/entre-fechas', [App\Http\Controllers\CronogramaAtencionController::class, 'entreFechas'])->name('entreFechas');
                 Route::get('/personal/{codPer}', [App\Http\Controllers\CronogramaAtencionController::class, 'porPersonal'])->name('porPersonal');
@@ -189,18 +198,24 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
                 Route::patch('/{fecha}/estado', [App\Http\Controllers\CronogramaAtencionController::class, 'cambiarEstado'])->name('cambiarEstado');
                 Route::delete('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'destroy'])->name('destroy');
             });
+
+            // API de Servicios
             Route::prefix('servicios')->name('servicios.')->group(function () {
-                Route::get('/', [App\Http\Controllers\ServicioController::class, 'index'])->name('index');
-                Route::get('/datos-formulario', [App\Http\Controllers\ServicioController::class, 'datosFormulario'])->name('datosFormulario');
-                Route::get('/estadisticas', [App\Http\Controllers\ServicioController::class, 'estadisticas'])->name('estadisticas');
-                Route::get('/paciente/{codPa}', [App\Http\Controllers\ServicioController::class, 'porPaciente'])->name('porPaciente');
-                Route::get('/estado/{estado}', [App\Http\Controllers\ServicioController::class, 'porEstado'])->name('porEstado');
-                Route::post('/', [App\Http\Controllers\ServicioController::class, 'store'])->name('store');
-                Route::get('/{id}', [App\Http\Controllers\ServicioController::class, 'show'])->name('show');
-                Route::put('/{id}', [App\Http\Controllers\ServicioController::class, 'update'])->name('update');
-                Route::patch('/{id}/estado', [App\Http\Controllers\ServicioController::class, 'cambiarEstado'])->name('cambiarEstado');
-                Route::post('/{id}/diagnosticos', [App\Http\Controllers\ServicioController::class, 'asociarDiagnosticos'])->name('asociarDiagnosticos');
-                Route::delete('/{id}', [App\Http\Controllers\ServicioController::class, 'destroy'])->name('destroy');
+                // Rutas especiales PRIMERO
+                Route::get('/calcular-ficha/{fechaCrono}', [ServicioController::class, 'calcularNumeroFicha']);
+                Route::get('/datos-formulario', [ServicioController::class, 'datosFormulario'])->name('datosFormulario');
+                Route::get('/estadisticas', [ServicioController::class, 'estadisticas'])->name('estadisticas');
+                Route::get('/paciente/{codPa}', [ServicioController::class, 'porPaciente'])->name('porPaciente');
+                Route::get('/estado/{estado}', [ServicioController::class, 'porEstado'])->name('porEstado');
+
+                // CRUD
+                Route::get('/', [ServicioController::class, 'index'])->name('index');
+                Route::post('/', [ServicioController::class, 'store'])->name('store');
+                Route::get('/{id}', [ServicioController::class, 'show'])->name('show');
+                Route::put('/{id}', [ServicioController::class, 'update'])->name('update');
+                Route::patch('/{id}/estado', [ServicioController::class, 'cambiarEstado'])->name('cambiarEstado');
+                Route::post('/{id}/diagnosticos', [ServicioController::class, 'asociarDiagnosticos'])->name('asociarDiagnosticos');
+                Route::delete('/{id}', [ServicioController::class, 'destroy'])->name('destroy');
             });
         });
     });
@@ -209,8 +224,7 @@ Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('report
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
-
-// Ruta fallback - Maneja URLs no encontradas
+// Ruta fallback
 Route::fallback(function () {
     if (!Auth::check()) {
         return redirect()->route('login');
