@@ -16,7 +16,8 @@ class Medico extends Model
     protected $fillable = [
         'nomMed',
         'paternoMed',
-        'tipoMed'
+        'tipoMed',
+        'estado'
     ];
 
     // Relación con Servicio

@@ -66,6 +66,7 @@ class MedicoController extends Controller
             'nomMed' => 'required|string|max:100',
             'paternoMed' => 'required|string|max:100',
             'tipoMed' => 'required|in:Interno,Externo'
+
         ], [
             'nomMed.required' => 'El nombre es obligatorio',
             'paternoMed.required' => 'El apellido es obligatorio',
@@ -85,7 +86,8 @@ class MedicoController extends Controller
             $medico = Medico::create([
                 'nomMed' => $request->nomMed,
                 'paternoMed' => $request->paternoMed,
-                'tipoMed' => $request->tipoMed
+                'tipoMed' => $request->tipoMed,
+                'estado' => 'Activo'
             ]);
 
             return response()->json([
@@ -179,19 +181,24 @@ class MedicoController extends Controller
                 ], 404);
             }
 
-            $medico->delete();
+            // Cambiar estado
+            $medico->estado = $medico->estado === 'Activo' ? 'Inactivo' : 'Activo';
+            $medico->save();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Médico eliminado exitosamente'
+                'message' => 'Estado actualizado correctamente',
+                'data' => $medico
             ], 200);
+
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al eliminar el médico: ' . $e->getMessage()
+                'message' => 'Error al cambiar estado: ' . $e->getMessage()
             ], 500);
         }
     }
+
 
     /**
      * Listar médicos por tipo

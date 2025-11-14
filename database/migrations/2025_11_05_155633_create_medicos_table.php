@@ -12,6 +12,7 @@ return new class extends Migration {
             $table->string('nomMed', 100);
             $table->string('paternoMed', 100)->nullable();
             $table->string('tipoMed', 50)->nullable();
+            $table->string('estado', 50)->nullable();
         });
     }
 

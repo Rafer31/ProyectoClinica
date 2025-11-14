@@ -13,11 +13,9 @@ return new class extends Migration {
             $table->date('fechaFin')->nullable();
             $table->unsignedInteger('codPer')->nullable();
             $table->unsignedInteger('codCons')->nullable();
-            $table->unsignedInteger('codServ')->nullable();
 
             $table->foreign('codPer')->references('codPer')->on('PersonalSalud')->onDelete('set null');
             $table->foreign('codCons')->references('codCons')->on('Consultorio')->onDelete('set null');
-            $table->foreign('codServ')->references('codServ')->on('Servicio')->onDelete('set null');
         });
     }
 
