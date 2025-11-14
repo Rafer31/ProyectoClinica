@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
+use App\Models\Personal; // 👈 Asegúrate de usar tu modelo correcto
 
 class AuthenticatedSessionController extends Controller
 {
@@ -30,7 +31,23 @@ class AuthenticatedSessionController extends Controller
             'clavePer.required' => 'La contraseña es obligatoria',
         ]);
 
-        // Intentar autenticar
+        // Verificar si el usuario existe
+        $user = \App\Models\PersonalSalud::where('usuarioPer', $request->usuarioPer)->first();
+
+        if (! $user) {
+            throw ValidationException::withMessages([
+                'usuarioPer' => 'Las credenciales proporcionadas son incorrectas.',
+            ]);
+        }
+
+        // Verificar si el usuario está activo
+        if (isset($user->estado) && strtolower($user->estado) !== 'activo') {
+            throw ValidationException::withMessages([
+                'usuarioPer' => 'El usuario está deshabilitado. Contacte con el supervisor.',
+            ]);
+        }
+
+        // Intentar autenticar credenciales
         if (Auth::attempt([
             'usuarioPer' => $request->usuarioPer,
             'password' => $request->clavePer
@@ -40,21 +57,21 @@ class AuthenticatedSessionController extends Controller
 
             $user = Auth::user();
 
-            // Redirigir según el rol
+            // Redirigir según rol
             if ($user->codRol == 1) {
                 return redirect()->intended(route('supervisor.home'));
             } elseif ($user->codRol == 2) {
                 return redirect()->intended(route('personal.home'));
             }
 
-            // Si no tiene un rol válido, cerrar sesión
+            // Si no tiene un rol válido
             Auth::logout();
             throw ValidationException::withMessages([
                 'usuarioPer' => 'Tu cuenta no tiene un rol válido asignado.',
             ]);
         }
 
-        // Credenciales incorrectas
+        // Si la contraseña no coincide
         throw ValidationException::withMessages([
             'usuarioPer' => 'Las credenciales proporcionadas son incorrectas.',
         ]);
@@ -70,7 +87,6 @@ class AuthenticatedSessionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Redirigir al login con mensaje de éxito
         return redirect()->route('login')
             ->with('success', 'Sesión cerrada correctamente')
             ->header('Cache-Control', 'no-cache, no-store, must-revalidate')

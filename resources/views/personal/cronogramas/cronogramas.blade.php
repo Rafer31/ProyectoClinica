@@ -488,7 +488,7 @@
                                     </div>
                                     <div class="flex items-baseline gap-1">
                                         <span class="text-xl font-bold text-red-700">${fichasEmergencia}</span>
-                                        <span class="text-xs text-gray-600">disponibles</span>
+                                        <span class="text-xs text-gray-600">Atendidos</span>
                                     </div>
                                 </div>
                                 <!-- Barra de progreso -->
@@ -599,7 +599,7 @@
     let infoTexto = '';
     if (cronograma.estado === 'activo') {
         if (disponibles > 0) {
-            infoTexto = `Este cronograma está activo. Turnos normales: ${disponibles} disponibles, ${atendidos} atendidos. Turnos de emergencia: ${fichasEmergencia} disponibles.`;
+            infoTexto = `Este cronograma está activo. Turnos normales: ${disponibles} disponibles, ${atendidos} atendidos. Turnos de emergencia: ${fichasEmergencia} atendidos.`;
         } else {
             infoTexto = `Este cronograma está activo pero no tiene turnos normales disponibles. Turnos de emergencia: ${fichasEmergencia}.`;
         }

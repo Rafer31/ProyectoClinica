@@ -126,7 +126,7 @@ class HomeController extends Controller
                 'periodo' => 'Día: ' . $hoy->isoFormat('dddd, D [de] MMMM [de] YYYY')
             ];
 
-            $pdf = Pdf::loadView('personal.reportes.servicios', $data);
+            $pdf = Pdf::loadView('personal.reportes.home-pdf', $data);
             return $pdf->download('reporte-diario-' . $hoy->format('Y-m-d') . '.pdf');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar reporte: ' . $e->getMessage());
@@ -162,7 +162,7 @@ class HomeController extends Controller
                 'periodo' => 'Semana del ' . $inicioSemana->format('d/m/Y') . ' al ' . $finSemana->format('d/m/Y')
             ];
 
-            $pdf = Pdf::loadView('personal.reportes.servicios', $data);
+            $pdf = Pdf::loadView('personal.reportes.home-pdf', $data);
             return $pdf->download('reporte-semanal-' . Carbon::now()->format('Y-m-d') . '.pdf');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar reporte: ' . $e->getMessage());
@@ -198,7 +198,7 @@ class HomeController extends Controller
                 'periodo' => 'Mes de ' . Carbon::now()->isoFormat('MMMM [de] YYYY')
             ];
 
-            $pdf = Pdf::loadView('personal.reportes.servicios', $data);
+            $pdf = Pdf::loadView('personal.reportes.home-pdf', $data);
             return $pdf->download('reporte-mensual-' . Carbon::now()->format('Y-m') . '.pdf');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar reporte: ' . $e->getMessage());

@@ -1,15 +1,28 @@
 <?php
 
 use App\Http\Controllers\HomeController;
+use App\Http\Controllers\Personal\ServicioPdfController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PacienteController;
 use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\ServicioController;
+use App\Http\Controllers\PersonalSaludController;
+use App\Http\Controllers\RolController;
 use Illuminate\Support\Facades\Auth;
 
 // Página inicial -> redirige al login
 Route::get('/', function () {
+    if (Auth::check()) {
+        $user = Auth::user();
+
+        if ($user->codRol == 1) {
+            return redirect()->route('supervisor.home');
+        } elseif ($user->codRol == 2) {
+            return redirect()->route('personal.home');
+        }
+    }
+
     return redirect()->route('login');
 });
 
@@ -26,9 +39,24 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/home', function () {
             return view('supervisor.home');
         })->name('home');
-        Route::get('/accesos', function () {
-            return view('supervisor.accesos.accesos');
-        })->name('accesos.accesos');
+
+        // ==========================================
+        // GESTIÓN DE PERSONAL - ACTUALIZADO
+        // ==========================================
+        Route::get('/gestion-personal', function () {
+            return view('supervisor.gestion-personal.gestion-personal');
+        })->name('gestion-personal.gestion-personal');
+
+        Route::get('/gestion-personal/agregar', function () {
+            return view('supervisor.gestion-personal.form-personal')
+                ->with('personal', null);
+        })->name('gestion-personal.agregar');
+
+        Route::get('/gestion-personal/editar/{id}', function ($id) {
+            $personal = App\Models\PersonalSalud::with('rol')->findOrFail($id);
+            return view('supervisor.gestion-personal.form-personal', compact('personal'));
+        })->name('gestion-personal.editar');
+
         Route::get('/clinicas', function () {
             return view('supervisor.clinicas.clinicas');
         })->name('clinicas.clinicas');
@@ -42,6 +70,12 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/home', function () {
             return view('personal.home');
         })->name('home');
+
+        Route::get('servicios/{nroServ}/pdf', [ServicioPdfController::class, 'generarFichaServicio'])
+            ->name('servicios.pdf');
+
+        Route::get('servicios/{nroServ}/pdf/ver', [ServicioPdfController::class, 'visualizarFichaServicio'])
+            ->name('servicios.pdf.ver');
 
         // ==========================================
         // REPORTES PDF - AGREGADOS AQUÍ
@@ -114,6 +148,24 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
     // API ROUTES (IMPORTANTES: Estas son las que usa el JavaScript)
     // ==========================================
     Route::prefix('api')->name('api.')->group(function () {
+
+        // ==========================================
+        // API PERSONAL DE SALUD - NUEVO
+        // ==========================================
+        Route::prefix('personal-salud')->name('personal-salud.')->group(function () {
+            Route::get('/', [PersonalSaludController::class, 'index'])->name('index');
+            Route::get('/activos', [PersonalSaludController::class, 'activos'])->name('activos');
+            Route::get('/{id}', [PersonalSaludController::class, 'show'])->name('show');
+            Route::post('/', [PersonalSaludController::class, 'store'])->name('store');
+            Route::put('/{id}', [PersonalSaludController::class, 'update'])->name('update');
+            Route::patch('/{id}/cambiar-estado', [PersonalSaludController::class, 'cambiarEstado'])->name('cambiarEstado');
+        });
+
+        // ==========================================
+        // API ROLES - NUEVO
+        // ==========================================
+        Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
+
         Route::prefix('supervisor')->name('supervisor.')->group(function () {
             // Rutas para el supervisor
         });

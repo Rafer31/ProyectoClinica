@@ -137,11 +137,6 @@
             </div>
 
             <div class="mt-6 flex gap-3 border-t pt-4">
-                <button onclick="exportarPDF()"
-                    class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 flex items-center justify-center">
-                    <span class="material-icons mr-2">picture_as_pdf</span>
-                    Exportar a PDF
-                </button>
                 <button onclick="cerrarModalDetalle()"
                     class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
                     Cerrar
@@ -406,26 +401,6 @@
 
         function cerrarModalDetalle() {
             document.getElementById('modal-detalle').classList.add('hidden');
-        }
-
-        function exportarPDF() {
-            const modal = document.getElementById('modal-detalle');
-            const codTest = modal.getAttribute('data-codtest');
-
-            if (!codTest) {
-                mostrarNotificacion('Error al obtener el código del estudio', 'error');
-                return;
-            }
-
-            // Crear un enlace temporal para descargar el PDF
-            const link = document.createElement('a');
-            link.href = `/api/personal/tipos-estudio/exportar-pdf/${codTest}`;
-            link.target = '_blank'; // Abrir en nueva pestaña
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-
-            mostrarNotificacion('Generando PDF...', 'info');
         }
 
         function abrirModalEliminar(codTest, descripcion) {

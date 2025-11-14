@@ -1,4 +1,4 @@
-// public/js/servicios.js - VERSIÓN ACTUALIZADA
+// public/js/servicios.js - VERSIÓN CORREGIDA
 
 // Estado global
 let servicios = [];
@@ -6,7 +6,7 @@ let pacientes = [];
 let medicos = [];
 let tiposEstudio = [];
 let cronogramas = [];
-let diagnosticos = []; // Ya no se usa para select, pero se mantiene por compatibilidad
+let diagnosticos = [];
 let servicioEditando = null;
 let servicioSeleccionado = null;
 let currentStep = 1;
@@ -20,6 +20,32 @@ document.addEventListener('DOMContentLoaded', function() {
     configurarStepper();
     configurarContadorDiagnostico();
 });
+
+// ============================================
+// FUNCIONES PARA PDF - DEFINIDAS GLOBALMENTE
+// ============================================
+
+function descargarPDF(nroServ) {
+    Swal.fire({
+        title: 'Descargando PDF...',
+        text: 'El documento se descargará en breve',
+        icon: 'info',
+        timer: 2000,
+        showConfirmButton: false
+    });
+    window.open(`/personal/servicios/${nroServ}/pdf`, '_blank');
+}
+
+function verPDF(nroServ) {
+    Swal.fire({
+        title: 'Abriendo PDF...',
+        text: 'El documento se abrirá en una nueva pestaña',
+        icon: 'info',
+        timer: 2000,
+        showConfirmButton: false
+    });
+    window.open(`/personal/servicios/${nroServ}/pdf/ver`, '_blank');
+}
 
 // Cargar datos iniciales
 async function cargarDatosIniciales() {
@@ -77,7 +103,6 @@ async function cargarDatosFormulario() {
             medicos = data.data.medicos;
             tiposEstudio = data.data.tiposEstudio;
             cronogramas = data.data.cronogramas;
-            // diagnosticos ya no se usa para select, pero se mantiene
             diagnosticos = data.data.diagnosticos || [];
         }
     } catch (error) {
@@ -99,15 +124,13 @@ async function cargarEstadisticas() {
     }
 }
 
-// NUEVA: Calcular número de ficha automáticamente
+// Calcular número de ficha automáticamente
 async function calcularNumeroFicha(fechaCrono) {
     try {
         const response = await fetch(`/api/personal/servicios/calcular-ficha/${fechaCrono}`);
 
-        // Verificar si la respuesta es JSON
         const contentType = response.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
-            // Si no es JSON, probablemente sea un error de ruta, pero no mostrar error
             console.warn('Respuesta no es JSON, pero continuando...');
             return;
         }
@@ -119,14 +142,11 @@ async function calcularNumeroFicha(fechaCrono) {
             nroFichaInput.value = result.data.nroFicha;
             nroFichaInput.readOnly = true;
 
-            // Mostrar mensaje informativo
             const parentDiv = nroFichaInput.parentElement;
 
-            // Remover mensaje anterior si existe
             const oldInfo = parentDiv.querySelector('.ficha-info');
             if (oldInfo) oldInfo.remove();
 
-            // Agregar nuevo mensaje
             const infoDiv = document.createElement('p');
             infoDiv.className = 'text-xs text-blue-600 mt-1 ficha-info';
             infoDiv.innerHTML = `
@@ -136,12 +156,11 @@ async function calcularNumeroFicha(fechaCrono) {
             parentDiv.appendChild(infoDiv);
         }
     } catch (error) {
-        // No mostrar error al usuario, solo en consola
         console.warn('Error al calcular número de ficha (no crítico):', error);
     }
 }
 
-// NUEVA: Configurar contador de caracteres del diagnóstico
+// Configurar contador de caracteres del diagnóstico
 function configurarContadorDiagnostico() {
     const textarea = document.getElementById('diagnostico-texto');
     const contador = document.getElementById('caracteres-actuales');
@@ -152,13 +171,11 @@ function configurarContadorDiagnostico() {
             const longitud = this.value.length;
             contador.textContent = longitud;
 
-            // Limitar a 500 caracteres
             if (longitud > maxCaracteres) {
                 this.value = this.value.substring(0, maxCaracteres);
                 contador.textContent = maxCaracteres;
             }
 
-            // Cambiar color según la longitud
             const contadorParent = contador.parentElement;
             if (longitud > maxCaracteres * 0.9) {
                 contadorParent.classList.add('text-red-600', 'font-bold');
@@ -301,7 +318,6 @@ function abrirModalEliminar(codServ) {
 
 // Configurar eventos de los modales personalizados
 function configurarEventosModales() {
-    // Confirmar cambio de estado
     const btnConfirmarCambioEstado = document.getElementById('btn-confirmar-cambio-estado');
     if (btnConfirmarCambioEstado) {
         btnConfirmarCambioEstado.addEventListener('click', async function() {
@@ -339,7 +355,6 @@ function configurarEventosModales() {
         });
     }
 
-    // Confirmar eliminación
     const btnConfirmarEliminar = document.getElementById('btn-confirmar-eliminar');
     if (btnConfirmarEliminar) {
         btnConfirmarEliminar.addEventListener('click', async function() {
@@ -373,7 +388,6 @@ function configurarEventosModales() {
         });
     }
 
-    // Cerrar modales al hacer clic fuera
     ['modal-cambiar-estado', 'modal-eliminar', 'modal-servicio', 'modal-detalle-servicio'].forEach(modalId => {
         const modal = document.getElementById(modalId);
         if (modal) {
@@ -386,7 +400,7 @@ function configurarEventosModales() {
     });
 }
 
-// MODIFICADO: Abrir modal de nuevo servicio
+// Abrir modal de nuevo servicio
 function abrirModalNuevoServicio() {
     servicioEditando = null;
     currentStep = 1;
@@ -397,27 +411,22 @@ function abrirModalNuevoServicio() {
     llenarSelectMedicos();
     llenarSelectTiposEstudio();
     llenarSelectCronogramas();
-    // Ya NO se llena select de diagnósticos
 
     const ahora = new Date();
     document.getElementById('fechaSol').valueAsDate = ahora;
     document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
 
-    // NUEVO: Establecer estado como "Programado" y bloquearlo
     const selectEstado = document.getElementById('estado');
     selectEstado.value = 'Programado';
     selectEstado.disabled = true;
 
-    // NUEVO: Bloquear campo nroFicha y limpiarlo
     const nroFichaInput = document.getElementById('nroFicha');
     nroFichaInput.value = '';
     nroFichaInput.readOnly = true;
 
-    // Limpiar mensaje de fichas restantes
     const oldInfo = nroFichaInput.parentElement.querySelector('.ficha-info');
     if (oldInfo) oldInfo.remove();
 
-    // NUEVO: Limpiar textarea de diagnóstico
     const textareaDiag = document.getElementById('diagnostico-texto');
     if (textareaDiag) {
         textareaDiag.value = '';
@@ -425,15 +434,12 @@ function abrirModalNuevoServicio() {
         if (contador) contador.textContent = '0';
     }
 
-    // NUEVO: Limpiar select de tipo diagnóstico
     const selectTipoDiag = document.getElementById('tipo-diagnostico');
     if (selectTipoDiag) {
         selectTipoDiag.value = '';
     }
 
-    // Resetear stepper
     resetStepper();
-
     abrirModal('modal-servicio');
 }
 
@@ -454,7 +460,7 @@ async function verServicio(codServ) {
     }
 }
 
-// Mostrar detalle del servicio
+// Mostrar detalle del servicio CON BOTONES PDF
 function mostrarDetalleServicio(servicio) {
     const pacienteNombre = servicio.paciente
         ? `${servicio.paciente.nomPa} ${servicio.paciente.paternoPa || ''} ${servicio.paciente.maternoPa || ''}`.trim()
@@ -465,6 +471,20 @@ function mostrarDetalleServicio(servicio) {
         : 'N/A';
 
     const contenidoDetalle = `
+        <!-- Botones de PDF -->
+        <div class="flex gap-2 mb-4 pb-4 border-b border-gray-200">
+            <button onclick="descargarPDF('${servicio.nroServ}')"
+                class="flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:shadow-lg">
+                <span class="material-icons text-sm">picture_as_pdf</span>
+                <span class="font-medium">Descargar PDF</span>
+            </button>
+            <button onclick="verPDF('${servicio.nroServ}')"
+                class="flex items-center gap-2 px-4 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all hover:shadow-lg">
+                <span class="material-icons text-sm">visibility</span>
+                <span class="font-medium">Ver PDF</span>
+            </button>
+        </div>
+
         <div class="space-y-4">
             <div class="grid grid-cols-2 gap-4">
                 <div>
@@ -521,7 +541,7 @@ function mostrarDetalleServicio(servicio) {
     abrirModal('modal-detalle-servicio');
 }
 
-// MODIFICADO: Editar servicio
+// Editar servicio
 async function editarServicio(codServ) {
     try {
         const response = await fetch(`/api/personal/servicios/${codServ}`);
@@ -541,24 +561,20 @@ async function editarServicio(codServ) {
     }
 }
 
-// MODIFICADO: Llenar formulario para edición
+// Llenar formulario para edición
 function llenarFormularioEdicion(servicio) {
     llenarSelectPacientes();
     llenarSelectMedicos();
     llenarSelectTiposEstudio();
     llenarSelectCronogramas();
 
-    // CORREGIDO: Formatear fechas sin problemas de timezone
     let fechaSol = '';
     if (servicio.fechaSol) {
-        // Si viene como objeto Date o string, extraer solo YYYY-MM-DD
         const fechaStr = servicio.fechaSol.toString();
         fechaSol = fechaStr.split('T')[0].split(' ')[0];
     }
 
     const horaSol = servicio.horaSol ? servicio.horaSol.substring(0, 5) : '';
-
-    console.log('Fecha a setear:', fechaSol, 'Hora:', horaSol); // Debug
 
     document.getElementById('fechaSol').value = fechaSol;
     document.getElementById('horaSol').value = horaSol;
@@ -569,7 +585,6 @@ function llenarFormularioEdicion(servicio) {
     document.getElementById('tipoAseg').value = servicio.tipoAseg;
     document.getElementById('fechaCrono').value = servicio.fechaCrono;
 
-    // NUEVO: En modo edición, DESBLOQUEAR el estado
     const selectEstado = document.getElementById('estado');
     selectEstado.value = servicio.estado;
     selectEstado.disabled = false;
@@ -578,7 +593,6 @@ function llenarFormularioEdicion(servicio) {
         document.getElementById('nroFicha').value = servicio.nroFicha;
     }
 
-    // NUEVO: Cargar diagnóstico en textarea si existe
     const textareaDiag = document.getElementById('diagnostico-texto');
     const contador = document.getElementById('caracteres-actuales');
     const selectTipoDiag = document.getElementById('tipo-diagnostico');
@@ -599,11 +613,10 @@ function llenarFormularioEdicion(servicio) {
         if (contador) contador.textContent = '0';
     }
 
-    // Resetear stepper al editar
     resetStepper();
 }
 
-// MODIFICADO: Guardar servicio
+// Guardar servicio
 async function guardarServicio(event) {
     event.preventDefault();
 
@@ -619,14 +632,12 @@ async function guardarServicio(event) {
         fechaCrono: document.getElementById('fechaCrono').value
     };
 
-    // MODIFICADO: Si está editando, incluir estado; si es nuevo, siempre "Programado"
     if (servicioEditando) {
         formData.estado = document.getElementById('estado').value;
     } else {
-        formData.estado = 'Programado'; // Siempre Programado al crear
+        formData.estado = 'Programado';
     }
 
-    // MODIFICADO: Incluir diagnóstico como texto Y tipo
     const diagnosticoTexto = document.getElementById('diagnostico-texto').value.trim();
     const tipoDiagnostico = document.getElementById('tipo-diagnostico').value;
 
@@ -636,7 +647,7 @@ async function guardarServicio(event) {
             return;
         }
         formData.diagnosticoTexto = diagnosticoTexto;
-        formData.tipoDiagnostico = tipoDiagnostico; // NUEVO
+        formData.tipoDiagnostico = tipoDiagnostico;
     }
 
     try {
@@ -705,20 +716,13 @@ function llenarSelectTiposEstudio() {
 
 function llenarSelectCronogramas() {
     const select = document.getElementById('fechaCrono');
-    select.innerHTML = '<option value="">Seleccione una fecha disponible</option>' +
-        cronogramas.map(c => {
+    select.innerHTML = '<option value="">Seleccione una fecha disponible</option>' +cronogramas.map(c => {
             const personal = c.personal_salud
                 ? `${c.personal_salud.nomPer} ${c.personal_salud.paternoPer || ''}`.trim()
                 : 'Sin asignar';
             return `<option value="${c.fechaCrono}">${formatearFecha(c.fechaCrono)} - Disponibles: ${c.cantDispo} - ${personal}</option>`;
         }).join('');
 }
-
-// REMOVIDA: function llenarSelectDiagnosticos() - Ya no se usa
-
-// REMOVIDAS: Funciones de agregar/quitar diagnósticos del array - Ya no se usan
-// function agregarDiagnostico() { ... }
-// function quitarDiagnostico(btn) { ... }
 
 // Actualizar estadísticas
 function actualizarEstadisticas(stats) {
@@ -740,7 +744,6 @@ function configurarEventos() {
         form.addEventListener('submit', guardarServicio);
     }
 
-    // NUEVO: Evento para calcular ficha al seleccionar cronograma
     const selectCronograma = document.getElementById('fechaCrono');
     if (selectCronograma) {
         selectCronograma.addEventListener('change', function() {
@@ -749,15 +752,12 @@ function configurarEventos() {
                 calcularNumeroFicha(fechaSeleccionada);
             } else {
                 document.getElementById('nroFicha').value = '';
-                // Limpiar mensaje de fichas
                 const nroFichaInput = document.getElementById('nroFicha');
                 const oldInfo = nroFichaInput.parentElement.querySelector('.ficha-info');
                 if (oldInfo) oldInfo.remove();
             }
         });
     }
-
-    // REMOVIDO: evento de btn-agregar-diagnostico (ya no existe)
 
     const filtroEstado = document.getElementById('filtro-estado');
     if (filtroEstado) {
@@ -813,8 +813,6 @@ function formatearFecha(fecha) {
     if (!fecha) return 'No registrada';
 
     if (typeof fecha === 'string') {
-        // CORREGIDO: Agregar T00:00:00 para evitar conversión UTC
-        // Si ya tiene la T, no agregarla de nuevo
         const fechaParseada = fecha.includes('T') ? fecha.split('T')[0] : fecha;
         const date = new Date(fechaParseada + 'T00:00:00');
 
@@ -874,7 +872,6 @@ function cerrarModal(idModal) {
     const modal = document.getElementById(idModal);
     if (modal) {
         modal.classList.add('hidden');
-        // Limpiar el servicio seleccionado al cerrar los modales de acción
         if (idModal === 'modal-cambiar-estado' || idModal === 'modal-eliminar') {
             servicioSeleccionado = null;
         }
@@ -923,7 +920,6 @@ function resetStepper() {
 }
 
 function siguienteStep() {
-    // Validar el step actual antes de avanzar
     if (!validarStepActual()) {
         return;
     }
@@ -947,7 +943,6 @@ function validarStepActual() {
 
     let valido = true;
     inputs.forEach(input => {
-        // Ignorar campos deshabilitados en la validación
         if (input.disabled) return;
 
         if (!input.value) {
@@ -957,12 +952,10 @@ function validarStepActual() {
         }
     });
 
-    // NUEVO: Validación especial para Step 4 (Diagnóstico)
     if (currentStep === 4) {
         const diagnosticoTexto = document.getElementById('diagnostico-texto').value.trim();
         const tipoDiagnostico = document.getElementById('tipo-diagnostico').value;
 
-        // Si hay texto de diagnóstico, debe tener tipo
         if (diagnosticoTexto && !tipoDiagnostico) {
             valido = false;
             const selectTipo = document.getElementById('tipo-diagnostico');
@@ -981,7 +974,6 @@ function validarStepActual() {
 }
 
 function actualizarStepper() {
-    // Actualizar steps visibles
     document.querySelectorAll('.form-step').forEach(step => {
         const stepNum = parseInt(step.dataset.step);
         if (stepNum === currentStep) {
@@ -993,7 +985,6 @@ function actualizarStepper() {
         }
     });
 
-    // Actualizar círculos del stepper
     document.querySelectorAll('.step-circle').forEach((circle, index) => {
         const stepNum = index + 1;
         const stepNumber = circle.querySelector('.step-number');
@@ -1001,7 +992,6 @@ function actualizarStepper() {
         const stepText = circle.parentElement.querySelector('div:last-child');
 
         if (stepNum < currentStep) {
-            // Completado
             circle.classList.remove('border-gray-300', 'bg-white', 'text-gray-500', 'border-blue-600', 'bg-blue-600');
             circle.classList.add('border-green-600', 'bg-green-600', 'text-white');
             stepNumber.classList.add('hidden');
@@ -1009,7 +999,6 @@ function actualizarStepper() {
             stepText.classList.remove('text-gray-500', 'text-blue-600');
             stepText.classList.add('text-green-600');
         } else if (stepNum === currentStep) {
-            // Actual
             circle.classList.remove('border-gray-300', 'bg-white', 'text-gray-500', 'border-green-600', 'bg-green-600');
             circle.classList.add('border-blue-600', 'bg-blue-600', 'text-white');
             stepNumber.classList.remove('hidden');
@@ -1017,7 +1006,6 @@ function actualizarStepper() {
             stepText.classList.remove('text-gray-500', 'text-green-600');
             stepText.classList.add('text-blue-600');
         } else {
-            // Pendiente
             circle.classList.remove('border-blue-600', 'bg-blue-600', 'border-green-600', 'bg-green-600', 'text-white');
             circle.classList.add('border-gray-300', 'bg-white', 'text-gray-500');
             stepNumber.classList.remove('hidden');
@@ -1027,7 +1015,6 @@ function actualizarStepper() {
         }
     });
 
-    // Actualizar líneas de conexión
     document.querySelectorAll('.step-line').forEach((line, index) => {
         if (index < currentStep - 1) {
             line.classList.remove('bg-gray-300');
@@ -1038,7 +1025,6 @@ function actualizarStepper() {
         }
     });
 
-    // Actualizar botones
     const btnAnterior = document.getElementById('btn-anterior');
     const btnSiguiente = document.getElementById('btn-siguiente');
     const btnGuardar = document.getElementById('btn-guardar');

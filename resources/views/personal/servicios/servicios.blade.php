@@ -453,7 +453,7 @@
                         <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
                             <div class="flex items-center">
                                 <span class="material-icons text-red-600 mr-2">medical_services</span>
-                                <p class="text-sm text-red-800 font-medium">Ingrese el diagnóstico (opcional)</p>
+                                <p class="text-sm text-red-800 font-medium">Ingrese el diagnóstico</p>
                             </div>
                         </div>
 
