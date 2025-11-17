@@ -46,25 +46,6 @@
                     mostrarLoader(false);
                 }
             }
-            function abrirModalEstado(medico) {
-                document.getElementById("nombreMedicoEstado").textContent = medico.nomMed + " " + medico.paternoMed;
-                document.getElementById("tipoMedicoEstado").textContent = medico.tipoMed;
-                document.getElementById("estadoActualMedico").textContent = medico.estado;
-
-                const nuevoEstado = medico.estado === "Activo" ? "Inactivo" : "Activo";
-
-                document.getElementById("tituloEstado").textContent =
-                    `¿Cambiar estado a ${nuevoEstado}?`;
-
-                document.getElementById("mensajeCambioEstado").textContent =
-                    `El médico pasará de ${medico.estado} a ${nuevoEstado}.`;
-
-                // Guardar ID temporalmente
-                estadoMedicoId = medico.id;
-
-                // Mostrar modal
-                document.getElementById("modalEstado").classList.remove("hidden");
-            }
 
             function filtrarMedicos() {
                 const busqueda = document.getElementById('busqueda').value.toLowerCase();
@@ -107,85 +88,85 @@
                         const tipoClass = m.tipoMed === 'Interno'
                             ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800 border border-emerald-200'
                             : m.tipoMed === 'Externo'
-                                ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-orange-800 border border-orange-200'
-                                : 'bg-gray-100 text-gray-800 border border-gray-200';
+                            ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-orange-800 border border-orange-200'
+                            : 'bg-gray-100 text-gray-800 border border-gray-200';
+
+                        const estadoClass = m.estado === 'Activo'
+                            ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-300';
+
+                        const estadoIcon = m.estado === 'Activo' ? 'check_circle' : 'cancel';
+
+                        const btnEstadoClass = m.estado === 'Activo'
+                            ? 'text-red-700 bg-gradient-to-r from-red-50 to-rose-50 hover:from-red-100 hover:to-rose-100 border-red-200'
+                            : 'text-emerald-700 bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 border-emerald-200';
+
+                        const btnEstadoIcon = m.estado === 'Activo' ? 'block' : 'check_circle';
+                        const btnEstadoText = m.estado === 'Activo' ? 'Desactivar' : 'Activar';
 
                         const fila = `
-                                        <tr class="bg-white border-b hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 transition-all duration-200">
+                            <tr class="bg-white border-b hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 transition-all duration-200">
+                                <td class="px-6 py-4">
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-12 w-12">
+                                            <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
+                                                <span class="material-icons text-white text-xl">medical_services</span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-4">
+                                            <div class="text-sm font-bold text-gray-900">${nombreCompleto}</div>
+                                            <div class="text-xs text-gray-500 font-medium">ID: ${m.codMed}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-bold rounded-lg ${tipoClass} shadow-sm">
+                                        ${m.tipoMed || 'Sin especificar'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4">
+                                    <span class="px-3 py-1.5 inline-flex items-center gap-1 text-xs leading-5 font-bold rounded-lg ${estadoClass} shadow-sm">
+                                        <span class="material-icons text-sm">${estadoIcon}</span>
+                                        ${m.estado || 'Sin especificar'}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 text-sm text-gray-500">
+                                   <div class="flex items-center gap-2">
 
-                                            <td class="px-6 py-4">
-                                                <div class="flex items-center">
-                                                    <div class="flex-shrink-0 h-12 w-12">
-                                                        <div class="h-12 w-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-md">
-                                                            <span class="material-icons text-white text-xl">medical_services</span>
-                                                        </div>
-                                                    </div>
-                                                    <div class="ml-4">
-                                                        <div class="text-sm font-bold text-gray-900">${nombreCompleto}</div>
-                                                        <div class="text-xs text-gray-500 font-medium">ID: ${m.codMed}</div>
-                                                    </div>
-                                                </div>
-                                            </td>
+    <!-- Botón VER -->
+    <button onclick="verDetalle(${m.codMed})"
+        class="flex items-center gap-1 px-4 py-2 text-sm font-semibold
+               text-teal-700 bg-teal-50 border border-teal-200 rounded-lg
+               hover:bg-teal-100 transition shadow-sm"
+        title="Ver detalles">
+        <span class="material-icons text-base">visibility</span>
+        Ver
+    </button>
 
-                                            <td class="px-6 py-4">
-                                                <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-bold rounded-lg ${tipoClass} shadow-sm">
-                                                    ${m.tipoMed || 'Sin especificar'}
-                                                </span>
-                                            </td>
+    <!-- Botón EDITAR -->
+    <a href="/personal/medicos/editar/${m.codMed}"
+        class="flex items-center gap-1 px-4 py-2 text-sm font-semibold
+               text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg
+               hover:bg-emerald-100 transition shadow-sm"
+        title="Editar">
+        <span class="material-icons text-base">edit</span>
+        Editar
+    </a>
 
-                                            <!-- ⭐ NUEVO: Badge de estado -->
-                                            <td class="px-6 py-4">
-                                                <span class="
-                                                    inline-flex px-3 py-1.5 text-xs font-bold rounded-lg shadow-sm border
-                                                    ${m.estado === 'Activo'
-                                ? 'bg-emerald-100 text-emerald-700 border-emerald-300'
-                                : 'bg-red-100 text-red-700 border-red-300'}
-                                                ">
-                                                    ${m.estado}
-                                                </span>
-                                            </td>
+    <!-- Botón ACTIVAR/DESACTIVAR -->
+    <button onclick="cambiarEstadoMedico(${m.codMed}, '${m.estado}')"
+        class="flex items-center gap-1 px-4 py-2 text-sm font-semibold
+               ${btnEstadoClass} border rounded-lg transition shadow-sm"
+        title="${btnEstadoText}">
+        <span class="material-icons text-base">${btnEstadoIcon}</span>
+        ${btnEstadoText}
+    </button>
 
-                                            <td class="px-6 py-4 text-sm text-gray-500">
-                                                <div class="flex items-center gap-2">
+</div>
 
-                                                    <button onclick="verDetalle(${m.codMed})"
-                                                        class="inline-flex items-center px-3 py-2 text-xs font-bold text-teal-700 bg-gradient-to-r from-teal-50 to-emerald-50 rounded-lg hover:from-teal-100 hover:to-emerald-100 transition-all duration-200 border border-teal-200 shadow-sm hover:shadow-md"
-                                                        title="Ver detalles">
-                                                        <span class="material-icons text-base mr-1">visibility</span>
-                                                        Ver
-                                                    </button>
-
-                                                    <a href="/personal/medicos/editar/${m.codMed}"
-                                                        class="inline-flex items-center px-3 py-2 text-xs font-bold text-emerald-700 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg hover:from-emerald-100 hover:to-teal-100 transition-all duration-200 border border-emerald-200 shadow-sm hover:shadow-md"
-                                                        title="Editar">
-                                                        <span class="material-icons text-base mr-1">edit</span>
-                                                        Editar
-                                                    </a>
-
-                                                    <!-- Botón dinámico activar/desactivar -->
-                                                    <button 
-                                                        onclick="cambiarEstadoMedico(${m.codMed})"
-                                                        class="inline-flex items-center px-3 py-2 text-xs font-bold 
-                                                            ${m.estado === 'Activo'
-                                ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200'
-                                : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'
-                            }
-                                                            rounded-lg transition-all duration-200 border shadow-sm hover:shadow-md"
-                                                        title="Cambiar estado">
-
-                                                        <span class="material-icons text-base mr-1">
-                                                            ${m.estado === 'Activo' ? 'block' : 'check_circle'}
-                                                        </span>
-
-                                                        ${m.estado === 'Activo' ? 'Desactivar' : 'Activar'}
-                                                    </button>
-
-                                                </div>
-                                            </td>
-
-                                        </tr>
-                                        `;
-
+                                </td>
+                            </tr>
+                        `;
                         tbody.innerHTML += fila;
                     });
 
@@ -210,26 +191,26 @@
 
                 // Información de página
                 html += `
-                                                                                            <div class="text-sm text-gray-700 font-medium">
-                                                                                                Página <span class="font-bold text-emerald-600">${paginaActual}</span> de <span class="font-bold">${totalPaginas}</span>
-                                                                                            </div>
-                                                                                        `;
+                    <div class="text-sm text-gray-700 font-medium">
+                        Página <span class="font-bold text-emerald-600">${paginaActual}</span> de <span class="font-bold">${totalPaginas}</span>
+                    </div>
+                `;
 
                 // Botones de navegación
                 html += '<div class="flex gap-2">';
 
                 // Botón anterior
                 html += `
-                                                                                            <button onclick="cambiarPagina(${paginaActual - 1})" 
-                                                                                                ${paginaActual === 1 ? 'disabled' : ''}
-                                                                                                class="px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1
-                                                                                                ${paginaActual === 1
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 shadow-sm hover:shadow-md'}">
-                                                                                                <span class="material-icons text-sm">chevron_left</span>
-                                                                                                Anterior
-                                                                                            </button>
-                                                                                        `;
+                    <button onclick="cambiarPagina(${paginaActual - 1})"
+                        ${paginaActual === 1 ? 'disabled' : ''}
+                        class="px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1
+                        ${paginaActual === 1
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 shadow-sm hover:shadow-md'}">
+                        <span class="material-icons text-sm">chevron_left</span>
+                        Anterior
+                    </button>
+                `;
 
                 // Números de página
                 const maxBotones = 5;
@@ -249,14 +230,14 @@
 
                 for (let i = inicio; i <= fin; i++) {
                     html += `
-                                                                                                <button onclick="cambiarPagina(${i})" 
-                                                                                                    class="px-3 py-2 text-sm font-bold rounded-lg transition-all duration-200 shadow-sm
-                                                                                                    ${i === paginaActual
-                            ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
-                            : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 hover:text-emerald-600 hover:border-emerald-200'}">
-                                                                                                    ${i}
-                                                                                                </button>
-                                                                                            `;
+                        <button onclick="cambiarPagina(${i})"
+                            class="px-3 py-2 text-sm font-bold rounded-lg transition-all duration-200 shadow-sm
+                            ${i === paginaActual
+                                ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-md'
+                                : 'bg-white text-gray-700 border border-gray-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 hover:text-emerald-600 hover:border-emerald-200'}">
+                            ${i}
+                        </button>
+                    `;
                 }
 
                 if (fin < totalPaginas) {
@@ -268,16 +249,16 @@
 
                 // Botón siguiente
                 html += `
-                                                                                            <button onclick="cambiarPagina(${paginaActual + 1})" 
-                                                                                                ${paginaActual === totalPaginas ? 'disabled' : ''}
-                                                                                                class="px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1
-                                                                                                ${paginaActual === totalPaginas
-                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                        : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 shadow-sm hover:shadow-md'}">
-                                                                                                Siguiente
-                                                                                                <span class="material-icons text-sm">chevron_right</span>
-                                                                                            </button>
-                                                                                        `;
+                    <button onclick="cambiarPagina(${paginaActual + 1})"
+                        ${paginaActual === totalPaginas ? 'disabled' : ''}
+                        class="px-4 py-2 text-sm font-bold rounded-lg transition-all duration-200 flex items-center gap-1
+                        ${paginaActual === totalPaginas
+                            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            : 'bg-white text-emerald-600 border border-emerald-200 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-teal-50 shadow-sm hover:shadow-md'}">
+                        Siguiente
+                        <span class="material-icons text-sm">chevron_right</span>
+                    </button>
+                `;
 
                 html += '</div></div>';
                 container.innerHTML = html;
@@ -302,48 +283,54 @@
                 document.getElementById('stat-tipos').textContent = internos;
             }
 
-            let medicoSeleccionado = null;
+            async function cambiarEstadoMedico(id, estadoActual) {
+                const medico = medicosData.find(m => m.codMed === id);
+                if (!medico) return;
 
-            function cambiarEstadoMedico(id) {
-                medicoSeleccionado = medicosData.find(m => m.codMed === id);
+                const nombreCompleto = `${medico.nomMed || ''} ${medico.paternoMed || ''}`.trim();
+                const nuevoEstado = estadoActual === 'Activo' ? 'Inactivo' : 'Activo';
+                const accion = estadoActual === 'Activo' ? 'desactivar' : 'activar';
 
-                
-                if (!medicoSeleccionado) {
-                    console.error("No se encontró el médico");
-                    return;
+                const modal = document.getElementById('modalCambiarEstado');
+                document.getElementById('nombreMedicoCambiarEstado').textContent = nombreCompleto;
+                document.getElementById('tipoMedicoCambiarEstado').textContent = medico.tipoMed || 'N/A';
+                document.getElementById('estadoActualMedico').textContent = estadoActual;
+                document.getElementById('nuevoEstadoMedico').textContent = nuevoEstado;
+                document.getElementById('accionEstado').textContent = accion;
+
+                // Actualizar estilos del modal según la acción
+                const iconoEstado = document.getElementById('iconoModalEstado');
+                const tituloModal = document.getElementById('tituloModalEstado');
+                const btnConfirmar = document.getElementById('btnConfirmarEstado');
+
+                if (estadoActual === 'Activo') {
+                    // Desactivar
+                    iconoEstado.className = 'rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 p-4 shadow-lg';
+                    iconoEstado.innerHTML = '<span class="material-icons text-white text-5xl">block</span>';
+                    tituloModal.textContent = '¿Desactivar médico?';
+                    btnConfirmar.className = 'flex-1 inline-flex justify-center items-center px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-rose-600 rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105';
+                    btnConfirmar.innerHTML = '<span class="material-icons text-base mr-1">block</span> Desactivar';
+                } else {
+                    // Activar
+                    iconoEstado.className = 'rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 p-4 shadow-lg';
+                    iconoEstado.innerHTML = '<span class="material-icons text-white text-5xl">check_circle</span>';
+                    tituloModal.textContent = '¿Activar médico?';
+                    btnConfirmar.className = 'flex-1 inline-flex justify-center items-center px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105';
+                    btnConfirmar.innerHTML = '<span class="material-icons text-base mr-1">check_circle</span> Activar';
                 }
 
-                // Llenar modal
-                document.getElementById("nombreMedicoEstado").textContent =
-                    medicoSeleccionado.nomMed + " " + medicoSeleccionado.paternoMed;
-
-                document.getElementById("tipoMedicoEstado").textContent =
-                    medicoSeleccionado.tipoMed;
-
-                document.getElementById("estadoActualMedico").textContent =
-                    medicoSeleccionado.estado;
-
-                const nuevoEstado = medicoSeleccionado.estado === "Activo" ? "Inactivo" : "Activo";
-
-                document.getElementById("tituloEstado").textContent =
-                    `¿Cambiar estado a ${nuevoEstado}?`;
-
-                document.getElementById("mensajeCambioEstado").textContent =
-                    `El médico pasará de ${medicoSeleccionado.estado} a ${nuevoEstado}.`;
-
-                // Mostrar modal
-                document.getElementById("modalEstado").classList.remove("hidden");
+                modal.classList.remove('hidden');
+                modal.dataset.medicoId = id;
             }
 
-
-            function cerrarModalEliminar() {
-                const modal = document.getElementById('modalEliminar');
+            function cerrarModalCambiarEstado() {
+                const modal = document.getElementById('modalCambiarEstado');
                 modal.classList.add('hidden');
                 delete modal.dataset.medicoId;
             }
 
-            async function confirmarEliminacion() {
-                const modal = document.getElementById('modalEliminar');
+            async function confirmarCambioEstado() {
+                const modal = document.getElementById('modalCambiarEstado');
                 const id = modal.dataset.medicoId;
 
                 if (!id) return;
@@ -371,7 +358,7 @@
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    mostrarAlerta('error', 'Error al eliminar el médico');
+                    mostrarAlerta('error', 'Error al cambiar el estado del médico');
                 } finally {
                     mostrarLoader(false);
                     delete modal.dataset.medicoId;
@@ -386,51 +373,64 @@
                 const tipoClass = medico.tipoMed === 'Interno'
                     ? 'bg-gradient-to-r from-emerald-100 to-teal-100 text-emerald-800 border border-emerald-200'
                     : medico.tipoMed === 'Externo'
-                        ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-orange-800 border border-orange-200'
-                        : 'bg-gray-100 text-gray-800 border border-gray-200';
+                    ? 'bg-gradient-to-r from-amber-100 to-orange-100 text-orange-800 border border-orange-200'
+                    : 'bg-gray-100 text-gray-800 border border-gray-200';
+
+                const estadoClass = medico.estado === 'Activo'
+                    ? 'bg-gradient-to-r from-emerald-100 to-green-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-gradient-to-r from-red-100 to-rose-100 text-red-800 border border-red-300';
+
+                const estadoIcon = medico.estado === 'Activo' ? 'check_circle' : 'cancel';
 
                 const modal = document.getElementById('modalDetalle');
                 const contenido = `
-                                                                                            <div class="space-y-6">
-                                                                                                <div class="flex items-center space-x-4">
-                                                                                                    <div class="h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
-                                                                                                        <span class="material-icons text-white text-4xl">medical_services</span>
-                                                                                                    </div>
-                                                                                                    <div>
-                                                                                                        <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
-                                                                                                        <p class="text-gray-500 font-medium">ID: ${medico.codMed}</p>
-                                                                                                    </div>
-                                                                                                </div>
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-4">
+                            <div class="h-20 w-20 rounded-2xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+                                <span class="material-icons text-white text-4xl">medical_services</span>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
+                                <p class="text-gray-500 font-medium">ID: ${medico.codMed}</p>
+                            </div>
+                        </div>
 
-                                                                                                <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                                                                                                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-                                                                                                        <p class="text-xs font-semibold text-gray-600 mb-1">Nombre</p>
-                                                                                                        <p class="text-gray-900 font-bold">${medico.nomMed || 'N/A'}</p>
-                                                                                                    </div>
-                                                                                                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-                                                                                                        <p class="text-xs font-semibold text-gray-600 mb-1">Apellido</p>
-                                                                                                        <p class="text-gray-900 font-bold">${medico.paternoMed || 'N/A'}</p>
-                                                                                                    </div>
-                                                                                                    <div class="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-                                                                                                        <p class="text-xs font-semibold text-gray-600 mb-2">Tipo de Médico</p>
-                                                                                                        <span class="px-4 py-2 text-sm font-bold rounded-xl ${tipoClass} shadow-sm inline-block">
-                                                                                                            ${medico.tipoMed || 'Sin especificar'}
-                                                                                                        </span>
-                                                                                                    </div>
-                                                                                                </div>
+                        <div class="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
+                            <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-600 mb-1">Nombre</p>
+                                <p class="text-gray-900 font-bold">${medico.nomMed || 'N/A'}</p>
+                            </div>
+                            <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-600 mb-1">Apellido</p>
+                                <p class="text-gray-900 font-bold">${medico.paternoMed || 'N/A'}</p>
+                            </div>
+                            <div class="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-600 mb-2">Tipo de Médico</p>
+                                <span class="px-4 py-2 text-sm font-bold rounded-xl ${tipoClass} shadow-sm inline-block">
+                                    ${medico.tipoMed || 'Sin especificar'}
+                                </span>
+                            </div>
+                            <div class="col-span-2 bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
+                                <p class="text-xs font-semibold text-gray-600 mb-2">Estado</p>
+                                <span class="px-4 py-2 text-sm font-bold rounded-xl ${estadoClass} shadow-sm inline-flex items-center gap-2">
+                                    <span class="material-icons text-base">${estadoIcon}</span>
+                                    ${medico.estado || 'Sin especificar'}
+                                </span>
+                            </div>
+                        </div>
 
-                                                                                                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
-                                                                                                    <button onclick="cerrarModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm">
-                                                                                                        <span class="material-icons text-base mr-1">close</span>
-                                                                                                        Cerrar
-                                                                                                    </button>
-                                                                                                    <a href="/personal/medicos/editar/${medico.codMed}" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
-                                                                                                        <span class="material-icons text-base mr-1">edit</span>
-                                                                                                        Editar
-                                                                                                    </a>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        `;
+                        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                            <button onclick="cerrarModal()" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm">
+                                <span class="material-icons text-base mr-1">close</span>
+                                Cerrar
+                            </button>
+                            <a href="/personal/medicos/editar/${medico.codMed}" class="inline-flex items-center px-5 py-2.5 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <span class="material-icons text-base mr-1">edit</span>
+                                Editar
+                            </a>
+                        </div>
+                    </div>
+                `;
 
                 document.getElementById('modalContenido').innerHTML = contenido;
                 modal.classList.remove('hidden');
@@ -455,9 +455,9 @@
 
                 alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-lg`;
                 alerta.innerHTML = `
-                                                                                            <span class="material-icons mr-3 text-2xl">${iconos[tipo]}</span>
-                                                                                            <span class="font-semibold">${mensaje}</span>
-                                                                                        `;
+                    <span class="material-icons mr-3 text-2xl">${iconos[tipo]}</span>
+                    <span class="font-semibold">${mensaje}</span>
+                `;
                 alerta.classList.remove('hidden');
 
                 setTimeout(() => {
@@ -518,8 +518,7 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                        <div
-                            class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
                             <span class="material-icons text-white text-2xl">medical_services</span>
                         </div>
                         Lista de Médicos
@@ -556,8 +555,7 @@
             </div>
 
             <div class="mt-4">
-                <button onclick="limpiarFiltros()"
-                    class="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-700 font-bold hover:underline">
+                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-700 font-bold hover:underline">
                     <span class="material-icons text-sm mr-1">clear</span>
                     Limpiar filtros
                 </button>
@@ -568,17 +566,14 @@
         <div id="loader" class="flex justify-center items-center py-16">
             <div class="relative">
                 <div class="animate-spin rounded-full h-16 w-16 border-4 border-gray-200"></div>
-                <div
-                    class="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent absolute top-0 left-0">
-                </div>
+                <div class="animate-spin rounded-full h-16 w-16 border-4 border-emerald-500 border-t-transparent absolute top-0 left-0"></div>
             </div>
         </div>
 
         <!-- Mensaje sin datos -->
         <div id="no-data" class="hidden bg-white rounded-xl shadow-lg border border-gray-200 p-16">
             <div class="flex flex-col items-center justify-center">
-                <div
-                    class="w-32 h-32 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
+                <div class="w-32 h-32 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-2xl flex items-center justify-center mb-6 shadow-lg">
                     <span class="material-icons text-emerald-600" style="font-size: 80px;">medical_services</span>
                 </div>
                 <p class="text-gray-900 text-xl font-bold mb-2">No hay médicos registrados</p>
@@ -590,8 +585,7 @@
         <div class="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden" id="tabla-container">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500">
-                    <thead
-                        class="text-xs text-gray-700 uppercase bg-gradient-to-r from-emerald-500 to-teal-600 border-b-2 border-teal-700">
+                    <thead class="text-xs text-gray-700 uppercase bg-gradient-to-r from-emerald-500 to-teal-600 border-b-2 border-teal-700">
                         <tr>
                             <th scope="col" class="px-6 py-4 text-white font-bold">Médico</th>
                             <th scope="col" class="px-6 py-4 text-white font-bold">Tipo</th>
@@ -609,11 +603,16 @@
     </div>
 
     <!-- Modal Detalle -->
-    <div id="modalDetalle" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-gray-900">Detalle del Médico</h3>
-                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600">
+    <div id="modalDetalle" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 backdrop-blur-sm">
+        <div class="relative top-20 mx-auto p-6 border border-gray-200 w-full max-w-2xl shadow-2xl rounded-2xl bg-white">
+            <div class="flex justify-between items-center mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="material-icons text-white text-xl">info</span>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900">Detalle del Médico</h3>
+                </div>
+                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-2 rounded-lg transition-all">
                     <span class="material-icons">close</span>
                 </button>
             </div>
@@ -621,51 +620,56 @@
         </div>
     </div>
 
-    <!-- Modal Eliminar -->
-    <div id="modalEstado"
-        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-        <div class="relative mx-auto p-6 border w-full max-w-md shadow-xl rounded-lg bg-white">
-
-            <!-- Icono -->
-            <div class="flex justify-center mb-4">
-                <div class="rounded-full bg-blue-100 p-3">
-                    <span class="material-icons text-blue-600 text-4xl">sync_alt</span>
+    <!-- Modal Cambiar Estado -->
+    <div id="modalCambiarEstado" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 backdrop-blur-sm flex items-center justify-center">
+        <div class="relative mx-auto p-6 border border-gray-200 w-full max-w-md shadow-2xl rounded-2xl bg-white">
+            <!-- Icono dinámico -->
+            <div class="flex justify-center mb-6">
+                <div id="iconoModalEstado" class="rounded-2xl bg-gradient-to-br from-red-500 to-rose-600 p-4 shadow-lg">
+                    <span class="material-icons text-white text-5xl">block</span>
                 </div>
             </div>
 
-            <!-- Título -->
-            <h3 id="tituloEstado" class="text-xl font-bold text-gray-900 text-center mb-2">
-                Cambiar estado del médico
-            </h3>
+            <!-- Título dinámico -->
+            <h3 id="tituloModalEstado" class="text-2xl font-bold text-gray-900 text-center mb-3">¿Cambiar estado del médico?</h3>
 
             <!-- Contenido -->
             <div class="text-center mb-6">
-                <p class="text-gray-600 mb-3">Estás a punto de cambiar el estado del médico:</p>
-
-                <div class="bg-gray-50 rounded-lg p-4 mb-3">
-                    <p class="font-semibold text-gray-900" id="nombreMedicoEstado"></p>
-                    <p class="text-sm text-gray-600">Tipo: <span id="tipoMedicoEstado"></span></p>
-                    <p class="text-sm text-gray-600">
-                        Estado actual:
-                        <span id="estadoActualMedico" class="font-bold"></span>
-                    </p>
+                <p class="text-gray-600 mb-4 font-medium">Estás a punto de <span id="accionEstado" class="font-bold text-gray-900">cambiar</span> al médico:</p>
+                <div class="bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl p-5 mb-4 border border-gray-200 shadow-sm">
+                    <p class="font-bold text-gray-900 text-lg" id="nombreMedicoCambiarEstado"></p>
+                    <p class="text-sm text-gray-600 mt-1">Tipo: <span class="font-semibold" id="tipoMedicoCambiarEstado"></span></p>
                 </div>
 
-                <p id="mensajeCambioEstado" class="text-sm font-medium text-blue-600">
-                    ¿Deseas continuar?
-                </p>
+                <!-- Info del cambio de estado -->
+                <div class="bg-gradient-to-br from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                    <div class="flex items-center justify-center gap-3 text-sm">
+                        <div class="text-center">
+                            <p class="text-xs text-gray-600 mb-1">Estado actual</p>
+                            <p class="font-bold text-gray-900" id="estadoActualMedico">Activo</p>
+                        </div>
+                        <span class="material-icons text-blue-600">arrow_forward</span>
+                        <div class="text-center">
+                            <p class="text-xs text-gray-600 mb-1">Nuevo estado</p>
+                            <p class="font-bold text-blue-700" id="nuevoEstadoMedico">Inactivo</p>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Botones -->
-            <div class="flex justify-center gap-4">
-                <button id="cancelarEstado" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg">
+            <div class="flex gap-3">
+                <button onclick="cerrarModalCambiarEstado()"
+                    class="flex-1 inline-flex justify-center items-center px-5 py-3 text-sm font-bold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-all duration-200 shadow-sm">
+                    <span class="material-icons text-base mr-1">close</span>
                     Cancelar
                 </button>
-                <button id="confirmarEstado" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
-                    Cambiar estado
+                <button id="btnConfirmarEstado" onclick="confirmarCambioEstado()"
+                    class="flex-1 inline-flex justify-center items-center px-5 py-3 text-sm font-bold text-white bg-gradient-to-r from-red-500 to-rose-600 rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    <span class="material-icons text-base mr-1">block</span>
+                    Desactivar
                 </button>
             </div>
-
         </div>
     </div>
 

@@ -25,34 +25,35 @@ class HomeController extends Controller
             $inicioSemana = Carbon::now()->startOfWeek();
             $inicioMes = Carbon::now()->startOfMonth();
 
-            // Servicios del día
+            // Servicios del día (atendidos HOY por este personal)
             $serviciosHoy = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->whereDate('Servicio.fechaAten', $hoy)
-                ->where('Servicio.estado', '!=', 'Programado')
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->count();
 
-            // Servicios de la semana
+            // Servicios de la semana (atendidos en los últimos 7 días)
             $serviciosSemana = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->where('Servicio.fechaAten', '>=', $inicioSemana)
-                ->where('Servicio.estado', '!=', 'Programado')
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->count();
 
-            // Servicios del mes
+            // Servicios del mes (atendidos este mes)
             $serviciosMes = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->where('Servicio.fechaAten', '>=', $inicioMes)
-                ->where('Servicio.estado', '!=', 'Programado')
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->count();
 
-            // Total de servicios atendidos
+            // Total de servicios atendidos (todos los que tienen fechaAten)
             $serviciosTotal = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
-                ->where('Servicio.estado', '!=', 'Programado')
+                ->whereNotNull('Servicio.fechaAten')
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->count();
 
-            // Servicios por estado
+            // Servicios por estado (TODOS los estados del personal)
             $porEstado = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->select('Servicio.estado', DB::raw('count(*) as total'))
@@ -60,7 +61,7 @@ class HomeController extends Controller
                 ->pluck('total', 'estado')
                 ->toArray();
 
-            // Servicios por tipo de seguro
+            // Servicios por tipo de seguro (TODOS los del personal)
             $porTipoAseg = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->select('Servicio.tipoAseg', DB::raw('count(*) as total'))
@@ -68,12 +69,13 @@ class HomeController extends Controller
                 ->pluck('total', 'tipoAseg')
                 ->toArray();
 
-            // Últimos 10 servicios atendidos
+            // Últimos 10 servicios atendidos o entregados
             $ultimosServicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
-                ->with(['paciente:codPa,nomPa,paternoPa', 'tipoEstudio:codTest,descripcion'])
+                ->with(['paciente:codPa,nomPa,paternoPa,maternoPa', 'tipoEstudio:codTest,descripcion'])
                 ->select('Servicio.*')
                 ->whereNotNull('Servicio.fechaAten')
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->orderBy('Servicio.fechaAten', 'desc')
                 ->orderBy('Servicio.horaAten', 'desc')
                 ->limit(10)
@@ -90,11 +92,22 @@ class HomeController extends Controller
                     'porTipoAseg' => $porTipoAseg,
                     'ultimosServicios' => $ultimosServicios
                 ]
-            ]);
+            ], 200);
         } catch (\Exception $e) {
+            \Log::error('Error en estadísticas del home:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+
             return response()->json([
                 'success' => false,
-                'message' => 'Error al obtener estadísticas: ' . $e->getMessage()
+                'message' => 'Error al obtener estadísticas: ' . $e->getMessage(),
+                'debug' => [
+                    'file' => $e->getFile(),
+                    'line' => $e->getLine()
+                ]
             ], 500);
         }
     }
@@ -112,6 +125,7 @@ class HomeController extends Controller
             $servicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->whereDate('Servicio.fechaAten', $hoy)
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->with(['paciente', 'medico', 'tipoEstudio', 'diagnosticos'])
                 ->select('Servicio.*')
                 ->orderBy('Servicio.horaAten')
@@ -147,6 +161,7 @@ class HomeController extends Controller
             $servicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->whereBetween('Servicio.fechaAten', [$inicioSemana, $finSemana])
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->with(['paciente', 'medico', 'tipoEstudio', 'diagnosticos'])
                 ->select('Servicio.*')
                 ->orderBy('Servicio.fechaAten')
@@ -183,6 +198,7 @@ class HomeController extends Controller
             $servicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->whereBetween('Servicio.fechaAten', [$inicioMes, $finMes])
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
                 ->with(['paciente', 'medico', 'tipoEstudio', 'diagnosticos'])
                 ->select('Servicio.*')
                 ->orderBy('Servicio.fechaAten')

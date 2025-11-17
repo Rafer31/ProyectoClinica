@@ -19,6 +19,7 @@ class CronogramaAtencion extends Model
         'fechaCrono',
         'cantDispo',
         'cantFijo',
+        'cantEmergencia',
         'estado',
         'codPer'
     ];

@@ -9,7 +9,15 @@ use Illuminate\Support\Facades\Validator;
 class RequisitoController extends Controller
 {
     /**
-     * Listar todos los requisitos
+     * Mostrar la vista de gestión de requisitos
+     */
+    public function indexView()
+    {
+        return view('personal.tipos-estudio.requisitos');
+    }
+
+    /**
+     * API: Listar todos los requisitos
      */
     public function index()
     {
@@ -30,7 +38,7 @@ class RequisitoController extends Controller
     }
 
     /**
-     * Mostrar un requisito específico
+     * API: Mostrar un requisito específico
      */
     public function show($id)
     {
@@ -58,14 +66,15 @@ class RequisitoController extends Controller
     }
 
     /**
-     * Registrar nuevo requisito
+     * API: Registrar nuevo requisito
      */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'descripRequisito' => 'required|string|max:200'
+            'descripRequisito' => 'required|string|max:200|unique:Requisito,descripRequisito'
         ], [
-            'descripRequisito.required' => 'La descripción es obligatoria'
+            'descripRequisito.required' => 'La descripción es obligatoria',
+            'descripRequisito.unique' => 'Ya existe un requisito con esta descripción'
         ]);
 
         if ($validator->fails()) {
@@ -95,7 +104,7 @@ class RequisitoController extends Controller
     }
 
     /**
-     * Actualizar requisito
+     * API: Actualizar requisito
      */
     public function update(Request $request, $id)
     {
@@ -110,9 +119,10 @@ class RequisitoController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'descripRequisito' => 'required|string|max:200'
+                'descripRequisito' => 'required|string|max:200|unique:Requisito,descripRequisito,' . $id . ',codRequisito'
             ], [
-                'descripRequisito.required' => 'La descripción es obligatoria'
+                'descripRequisito.required' => 'La descripción es obligatoria',
+                'descripRequisito.unique' => 'Ya existe un requisito con esta descripción'
             ]);
 
             if ($validator->fails()) {
@@ -140,7 +150,7 @@ class RequisitoController extends Controller
     }
 
     /**
-     * Eliminar requisito
+     * API: Eliminar requisito
      */
     public function destroy($id)
     {
@@ -152,6 +162,16 @@ class RequisitoController extends Controller
                     'success' => false,
                     'message' => 'Requisito no encontrado'
                 ], 404);
+            }
+
+            // Verificar si el requisito está siendo usado por algún tipo de estudio
+            $enUso = $requisito->tiposEstudio()->count();
+
+            if ($enUso > 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "No se puede eliminar este requisito porque está siendo usado por {$enUso} tipo(s) de estudio"
+                ], 409);
             }
 
             $requisito->delete();

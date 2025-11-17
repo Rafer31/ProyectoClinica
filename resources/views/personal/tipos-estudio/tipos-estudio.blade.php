@@ -13,59 +13,77 @@
 
     <div class="space-y-6">
         <!-- Encabezado -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <div class="flex flex-wrap gap-3 items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                        <span class="material-icons align-middle text-4xl text-purple-600">category</span>
+                    <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
+                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                            <span class="material-icons text-white text-2xl">category</span>
+                        </div>
                         Tipos de Estudio
                     </h1>
-                    <p class="text-gray-600">Gestiona los tipos de estudios ecográficos y sus requisitos</p>
+                    <p class="text-emerald-600 font-medium ml-15">Gestiona los tipos de estudios ecográficos y sus requisitos</p>
                 </div>
-                <a href="{{ route('personal.tipos-estudio.crear') }}"
-                    class="flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
-                    <span class="material-icons me-2">add</span>
-                    Nuevo Tipo de Estudio
-                </a>
+                <div class="flex gap-2">
+                    <a href="{{ route('personal.requisitos.index') }}"
+                        class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl hover:from-blue-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105">
+                        <span class="material-icons">assignment</span>
+                        <span>Gestionar Requisitos</span>
+                    </a>
+                    <a href="{{ route('personal.tipos-estudio.crear') }}"
+                        class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105">
+                        <span class="material-icons">add_circle</span>
+                        <span>Nuevo Tipo de Estudio</span>
+                    </a>
+                </div>
             </div>
         </div>
 
         <!-- Estadísticas -->
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="material-icons text-4xl opacity-80">category</span>
+            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <span class="material-icons text-3xl">category</span>
+                    </div>
+                    <span class="text-xs font-bold bg-white bg-opacity-25 px-3 py-1 rounded-full">TOTAL</span>
                 </div>
-                <p class="text-3xl font-bold" id="total-tipos">0</p>
-                <p class="text-sm opacity-90">Total de Tipos de Estudio</p>
+                <p class="text-4xl font-bold mb-2" id="total-tipos">0</p>
+                <p class="text-sm opacity-90 font-medium">Tipos de Estudio</p>
             </div>
 
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="material-icons text-4xl opacity-80">check_circle</span>
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <span class="material-icons text-3xl">check_circle</span>
+                    </div>
+                    <span class="text-xs font-bold bg-white bg-opacity-25 px-3 py-1 rounded-full">TOTAL</span>
                 </div>
-                <p class="text-3xl font-bold" id="total-requisitos">0</p>
-                <p class="text-sm opacity-90">Requisitos Disponibles</p>
+                <p class="text-4xl font-bold mb-2" id="total-requisitos">0</p>
+                <p class="text-sm opacity-90 font-medium">Requisitos Disponibles</p>
             </div>
 
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow p-6 text-white">
-                <div class="flex items-center justify-between mb-2">
-                    <span class="material-icons text-4xl opacity-80">medical_services</span>
+            <div class="bg-gradient-to-br from-teal-500 to-teal-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+                <div class="flex items-center justify-between mb-3">
+                    <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                        <span class="material-icons text-3xl">medical_services</span>
+                    </div>
+                    <span class="text-xs font-bold bg-white bg-opacity-25 px-3 py-1 rounded-full">HOY</span>
                 </div>
-                <p class="text-3xl font-bold" id="estudios-hoy">0</p>
-                <p class="text-sm opacity-90">Estudios Realizados Hoy</p>
+                <p class="text-4xl font-bold mb-2" id="estudios-hoy">0</p>
+                <p class="text-sm opacity-90 font-medium">Estudios Realizados</p>
             </div>
         </div>
 
         <!-- Buscador -->
-        <div class="bg-white rounded-lg shadow p-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <div class="flex gap-4">
                 <div class="flex-1">
                     <input type="text" id="buscar-tipo" placeholder="Buscar tipo de estudio..."
-                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition-all">
                 </div>
                 <button onclick="cargarTiposEstudio()"
-                    class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                    class="px-4 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                     <span class="material-icons">refresh</span>
                 </button>
             </div>
@@ -78,69 +96,77 @@
 
         <!-- Estado de carga -->
         <div id="loading-state" class="text-center py-12 hidden">
-            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
             <p class="mt-4 text-gray-600">Cargando tipos de estudio...</p>
         </div>
 
         <!-- Estado vacío -->
         <div id="empty-state" class="text-center py-12 hidden">
-            <span class="material-icons text-gray-400" style="font-size: 72px;">category</span>
-            <p class="mt-4 text-gray-600 text-lg">No hay tipos de estudio registrados</p>
+            <div class="w-32 h-32 bg-gray-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <span class="material-icons text-gray-300" style="font-size: 80px;">category</span>
+            </div>
+            <p class="text-gray-800 text-xl font-bold mb-2">No hay tipos de estudio registrados</p>
+            <p class="text-gray-500 text-sm mb-4">Comienza creando tu primer tipo de estudio</p>
             <a href="{{ route('personal.tipos-estudio.crear') }}"
-                class="mt-4 inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-                <span class="material-icons me-2">add</span>
+                class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md font-semibold">
+                <span class="material-icons mr-2">add_circle</span>
                 Crear primer tipo de estudio
             </a>
         </div>
     </div>
 
     <!-- Modal de Confirmación de Eliminación -->
-    <div id="modal-eliminar" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-            <div class="mt-3">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100">
-                    <span class="material-icons text-red-600">delete</span>
+    <div id="modal-eliminar" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-0 border w-full max-w-md shadow-2xl rounded-xl bg-white">
+            <div class="bg-gradient-to-r from-red-500 to-rose-600 rounded-t-xl p-5">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-3">
+                        <span class="material-icons text-white text-2xl">delete</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white">Eliminar Tipo de Estudio</h3>
+                        <p class="text-sm text-red-100">Esta acción no se puede deshacer</p>
+                    </div>
                 </div>
-                <h3 class="text-lg font-medium text-gray-900 mt-4 text-center">Eliminar Tipo de Estudio</h3>
-                <p class="text-sm text-gray-500 mt-2 text-center" id="mensaje-eliminar">
+            </div>
+
+            <div class="p-6">
+                <p class="text-gray-800 font-medium" id="mensaje-eliminar">
                     ¿Está seguro de que desea eliminar este tipo de estudio?
                 </p>
-                <div class="mt-6 flex gap-3">
-                    <button onclick="cerrarModalEliminar()"
-                        class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                        Cancelar
-                    </button>
-                    <button onclick="confirmarEliminar()"
-                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
-                        Eliminar
-                    </button>
-                </div>
+            </div>
+
+            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex gap-3">
+                <button onclick="cerrarModalEliminar()"
+                    class="flex-1 px-5 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold">
+                    Cancelar
+                </button>
+                <button onclick="confirmarEliminar()"
+                    class="flex-1 px-5 py-3 bg-gradient-to-r from-red-500 to-rose-600 text-white rounded-lg hover:from-red-600 hover:to-rose-700 transition-all shadow-md font-semibold">
+                    Eliminar
+                </button>
             </div>
         </div>
     </div>
 
     <!-- Modal de Detalle -->
-    <div id="modal-detalle" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-10 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-2/3 shadow-lg rounded-lg bg-white">
-            <div class="flex justify-between items-center mb-4 border-b pb-4">
-                <h3 class="text-2xl font-bold text-gray-900 flex items-center">
-                    <span class="material-icons text-purple-600 mr-2">medical_services</span>
-                    <span id="detalle-titulo">Detalle del Tipo de Estudio</span>
-                </h3>
-                <button onclick="cerrarModalDetalle()" class="text-gray-400 hover:text-gray-600">
-                    <span class="material-icons">close</span>
-                </button>
+    <div id="modal-detalle" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-0 border w-full max-w-3xl shadow-2xl rounded-xl bg-white max-h-[90vh] overflow-y-auto">
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6 rounded-t-xl z-10">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <span class="material-icons text-emerald-600">medical_services</span>
+                        <span id="detalle-titulo">Detalle del Tipo de Estudio</span>
+                    </h3>
+                    <button onclick="cerrarModalDetalle()"
+                        class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full p-2 transition-colors">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
             </div>
 
-            <div id="detalle-contenido" class="space-y-6">
+            <div id="detalle-contenido" class="p-6">
                 <!-- El contenido se cargará dinámicamente -->
-            </div>
-
-            <div class="mt-6 flex gap-3 border-t pt-4">
-                <button onclick="cerrarModalDetalle()"
-                    class="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300">
-                    Cerrar
-                </button>
             </div>
         </div>
     </div>
@@ -155,7 +181,6 @@
             cargarTiposEstudio();
             cargarEstadisticas();
 
-            // Buscador en tiempo real
             document.getElementById('buscar-tipo').addEventListener('input', function (e) {
                 const busqueda = e.target.value.toLowerCase();
                 const cards = document.querySelectorAll('.tipo-estudio-card');
@@ -217,35 +242,34 @@
 
         function crearCardTipoEstudio(tipo) {
             const colores = [
-                'from-blue-500 to-blue-600',
-                'from-purple-500 to-purple-600',
-                'from-green-500 to-green-600',
-                'from-pink-500 to-pink-600',
-                'from-indigo-500 to-indigo-600',
-                'from-orange-500 to-orange-600'
+                'from-emerald-500 to-teal-600',
+                'from-blue-500 to-indigo-600',
+                'from-purple-500 to-pink-600',
+                'from-orange-500 to-amber-600',
+                'from-cyan-500 to-blue-600',
+                'from-green-500 to-emerald-600'
             ];
             const color = colores[tipo.codTest % colores.length];
 
             const requisitosHTML = tipo.requisitos && tipo.requisitos.length > 0
                 ? tipo.requisitos.map(req => `
-                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 mr-1 mb-1">
+                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 mr-1 mb-1">
                     <span class="material-icons text-xs mr-1">check_circle</span>
                     ${req.descripRequisito}
                 </span>
             `).join('')
                 : '<span class="text-sm text-gray-500 italic">Sin requisitos específicos</span>';
 
-            // Obtener la observación principal (la primera con texto)
             const observacion = tipo.requisitos && tipo.requisitos.length > 0 && tipo.requisitos[0].pivot.observacion
                 ? tipo.requisitos[0].pivot.observacion
                 : 'Sin observaciones adicionales';
 
             return `
-            <div class="tipo-estudio-card bg-white rounded-lg shadow hover:shadow-xl transition-all">
-                <div class="bg-gradient-to-br ${color} p-4 rounded-t-lg">
+            <div class="tipo-estudio-card bg-white rounded-xl shadow-sm border border-gray-100 hover:shadow-xl transition-all transform hover:scale-[1.02]">
+                <div class="bg-gradient-to-br ${color} p-4 rounded-t-xl">
                     <div class="flex items-center justify-between text-white">
                         <span class="material-icons text-3xl opacity-90">medical_services</span>
-                        <span class="bg-white bg-opacity-20 px-2 py-1 rounded text-xs font-medium">
+                        <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-xs font-bold">
                             ID: ${tipo.codTest}
                         </span>
                     </div>
@@ -275,16 +299,16 @@
 
                     <div class="flex gap-2">
                         <button onclick="verDetalle(${tipo.codTest})"
-                            class="flex-1 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium flex items-center justify-center">
+                            class="flex-1 px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 text-sm font-semibold flex items-center justify-center transition-all shadow-sm hover:shadow-md">
                             <span class="material-icons text-sm mr-1">visibility</span>
                             Ver Detalle
                         </button>
                         <a href="/personal/tipos-estudio/editar/${tipo.codTest}"
-                            class="px-3 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center">
+                            class="px-3 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 flex items-center transition-all">
                             <span class="material-icons text-sm">edit</span>
                         </a>
-                        <button onclick="abrirModalEliminar(${tipo.codTest}, '${tipo.descripcion}')"
-                            class="px-3 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 flex items-center">
+                        <button onclick="abrirModalEliminar(${tipo.codTest}, '${tipo.descripcion.replace(/'/g, "\\'")}')"
+                            class="px-3 py-2 border-2 border-red-300 text-red-600 rounded-lg hover:bg-red-50 flex items-center transition-all">
                             <span class="material-icons text-sm">delete</span>
                         </button>
                     </div>
@@ -298,16 +322,14 @@
             const contenido = document.getElementById('detalle-contenido');
 
             try {
-                // Mostrar modal con loading
                 modal.classList.remove('hidden');
                 contenido.innerHTML = `
                 <div class="text-center py-8">
-                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+                    <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
                     <p class="mt-4 text-gray-600">Cargando información...</p>
                 </div>
             `;
 
-                // Cargar datos
                 const response = await fetch(`/api/personal/tipos-estudio/${codTest}`);
                 const data = await response.json();
 
@@ -315,7 +337,6 @@
                     const tipo = data.data;
                     document.getElementById('detalle-titulo').textContent = tipo.descripcion;
 
-                    // Obtener la observación principal
                     let observacionPrincipal = 'Sin observaciones adicionales';
                     if (tipo.requisitos && tipo.requisitos.length > 0 && tipo.requisitos[0].pivot.observacion) {
                         observacionPrincipal = tipo.requisitos[0].pivot.observacion;
@@ -323,9 +344,9 @@
 
                     const requisitosHTML = tipo.requisitos && tipo.requisitos.length > 0
                         ? tipo.requisitos.map(req => `
-                        <div class="bg-purple-50 p-4 rounded-lg border border-purple-200 hover:border-purple-400 transition-colors">
+                        <div class="bg-emerald-50 p-4 rounded-lg border border-emerald-200 hover:border-emerald-400 transition-colors">
                             <div class="flex items-start gap-3">
-                                <span class="material-icons text-purple-600 mt-1 text-xl">check_circle</span>
+                                <span class="material-icons text-emerald-600 mt-1 text-xl">check_circle</span>
                                 <div class="flex-1">
                                     <p class="font-medium text-gray-900 text-base">${req.descripRequisito}</p>
                                 </div>
@@ -336,8 +357,7 @@
 
                     contenido.innerHTML = `
                     <div class="space-y-6">
-                        <!-- Información General -->
-                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-lg border border-blue-200">
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-5 rounded-xl border border-blue-200">
                             <h4 class="font-bold text-gray-900 mb-4 flex items-center text-lg">
                                 <span class="material-icons text-blue-600 mr-2">info</span>
                                 Información General
@@ -354,8 +374,7 @@
                             </div>
                         </div>
 
-                        <!-- Observación Principal -->
-                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-lg border border-green-200">
+                        <div class="bg-gradient-to-r from-green-50 to-emerald-50 p-5 rounded-xl border border-green-200">
                             <h4 class="font-bold text-gray-900 mb-4 flex items-center text-lg">
                                 <span class="material-icons text-green-600 mr-2">description</span>
                                 Instrucciones para el Paciente
@@ -365,10 +384,9 @@
                             </div>
                         </div>
 
-                        <!-- Requisitos -->
                         <div>
                             <h4 class="font-bold text-gray-900 mb-4 flex items-center text-lg">
-                                <span class="material-icons text-purple-600 mr-2">assignment</span>
+                                <span class="material-icons text-emerald-600 mr-2">assignment</span>
                                 Requisitos Específicos (${tipo.requisitos ? tipo.requisitos.length : 0})
                             </h4>
                             <div class="space-y-3 max-h-60 overflow-y-auto pr-2">
@@ -377,9 +395,6 @@
                         </div>
                     </div>
                 `;
-
-                    // Guardar el codTest actual para el PDF
-                    modal.setAttribute('data-codtest', codTest);
                 } else {
                     contenido.innerHTML = `
                     <div class="text-center py-8">
@@ -444,22 +459,30 @@
 
         function mostrarNotificacion(mensaje, tipo = 'success') {
             const colores = {
-                success: 'bg-green-500',
-                error: 'bg-red-500',
-                info: 'bg-blue-500'
+                success: 'from-emerald-500 to-teal-600',
+                error: 'from-red-500 to-rose-600',
+                info: 'from-blue-500 to-indigo-600'
+            };
+
+            const iconos = {
+                success: 'check_circle',
+                error: 'error',
+                info: 'info'
             };
 
             const notificacion = document.createElement('div');
-            notificacion.className = `fixed top-4 right-4 ${colores[tipo]} text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center gap-2`;
+            notificacion.className = `fixed top-4 right-4 bg-gradient-to-r ${colores[tipo]} text-white px-6 py-3 rounded-xl shadow-lg z-50 flex items-center gap-2 transform transition-all`;
             notificacion.innerHTML = `
-            <span class="material-icons">${tipo === 'success' ? 'check_circle' : 'error'}</span>
-            <span>${mensaje}</span>
+            <span class="material-icons">${iconos[tipo]}</span>
+            <span class="font-semibold">${mensaje}</span>
         `;
 
             document.body.appendChild(notificacion);
 
             setTimeout(() => {
-                notificacion.remove();
+                notificacion.style.opacity = '0';
+                notificacion.style.transform = 'translateY(-20px)';
+                setTimeout(() => notificacion.remove(), 300);
             }, 3000);
         }
     </script>
@@ -473,3 +496,4 @@
         }
     </style>
 @endpush
+</document_content>

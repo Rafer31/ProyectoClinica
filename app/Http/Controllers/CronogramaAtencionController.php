@@ -9,13 +9,10 @@ use Illuminate\Support\Facades\Auth;
 
 class CronogramaAtencionController extends Controller
 {
-    /**
-     * Listar todos los cronogramas
-     */
     public function index()
     {
         try {
-            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
+            $cronogramas = CronogramaAtencion::with('personalSalud')
                 ->orderBy('fechaCrono', 'desc')
                 ->get();
 
@@ -32,13 +29,10 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Mostrar un cronograma específico por fecha
-     */
     public function show($fecha)
     {
         try {
-            $cronograma = CronogramaAtencion::with('personalSalud')->find($fecha);  // CAMBIADO AQUÍ
+            $cronograma = CronogramaAtencion::with('personalSalud')->find($fecha);
 
             if (!$cronograma) {
                 return response()->json([
@@ -62,20 +56,19 @@ class CronogramaAtencionController extends Controller
 
     /**
      * Registrar nuevo cronograma
-     * - El codPer se obtiene del usuario autenticado automáticamente
-     * - El estado se calcula automáticamente según la fecha
+     * VALIDACIÓN: No permite crear cronogramas en fechas pasadas
      */
     public function store(Request $request)
     {
         // Validación inicial
         $validator = Validator::make($request->all(), [
-            'fechaCrono' => 'required|date',
-            'cantDispo' => 'required|integer|min:0',
+            'fechaCrono' => 'required|date|after_or_equal:today',
             'cantFijo' => 'required|integer|min:0',
+            'cantEmergencia' => 'nullable|integer|min:0',
         ], [
             'fechaCrono.required' => 'La fecha es obligatoria',
             'fechaCrono.date' => 'La fecha no es válida',
-            'cantDispo.required' => 'La cantidad disponible es obligatoria',
+            'fechaCrono.after_or_equal' => 'No se puede crear un cronograma para una fecha pasada',
             'cantFijo.required' => 'La cantidad fija es obligatoria',
         ]);
 
@@ -88,7 +81,6 @@ class CronogramaAtencionController extends Controller
         }
 
         try {
-            // Obtener el código del usuario autenticado
             $user = Auth::user();
             if (!$user || !$user->codPer) {
                 return response()->json([
@@ -99,6 +91,17 @@ class CronogramaAtencionController extends Controller
 
             $codPer = $user->codPer;
             $fechaCrono = $request->fechaCrono;
+
+            // VALIDACIÓN ADICIONAL: Verificar que no sea fecha pasada
+            $fechaSeleccionada = new \DateTime($fechaCrono);
+            $hoy = new \DateTime(date('Y-m-d'));
+
+            if ($fechaSeleccionada < $hoy) {
+                return response()->json([
+                    'success' => false,
+                    'message' => '❌ No se puede crear un cronograma para una fecha pasada'
+                ], 422);
+            }
 
             // Verificar si ya existe un cronograma para esta fecha
             $existe = CronogramaAtencion::where('fechaCrono', $fechaCrono)->exists();
@@ -117,24 +120,36 @@ class CronogramaAtencionController extends Controller
             } elseif ($fechaCrono > $hoy) {
                 $estado = 'inactivoFut';
             } else {
+                // Esto nunca debería ocurrir por la validación anterior
                 $estado = 'inactivoPas';
             }
+
+            // Calcular cantDispo automáticamente
+            $cantFijo = $request->cantFijo;
+            $cantEmergencia = $request->cantEmergencia ?? 0;
+            $cantDispo = $cantFijo + $cantEmergencia;
 
             // Crear el cronograma
             $cronograma = CronogramaAtencion::create([
                 'fechaCrono' => $fechaCrono,
-                'cantDispo' => $request->cantDispo,
-                'cantFijo' => $request->cantFijo,
+                'cantDispo' => $cantDispo,
+                'cantFijo' => $cantFijo,
+                'cantEmergencia' => $cantEmergencia > 0 ? $cantEmergencia : null,
                 'estado' => $estado,
                 'codPer' => $codPer
             ]);
 
-            $cronograma->load('personalSalud');  // CAMBIADO AQUÍ
+            $cronograma->load('personalSalud');
 
             return response()->json([
                 'success' => true,
                 'data' => $cronograma,
-                'message' => "Cronograma registrado exitosamente con estado: {$estado}"
+                'message' => "Cronograma registrado exitosamente con estado: {$estado}",
+                'debug' => [
+                    'cantFijo' => $cantFijo,
+                    'cantEmergencia' => $cantEmergencia,
+                    'cantDispo' => $cantDispo
+                ]
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -149,10 +164,6 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Actualizar cronograma
-     * Solo permite actualizar cantDispo, cantFijo y estado manualmente si es necesario
-     */
     public function update(Request $request, $fecha)
     {
         try {
@@ -166,11 +177,11 @@ class CronogramaAtencionController extends Controller
             }
 
             $rules = [];
-            if ($request->has('cantDispo')) {
-                $rules['cantDispo'] = 'integer|min:0';
-            }
             if ($request->has('cantFijo')) {
                 $rules['cantFijo'] = 'integer|min:0';
+            }
+            if ($request->has('cantEmergencia')) {
+                $rules['cantEmergencia'] = 'nullable|integer|min:0';
             }
             if ($request->has('estado')) {
                 $rules['estado'] = 'in:activo,inactivoPas,inactivoFut';
@@ -188,23 +199,33 @@ class CronogramaAtencionController extends Controller
                 ], 422);
             }
 
-            if ($request->has('cantDispo')) {
-                $cronograma->cantDispo = $request->cantDispo;
-            }
             if ($request->has('cantFijo')) {
                 $cronograma->cantFijo = $request->cantFijo;
             }
+            if ($request->has('cantEmergencia')) {
+                $cronograma->cantEmergencia = $request->cantEmergencia;
+            }
+
+            // Recalcular cantDispo automáticamente
+            $cantEmergencia = $cronograma->cantEmergencia ?? 0;
+            $cronograma->cantDispo = $cronograma->cantFijo + $cantEmergencia;
+
             if ($request->has('estado')) {
                 $cronograma->estado = $request->estado;
             }
 
             $cronograma->save();
-            $cronograma->load('personalSalud');  // CAMBIADO AQUÍ
+            $cronograma->load('personalSalud');
 
             return response()->json([
                 'success' => true,
                 'data' => $cronograma,
-                'message' => 'Cronograma actualizado exitosamente'
+                'message' => 'Cronograma actualizado exitosamente',
+                'debug' => [
+                    'cantFijo' => $cronograma->cantFijo,
+                    'cantEmergencia' => $cronograma->cantEmergencia,
+                    'cantDispo' => $cronograma->cantDispo
+                ]
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
@@ -214,9 +235,6 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Cambiar estado del cronograma manualmente
-     */
     public function cambiarEstado(Request $request, $fecha)
     {
         try {
@@ -260,13 +278,10 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Listar cronogramas activos
-     */
     public function activos()
     {
         try {
-            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
+            $cronogramas = CronogramaAtencion::with('personalSalud')
                 ->activos()
                 ->orderBy('fechaCrono')
                 ->get();
@@ -284,13 +299,10 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Listar cronogramas por personal
-     */
     public function porPersonal($codPer)
     {
         try {
-            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
+            $cronogramas = CronogramaAtencion::with('personalSalud')
                 ->porPersonal($codPer)
                 ->orderBy('fechaCrono', 'desc')
                 ->get();
@@ -308,9 +320,6 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Listar cronogramas entre fechas
-     */
     public function entreFechas(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -327,7 +336,7 @@ class CronogramaAtencionController extends Controller
         }
 
         try {
-            $cronogramas = CronogramaAtencion::with('personalSalud')  // CAMBIADO AQUÍ
+            $cronogramas = CronogramaAtencion::with('personalSalud')
                 ->entreFechas($request->fechaInicio, $request->fechaFin)
                 ->orderBy('fechaCrono')
                 ->get();
@@ -345,9 +354,6 @@ class CronogramaAtencionController extends Controller
         }
     }
 
-    /**
-     * Eliminar cronograma
-     */
     public function destroy($fecha)
     {
         try {

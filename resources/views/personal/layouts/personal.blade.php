@@ -153,13 +153,38 @@
 
                 <!-- Servicios -->
                 <li>
-                    <a href="{{ route('personal.servicios.servicios') }}" class="sidebar-item flex items-center p-3 rounded-xl hover:bg-emerald-50 group {{ request()->routeIs('personal.servicios.*') ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg' : 'text-gray-700 hover:text-emerald-600' }}">
-                        <span class="material-icons {{ request()->routeIs('personal.servicios.*') ? 'text-white' : 'text-emerald-600' }}">miscellaneous_services</span>
-                        <span class="ms-3 font-semibold">Servicios</span>
-                        @if(request()->routeIs('personal.servicios.*'))
-                        <span class="material-icons ms-auto text-sm">chevron_right</span>
-                        @endif
-                    </a>
+                    <button type="button"
+                        class="sidebar-item flex items-center w-full p-3 rounded-xl hover:bg-emerald-50 group transition-colors {{ request()->routeIs('personal.servicios.*') || request()->routeIs('personal.tipos-estudio.*') ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-lg' : 'text-gray-700 hover:text-emerald-600' }}"
+                        onclick="toggleSubmenu('servicios-submenu')">
+                        <span class="material-icons {{ request()->routeIs('personal.servicios.*') || request()->routeIs('personal.tipos-estudio.*') ? 'text-white' : 'text-emerald-600' }}">miscellaneous_services</span>
+                        <span class="ms-3 font-semibold flex-1 text-left">Servicios</span>
+                        <span class="material-icons text-sm transition-transform" id="servicios-submenu-icon">expand_more</span>
+                    </button>
+
+                    <!-- Submenú de Servicios -->
+                    <ul class="ml-8 mt-2 space-y-2 {{ request()->routeIs('personal.servicios.*') || request()->routeIs('personal.tipos-estudio.*') ? '' : 'hidden' }}" id="servicios-submenu">
+                        <li>
+                            <a href="{{ route('personal.servicios.servicios') }}"
+                                class="sidebar-item flex items-center p-2 rounded-lg hover:bg-emerald-50 group {{ request()->routeIs('personal.servicios.servicios') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-700 hover:text-emerald-600' }}">
+                                <span class="material-icons text-sm {{ request()->routeIs('personal.servicios.servicios') ? 'text-emerald-600' : 'text-gray-500' }}">list_alt</span>
+                                <span class="ms-2 text-sm font-medium">Todos los Servicios</span>
+                            </a>
+                        </li>
+                        <li>
+                           <a href="{{ route('personal.servicios.atendidos') }}"
+                                class="sidebar-item flex items-center p-2 rounded-lg hover:bg-emerald-50 group {{ request()->routeIs('personal.servicios.atendidos') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-700 hover:text-emerald-600' }}">
+                                <span class="material-icons text-sm {{ request()->routeIs('personal.servicios.atendidos') ? 'text-emerald-600' : 'text-gray-500' }}">check_circle</span>
+                                <span class="ms-2 text-sm font-medium">Servicios Atendidos</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('personal.tipos-estudio.index') }}"
+                                class="sidebar-item flex items-center p-2 rounded-lg hover:bg-emerald-50 group {{ request()->routeIs('personal.tipos-estudio.*') ? 'bg-emerald-100 text-emerald-700' : 'text-gray-700 hover:text-emerald-600' }}">
+                                <span class="material-icons text-sm {{ request()->routeIs('personal.tipos-estudio.*') ? 'text-emerald-600' : 'text-gray-500' }}">category</span>
+                                <span class="ms-2 text-sm font-medium">Tipos de Estudio</span>
+                            </a>
+                        </li>
+                    </ul>
                 </li>
             </ul>
         </div>
@@ -199,6 +224,22 @@
 
     <!-- Flowbite JS -->
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+
+    <script>
+        // Toggle submenú
+        function toggleSubmenu(id) {
+            const submenu = document.getElementById(id);
+            const icon = document.getElementById(id + '-icon');
+
+            if (submenu.classList.contains('hidden')) {
+                submenu.classList.remove('hidden');
+                icon.style.transform = 'rotate(180deg)';
+            } else {
+                submenu.classList.add('hidden');
+                icon.style.transform = 'rotate(0deg)';
+            }
+        }
+    </script>
 
     @stack('scripts')
 </body>

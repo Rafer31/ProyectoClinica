@@ -125,6 +125,20 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             })->name('editar');
         });
 
+        // ==========================================
+        // RUTAS DE SERVICIOS (VISTAS)
+        // ==========================================
+        Route::get('/atendidos', function () {
+            return view('personal.servicios.atendidos');
+        })->name('servicios.atendidos');
+
+        Route::get('/servicios', function () {
+            return view('personal.servicios.servicios');
+        })->name('servicios.servicios');
+
+        // ==========================================
+        // RUTAS DE TIPOS DE ESTUDIO
+        // ==========================================
         Route::get('/tipos-estudio', function () {
             return view('personal.tipos-estudio.tipos-estudio');
         })->name('tipos-estudio.index');
@@ -139,9 +153,11 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('personal.tipos-estudio.form-tipo-estudio', compact('tipoEstudio'));
         })->name('tipos-estudio.editar');
 
-        Route::get('/servicios', function () {
-            return view('personal.servicios.servicios');
-        })->name('servicios.servicios');
+        // ==========================================
+        // RUTA DE REQUISITOS (VISTA) - NUEVA
+        // ==========================================
+        Route::get('/requisitos', [App\Http\Controllers\RequisitoController::class, 'indexView'])
+            ->name('requisitos.index');
     });
 
     // ==========================================
@@ -191,7 +207,9 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             // ==========================================
             Route::get('/home/estadisticas', [HomeController::class, 'estadisticas']);
 
-            // API de Pacientes
+            // ==========================================
+            // API DE PACIENTES
+            // ==========================================
             Route::prefix('pacientes')->name('pacientes.')->group(function () {
                 Route::get('/', [PacienteController::class, 'index'])->name('index');
                 Route::post('/', [PacienteController::class, 'store'])->name('store');
@@ -200,23 +218,29 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::delete('/{id}', [PacienteController::class, 'cambiarEstado'])->name('cambiarEstado');
             });
 
+            // ==========================================
+            // API DE REQUISITOS - ACTUALIZADO
+            // ==========================================
             Route::prefix('requisitos')->name('requisitos.')->group(function () {
-                Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('index');
-                Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('store');
-                Route::get('/{id}', [App\Http\Controllers\RequisitoController::class, 'show'])->name('show');
-                Route::put('/{id}', [App\Http\Controllers\RequisitoController::class, 'update'])->name('update');
-                Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('destroy');
+                Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('api.index');
+                Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('api.store');
+                Route::get('/{id}', [App\Http\Controllers\RequisitoController::class, 'show'])->name('api.show');
+                Route::put('/{id}', [App\Http\Controllers\RequisitoController::class, 'update'])->name('api.update');
+                Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('api.destroy');
             });
 
+            // ==========================================
+            // API DE TIPOS DE ESTUDIO
+            // ==========================================
             Route::prefix('tipos-estudio')->name('tipos-estudio.')->group(function () {
-                Route::get('/', [App\Http\Controllers\TipoEstudioController::class, 'index'])->name('index');
+                Route::get('/', [App\Http\Controllers\TipoEstudioController::class, 'index'])->name('api.index');
                 Route::post('/con-requisitos', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'crearConRequisitos'])->name('crearConRequisitos');
                 Route::get('/exportar-pdf/{id}', [App\Http\Controllers\TipoEstudioController::class, 'exportarPDF'])->name('exportarPDF');
-                Route::get('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'show'])->name('show');
-                Route::put('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'update'])->name('update');
-                Route::delete('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'destroy'])->name('destroy');
+                Route::get('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'show'])->name('api.show');
+                Route::put('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'update'])->name('api.update');
+                Route::delete('/{id}', [App\Http\Controllers\TipoEstudioController::class, 'destroy'])->name('api.destroy');
 
-                // Gestión de requisitos
+                // Gestión de requisitos por tipo de estudio
                 Route::prefix('{codTest}/requisitos')->group(function () {
                     Route::get('/', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'listarRequisitos'])->name('requisitos.index');
                     Route::post('/asignar', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'asignarRequisitos'])->name('requisitos.asignar');
@@ -226,16 +250,20 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 });
             });
 
-            // API de Médicos
+            // ==========================================
+            // API DE MÉDICOS
+            // ==========================================
             Route::prefix('medicos')->name('medicos.')->group(function () {
-                Route::get('/', [MedicoController::class, 'index'])->name('index');
-                Route::post('/', [MedicoController::class, 'store'])->name('store');
-                Route::get('/{id}', [MedicoController::class, 'show'])->name('show');
-                Route::put('/{id}', [MedicoController::class, 'update'])->name('update');
-                Route::delete('/{id}', [MedicoController::class, 'destroy'])->name('destroy');
+                Route::get('/', [MedicoController::class, 'index'])->name('api.index');
+                Route::post('/', [MedicoController::class, 'store'])->name('api.store');
+                Route::get('/{id}', [MedicoController::class, 'show'])->name('api.show');
+                Route::put('/{id}', [MedicoController::class, 'update'])->name('api.update');
+                Route::delete('/{id}', [MedicoController::class, 'destroy'])->name('api.destroy');
             });
 
-            // API de Cronogramas
+            // ==========================================
+            // API DE CRONOGRAMAS
+            // ==========================================
             Route::prefix('cronogramas')->name('cronogramas.')->group(function () {
                 // Rutas especiales PRIMERO
                 Route::get('/activos', [App\Http\Controllers\CronogramaAtencionController::class, 'activos'])->name('activos');
@@ -243,31 +271,37 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::get('/personal/{codPer}', [App\Http\Controllers\CronogramaAtencionController::class, 'porPersonal'])->name('porPersonal');
 
                 // Rutas CRUD estándar
-                Route::get('/', [App\Http\Controllers\CronogramaAtencionController::class, 'index'])->name('index');
-                Route::post('/', [App\Http\Controllers\CronogramaAtencionController::class, 'store'])->name('store');
-                Route::get('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'show'])->name('show');
-                Route::put('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'update'])->name('update');
+                Route::get('/', [App\Http\Controllers\CronogramaAtencionController::class, 'index'])->name('api.index');
+                Route::post('/', [App\Http\Controllers\CronogramaAtencionController::class, 'store'])->name('api.store');
+                Route::get('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'show'])->name('api.show');
+                Route::put('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'update'])->name('api.update');
                 Route::patch('/{fecha}/estado', [App\Http\Controllers\CronogramaAtencionController::class, 'cambiarEstado'])->name('cambiarEstado');
-                Route::delete('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'destroy'])->name('destroy');
+                Route::delete('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'destroy'])->name('api.destroy');
             });
 
-            // API de Servicios
+            // ==========================================
+            // API DE SERVICIOS - ACTUALIZADO
+            // ==========================================
             Route::prefix('servicios')->name('servicios.')->group(function () {
-                // Rutas especiales PRIMERO
+                // Rutas especiales PRIMERO (las más específicas)
                 Route::get('/calcular-ficha/{fechaCrono}', [ServicioController::class, 'calcularNumeroFicha']);
                 Route::get('/datos-formulario', [ServicioController::class, 'datosFormulario'])->name('datosFormulario');
                 Route::get('/estadisticas', [ServicioController::class, 'estadisticas'])->name('estadisticas');
                 Route::get('/paciente/{codPa}', [ServicioController::class, 'porPaciente'])->name('porPaciente');
                 Route::get('/estado/{estado}', [ServicioController::class, 'porEstado'])->name('porEstado');
 
-                // CRUD
-                Route::get('/', [ServicioController::class, 'index'])->name('index');
-                Route::post('/', [ServicioController::class, 'store'])->name('store');
-                Route::get('/{id}', [ServicioController::class, 'show'])->name('show');
-                Route::put('/{id}', [ServicioController::class, 'update'])->name('update');
+                // Cambios de estado
+                Route::patch('/{id}/cancelar', [ServicioController::class, 'cancelar'])->name('cancelar');
+                Route::patch('/{id}/entregar', [ServicioController::class, 'entregar'])->name('entregar');
                 Route::patch('/{id}/estado', [ServicioController::class, 'cambiarEstado'])->name('cambiarEstado');
+
+                // CRUD básico
+                Route::get('/', [ServicioController::class, 'index'])->name('api.index');
+                Route::post('/', [ServicioController::class, 'store'])->name('api.store');
+                Route::get('/{id}', [ServicioController::class, 'show'])->name('api.show');
+                Route::put('/{id}', [ServicioController::class, 'update'])->name('api.update');
                 Route::post('/{id}/diagnosticos', [ServicioController::class, 'asociarDiagnosticos'])->name('asociarDiagnosticos');
-                Route::delete('/{id}', [ServicioController::class, 'destroy'])->name('destroy');
+                Route::delete('/{id}', [ServicioController::class, 'destroy'])->name('api.destroy');
             });
         });
     });

@@ -21,12 +21,14 @@ class ServicioController extends Controller
     public function index()
     {
         try {
+            $this->actualizarEstadosAutomaticos();
+
             $servicios = Servicio::with([
                 'paciente:codPa,nomPa,paternoPa,maternoPa,nroHCI',
                 'medico:codMed,nomMed,paternoMed',
                 'tipoEstudio:codTest,descripcion',
                 'cronograma:fechaCrono,cantDispo',
-                'diagnosticos:codDiag,descripDiag'
+                'diagnosticos'
             ])
             ->orderBy('fechaSol', 'desc')
             ->orderBy('horaSol', 'desc')
@@ -45,9 +47,24 @@ class ServicioController extends Controller
         }
     }
 
-    /**
-     * Mostrar un servicio específico
-     */
+    private function actualizarEstadosAutomaticos()
+    {
+        try {
+            $ahora = Carbon::now();
+            $serviciosProgramados = Servicio::where('estado', 'Programado')->get();
+
+            foreach ($serviciosProgramados as $servicio) {
+                $fechaHoraSol = Carbon::parse($servicio->fechaSol . ' ' . $servicio->horaSol);
+                if ($fechaHoraSol->lte($ahora)) {
+                    $servicio->estado = 'EnProceso';
+                    $servicio->save();
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Error al actualizar estados automáticos: ' . $e->getMessage());
+        }
+    }
+
     public function show($id)
     {
         try {
@@ -56,8 +73,7 @@ class ServicioController extends Controller
                 'medico',
                 'tipoEstudio.requisitos',
                 'cronograma.personalSalud',
-                'diagnosticos',
-                'asignaciones.consultorio'
+                'diagnosticos'
             ])->find($id);
 
             if (!$servicio) {
@@ -81,7 +97,8 @@ class ServicioController extends Controller
     }
 
     /**
-     * NUEVO: Calcular número de ficha automáticamente
+     * Calcular número de ficha automáticamente
+     * CORREGIDO: Usa cantDispo directamente del cronograma
      */
     public function calcularNumeroFicha($fechaCrono)
     {
@@ -95,17 +112,16 @@ class ServicioController extends Controller
                 ], 404);
             }
 
-            // Obtener cantidad de servicios ya registrados para esta fecha
-            $serviciosRegistrados = Servicio::where('fechaCrono', $fechaCrono)->count();
+            // Contar servicios NO cancelados (activos)
+            $serviciosActivos = Servicio::where('fechaCrono', $fechaCrono)
+                ->where('estado', '!=', 'Cancelado')
+                ->count();
 
-            // Calcular el número de ficha (servicios registrados + 1)
-            $nroFicha = $serviciosRegistrados + 1;
+            // El próximo número de ficha
+            $nroFicha = $serviciosActivos + 1;
 
-            // Calcular fichas restantes
-            $fichasRestantes = $cronograma->cantDispo - $serviciosRegistrados;
-
-            // Verificar si aún hay fichas disponibles
-            if ($fichasRestantes <= 0) {
+            // Verificar disponibilidad usando cantDispo del cronograma
+            if ($cronograma->cantDispo <= 0) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No hay fichas disponibles para esta fecha'
@@ -116,8 +132,10 @@ class ServicioController extends Controller
                 'success' => true,
                 'data' => [
                     'nroFicha' => $nroFicha,
-                    'fichasRestantes' => $fichasRestantes,
-                    'cantTotal' => $cronograma->cantDispo
+                    'cantDispo' => $cronograma->cantDispo,
+                    'cantFijo' => $cronograma->cantFijo,
+                    'cantEmergencia' => $cronograma->cantEmergencia ?? 0,
+                    'serviciosActivos' => $serviciosActivos
                 ],
                 'message' => 'Número de ficha calculado correctamente'
             ], 200);
@@ -130,7 +148,11 @@ class ServicioController extends Controller
     }
 
     /**
-     * Registrar nuevo servicio - MODIFICADO
+     * Registrar nuevo servicio
+     * CORREGIDO:
+     * - Usa cantDispo directamente
+     * - Incrementa cantEmergencia si es emergencia
+     * - Decrementa cantDispo solo si NO es emergencia
      */
     public function store(Request $request)
     {
@@ -140,29 +162,10 @@ class ServicioController extends Controller
             'nroServ' => 'nullable|string|max:50|unique:Servicio,nroServ',
             'tipoAseg' => 'required|in:AsegEmergencia,AsegRegular,NoAsegEmergencia,NoAsegRegular',
             'nroFicha' => 'nullable|string|max:50',
-            // REMOVIDO: validación de 'estado', siempre será 'Programado' al crear
             'codPa' => 'required|exists:Paciente,codPa',
             'codMed' => 'required|exists:Medico,codMed',
             'codTest' => 'required|exists:TipoEstudio,codTest',
-            'fechaCrono' => 'required|exists:CronogramaAtencion,fechaCrono',
-            'diagnosticoTexto' => 'nullable|string|max:500',
-            'tipoDiagnostico' => 'nullable|in:sol,eco' // NUEVO: tipo de diagnóstico
-        ], [
-            'fechaSol.required' => 'La fecha de solicitud es obligatoria',
-            'horaSol.required' => 'La hora de solicitud es obligatoria',
-            'nroServ.unique' => 'El número de servicio ya existe',
-            'tipoAseg.required' => 'El tipo de seguro es obligatorio',
-            'tipoAseg.in' => 'El tipo de seguro no es válido',
-            'codPa.required' => 'El paciente es obligatorio',
-            'codPa.exists' => 'El paciente seleccionado no existe',
-            'codMed.required' => 'El médico es obligatorio',
-            'codMed.exists' => 'El médico seleccionado no existe',
-            'codTest.required' => 'El tipo de estudio es obligatorio',
-            'codTest.exists' => 'El tipo de estudio seleccionado no existe',
-            'fechaCrono.required' => 'La fecha del cronograma es obligatoria',
-            'fechaCrono.exists' => 'El cronograma seleccionado no existe',
-            'diagnosticoTexto.max' => 'El diagnóstico no puede exceder 500 caracteres',
-            'tipoDiagnostico.in' => 'El tipo de diagnóstico debe ser "sol" o "eco"'
+            'fechaCrono' => 'required|exists:CronogramaAtencion,fechaCrono'
         ]);
 
         if ($validator->fails()) {
@@ -175,62 +178,84 @@ class ServicioController extends Controller
 
         DB::beginTransaction();
         try {
-            // Generar número de servicio si no se proporciona
+            $cronograma = CronogramaAtencion::find($request->fechaCrono);
+
+            if (!$cronograma) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Cronograma no encontrado'
+                ], 404);
+            }
+
+            // Determinar si es emergencia
+            $esEmergencia = in_array($request->tipoAseg, ['AsegEmergencia', 'NoAsegEmergencia']);
+
+            // VALIDACIÓN: Solo si NO es emergencia, verificar cantDispo
+            if (!$esEmergencia && $cronograma->cantDispo <= 0) {
+                DB::rollBack();
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No hay fichas disponibles para esta fecha'
+                ], 422);
+            }
+
+            // Generar número de servicio
             if (!$request->nroServ) {
+                $ultimoServicio = Servicio::count();
                 $request->merge([
-                    'nroServ' => 'SRV-' . date('Ymd') . '-' . str_pad(Servicio::count() + 1, 4, '0', STR_PAD_LEFT)
+                    'nroServ' => 'SRV-' . date('Ymd') . '-' . str_pad($ultimoServicio + 1, 4, '0', STR_PAD_LEFT)
                 ]);
             }
 
-            // NUEVO: Calcular número de ficha si no se proporciona
-            if (!$request->nroFicha) {
-                $serviciosRegistrados = Servicio::where('fechaCrono', $request->fechaCrono)->count();
-                $nroFicha = $serviciosRegistrados + 1;
-            } else {
-                $nroFicha = $request->nroFicha;
-            }
+            // Calcular número de ficha
+            $serviciosActivos = Servicio::where('fechaCrono', $request->fechaCrono)
+                ->where('estado', '!=', 'Cancelado')
+                ->count();
 
-            $data = [
+            $nroFicha = $request->nroFicha ?: ($serviciosActivos + 1);
+
+            // Determinar estado inicial
+            $fechaHoraSol = Carbon::parse($request->fechaSol . ' ' . $request->horaSol);
+            $ahora = Carbon::now();
+            $estado = $fechaHoraSol->lte($ahora) ? 'EnProceso' : 'Programado';
+
+            // Crear el servicio
+            $servicio = Servicio::create([
                 'fechaSol' => $request->fechaSol,
                 'horaSol' => $request->horaSol,
                 'nroServ' => $request->nroServ,
                 'tipoAseg' => $request->tipoAseg,
                 'nroFicha' => $nroFicha,
-                'estado' => 'Programado', // SIEMPRE PROGRAMADO AL CREAR
+                'estado' => $estado,
                 'codPa' => $request->codPa,
                 'codMed' => $request->codMed,
                 'codTest' => $request->codTest,
                 'fechaCrono' => $request->fechaCrono
-            ];
+            ]);
 
-            $servicio = Servicio::create($data);
-
-            // MODIFICADO: Crear/asociar diagnóstico con tipo
-            if ($request->filled('diagnosticoTexto')) {
-                $diagnosticoTexto = trim($request->diagnosticoTexto);
-                $tipoDiagnostico = $request->tipoDiagnostico ?? 'sol'; // Por defecto 'sol'
-
-                // Buscar si ya existe un diagnóstico con ese texto
-                $diagnostico = Diagnostico::where('descripDiag', $diagnosticoTexto)->first();
-
-                // Si no existe, crearlo
-                if (!$diagnostico) {
-                    $diagnostico = Diagnostico::create([
-                        'descripDiag' => $diagnosticoTexto
-                    ]);
-                }
-
-                // Asociar el diagnóstico al servicio con el tipo especificado
-                $servicio->diagnosticos()->attach($diagnostico->codDiag, ['tipo' => $tipoDiagnostico]);
+            // ACTUALIZAR CRONOGRAMA según tipo de servicio
+            if ($esEmergencia) {
+                // EMERGENCIA: Incrementar cantEmergencia
+                $cronograma->cantEmergencia = ($cronograma->cantEmergencia ?? 0) + 1;
+            } else {
+                // NORMAL: Decrementar cantDispo
+                $cronograma->cantDispo = $cronograma->cantDispo - 1;
             }
 
-            $servicio->load(['paciente', 'medico', 'tipoEstudio', 'cronograma', 'diagnosticos']);
+            $cronograma->save();
+
+            $servicio->load(['paciente', 'medico', 'tipoEstudio', 'cronograma']);
 
             DB::commit();
+
             return response()->json([
                 'success' => true,
                 'data' => $servicio,
-                'message' => 'Servicio registrado exitosamente con estado Programado'
+                'message' => "Servicio registrado exitosamente con estado: {$estado}",
+                'cronograma' => [
+                    'cantDispo' => $cronograma->cantDispo,
+                    'cantEmergencia' => $cronograma->cantEmergencia
+                ]
             ], 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -242,7 +267,8 @@ class ServicioController extends Controller
     }
 
     /**
-     * Actualizar servicio - MODIFICADO
+     * Actualizar servicio
+     * Al agregar diagnóstico, cambia automáticamente a "Atendido"
      */
     public function update(Request $request, $id)
     {
@@ -260,13 +286,15 @@ class ServicioController extends Controller
             if ($request->has('fechaSol')) $rules['fechaSol'] = 'date';
             if ($request->has('nroServ')) $rules['nroServ'] = 'string|max:50|unique:Servicio,nroServ,' . $id . ',codServ';
             if ($request->has('tipoAseg')) $rules['tipoAseg'] = 'in:AsegEmergencia,AsegRegular,NoAsegEmergencia,NoAsegRegular';
-            if ($request->has('estado')) $rules['estado'] = 'in:Programado,Atendido,Entregado,EnProceso';
             if ($request->has('codPa')) $rules['codPa'] = 'exists:Paciente,codPa';
             if ($request->has('codMed')) $rules['codMed'] = 'exists:Medico,codMed';
             if ($request->has('codTest')) $rules['codTest'] = 'exists:TipoEstudio,codTest';
             if ($request->has('fechaCrono')) $rules['fechaCrono'] = 'exists:CronogramaAtencion,fechaCrono';
-            if ($request->has('diagnosticoTexto')) $rules['diagnosticoTexto'] = 'nullable|string|max:500';
-            if ($request->has('tipoDiagnostico')) $rules['tipoDiagnostico'] = 'nullable|in:sol,eco'; // NUEVO
+
+            if ($request->has('diagnosticoTexto')) {
+                $rules['diagnosticoTexto'] = 'required|string|max:500';
+                $rules['tipoDiagnostico'] = 'required|in:sol,eco';
+            }
 
             $validator = Validator::make($request->all(), $rules);
 
@@ -280,43 +308,23 @@ class ServicioController extends Controller
 
             DB::beginTransaction();
 
-            // Detectar cambio de estado y actualizar fechas automáticamente
-            $estadoAnterior = $servicio->estado;
+            // Actualizar campos básicos
+            if ($request->has('fechaSol')) $servicio->fechaSol = $request->fechaSol;
+            if ($request->has('horaSol')) $servicio->horaSol = $request->horaSol;
+            if ($request->has('nroServ')) $servicio->nroServ = $request->nroServ;
+            if ($request->has('tipoAseg')) $servicio->tipoAseg = $request->tipoAseg;
+            if ($request->has('nroFicha')) $servicio->nroFicha = $request->nroFicha;
+            if ($request->has('codPa')) $servicio->codPa = $request->codPa;
+            if ($request->has('codMed')) $servicio->codMed = $request->codMed;
+            if ($request->has('codTest')) $servicio->codTest = $request->codTest;
+            if ($request->has('fechaCrono')) $servicio->fechaCrono = $request->fechaCrono;
 
-            $servicio->fill($request->only([
-                'fechaSol', 'horaSol', 'nroServ', 'tipoAseg', 'nroFicha', 'estado',
-                'codPa', 'codMed', 'codTest', 'fechaCrono'
-            ]));
-
-            // Si el estado cambió a "Atendido" y no tenía fecha de atención
-            if ($request->has('estado') && $request->estado === 'Atendido' && $estadoAnterior !== 'Atendido') {
-                if (!$servicio->fechaAten) {
-                    $servicio->fechaAten = Carbon::now()->toDateString();
-                    $servicio->horaAten = Carbon::now()->toTimeString();
-                }
-            }
-
-            // Si el estado cambió a "Entregado" y no tenía fecha de entrega
-            if ($request->has('estado') && $request->estado === 'Entregado' && $estadoAnterior !== 'Entregado') {
-                // Asegurar que tenga fecha de atención
-                if (!$servicio->fechaAten) {
-                    $servicio->fechaAten = Carbon::now()->toDateString();
-                    $servicio->horaAten = Carbon::now()->toTimeString();
-                }
-                // Establecer fecha de entrega
-                if (!$servicio->fechaEnt) {
-                    $servicio->fechaEnt = Carbon::now()->toDateString();
-                    $servicio->horaEnt = Carbon::now()->toTimeString();
-                }
-            }
-
-            // NUEVO: Actualizar diagnóstico si se proporciona texto
-            if ($request->has('diagnosticoTexto')) {
+            // Si se agrega diagnóstico, cambiar a "Atendido"
+            if ($request->has('diagnosticoTexto') && $request->has('tipoDiagnostico')) {
                 $diagnosticoTexto = trim($request->diagnosticoTexto);
-                $tipoDiagnostico = $request->tipoDiagnostico ?? 'sol'; // Por defecto 'sol'
+                $tipoDiagnostico = $request->tipoDiagnostico;
 
                 if (!empty($diagnosticoTexto)) {
-                    // Buscar o crear diagnóstico
                     $diagnostico = Diagnostico::where('descripDiag', $diagnosticoTexto)->first();
 
                     if (!$diagnostico) {
@@ -325,13 +333,16 @@ class ServicioController extends Controller
                         ]);
                     }
 
-                    // Sincronizar (reemplazar el diagnóstico anterior) con el tipo especificado
                     $servicio->diagnosticos()->sync([
                         $diagnostico->codDiag => ['tipo' => $tipoDiagnostico]
                     ]);
-                } else {
-                    // Si el texto está vacío, eliminar todos los diagnósticos
-                    $servicio->diagnosticos()->detach();
+
+                    $servicio->estado = 'Atendido';
+
+                    if (!$servicio->fechaAten) {
+                        $servicio->fechaAten = Carbon::now()->toDateString();
+                        $servicio->horaAten = Carbon::now()->toTimeString();
+                    }
                 }
             }
 
@@ -355,8 +366,118 @@ class ServicioController extends Controller
     }
 
     /**
-     * Cambiar estado del servicio
+     * Cancelar servicio
+     * CORREGIDO: Devuelve la ficha a cantDispo si NO era emergencia
      */
+    public function cancelar($id)
+    {
+        DB::beginTransaction();
+        try {
+            $servicio = Servicio::find($id);
+
+            if (!$servicio) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Servicio no encontrado'
+                ], 404);
+            }
+
+            if ($servicio->estado === 'Entregado') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede cancelar un servicio ya entregado'
+                ], 422);
+            }
+
+            if ($servicio->estado === 'Atendido') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se puede cancelar un servicio ya atendido'
+                ], 422);
+            }
+
+            // Determinar si era emergencia
+            $esEmergencia = in_array($servicio->tipoAseg, ['AsegEmergencia', 'NoAsegEmergencia']);
+
+            // DEVOLVER FICHA AL CRONOGRAMA
+            $cronograma = CronogramaAtencion::find($servicio->fechaCrono);
+
+            if ($cronograma) {
+                if ($esEmergencia) {
+                    // Si era emergencia, decrementar cantEmergencia
+                    $cronograma->cantEmergencia = max(0, ($cronograma->cantEmergencia ?? 0) - 1);
+                } else {
+                    // Si era normal, incrementar cantDispo
+                    $cronograma->cantDispo = $cronograma->cantDispo + 1;
+                }
+                $cronograma->save();
+            }
+
+            // Cambiar estado del servicio
+            $servicio->estado = 'Cancelado';
+            $servicio->save();
+
+            $servicio->load(['paciente', 'medico', 'tipoEstudio', 'cronograma']);
+
+            DB::commit();
+
+            return response()->json([
+                'success' => true,
+                'data' => $servicio,
+                'message' => 'Servicio cancelado exitosamente',
+                'cronograma' => [
+                    'cantDispo' => $cronograma->cantDispo ?? null,
+                    'cantEmergencia' => $cronograma->cantEmergencia ?? null
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al cancelar el servicio: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function entregar($id)
+    {
+        try {
+            $servicio = Servicio::find($id);
+
+            if (!$servicio) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Servicio no encontrado'
+                ], 404);
+            }
+
+            if ($servicio->estado !== 'Atendido') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Solo se pueden entregar servicios que estén en estado "Atendido"'
+                ], 422);
+            }
+
+            $servicio->estado = 'Entregado';
+            $servicio->fechaEnt = Carbon::now()->toDateString();
+            $servicio->horaEnt = Carbon::now()->toTimeString();
+            $servicio->save();
+
+            $servicio->load(['paciente', 'medico', 'tipoEstudio', 'diagnosticos']);
+
+            return response()->json([
+                'success' => true,
+                'data' => $servicio,
+                'message' => 'Servicio marcado como entregado exitosamente'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al marcar como entregado: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
     public function cambiarEstado(Request $request, $id)
     {
         try {
@@ -370,7 +491,7 @@ class ServicioController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'estado' => 'required|in:Programado,Atendido,Entregado,EnProceso'
+                'estado' => 'required|in:Programado,Atendido,Entregado,EnProceso,Cancelado'
             ]);
 
             if ($validator->fails()) {
@@ -381,17 +502,12 @@ class ServicioController extends Controller
                 ], 422);
             }
 
-            DB::beginTransaction();
-
             $estadoAnterior = $servicio->estado;
             $nuevoEstado = $request->estado;
 
-            // Actualizar el estado
             $servicio->estado = $nuevoEstado;
 
-            // Lógica automática de fechas según el cambio de estado
             if ($nuevoEstado === 'Atendido' && $estadoAnterior !== 'Atendido') {
-                // Al cambiar a "Atendido", registrar fecha y hora de atención
                 if (!$servicio->fechaAten) {
                     $servicio->fechaAten = Carbon::now()->toDateString();
                     $servicio->horaAten = Carbon::now()->toTimeString();
@@ -399,12 +515,10 @@ class ServicioController extends Controller
             }
 
             if ($nuevoEstado === 'Entregado' && $estadoAnterior !== 'Entregado') {
-                // Al cambiar a "Entregado", asegurar que tenga fecha de atención
                 if (!$servicio->fechaAten) {
                     $servicio->fechaAten = Carbon::now()->toDateString();
                     $servicio->horaAten = Carbon::now()->toTimeString();
                 }
-                // Registrar fecha y hora de entrega
                 if (!$servicio->fechaEnt) {
                     $servicio->fechaEnt = Carbon::now()->toDateString();
                     $servicio->horaEnt = Carbon::now()->toTimeString();
@@ -414,22 +528,12 @@ class ServicioController extends Controller
             $servicio->save();
             $servicio->load(['paciente', 'medico', 'tipoEstudio']);
 
-            DB::commit();
-
-            $mensaje = "Estado cambiado a {$nuevoEstado} exitosamente";
-            if ($nuevoEstado === 'Atendido') {
-                $mensaje .= " - Fecha de atención registrada automáticamente";
-            } elseif ($nuevoEstado === 'Entregado') {
-                $mensaje .= " - Fecha de entrega registrada automáticamente";
-            }
-
             return response()->json([
                 'success' => true,
                 'data' => $servicio,
-                'message' => $mensaje
+                'message' => "Estado cambiado a {$nuevoEstado} exitosamente"
             ], 200);
         } catch (\Exception $e) {
-            DB::rollBack();
             return response()->json([
                 'success' => false,
                 'message' => 'Error al cambiar el estado: ' . $e->getMessage()
@@ -437,9 +541,6 @@ class ServicioController extends Controller
         }
     }
 
-    /**
-     * Asociar diagnósticos a un servicio
-     */
     public function asociarDiagnosticos(Request $request, $id)
     {
         try {
@@ -488,7 +589,8 @@ class ServicioController extends Controller
     }
 
     /**
-     * Obtener datos necesarios para el formulario
+     * Obtener datos para el formulario
+     * CORREGIDO: Usa cantDispo directamente
      */
     public function datosFormulario()
     {
@@ -506,16 +608,17 @@ class ServicioController extends Controller
                 ->orderBy('descripcion')
                 ->get();
 
-            $cronogramas = CronogramaAtencion::where('estado', 'activo')
-                ->orWhere('estado', 'inactivoFut') // AGREGADO: Permitir cronogramas futuros
-                ->where('cantDispo', '>', 0)
-                ->where('fechaCrono', '>=', date('Y-m-d'))
-                ->with('personalSalud:codPer,nomPer,paternoPer')
-                ->orderBy('fechaCrono')
-                ->get();
+            $hoy = Carbon::now()->toDateString();
 
-            $diagnosticos = Diagnostico::select('codDiag', 'descripDiag')
-                ->orderBy('descripDiag')
+            // Obtener cronogramas con cantDispo > 0
+            $cronogramas = CronogramaAtencion::where(function($query) {
+                    $query->where('estado', 'activo')
+                          ->orWhere('estado', 'inactivoFut');
+                })
+                ->where('cantDispo', '>', 0)
+                ->where('fechaCrono', '>=', $hoy)
+                ->select('fechaCrono', 'cantDispo', 'cantFijo', 'cantEmergencia', 'estado', 'codPer')
+                ->orderBy('fechaCrono', 'asc')
                 ->get();
 
             return response()->json([
@@ -524,12 +627,17 @@ class ServicioController extends Controller
                     'pacientes' => $pacientes,
                     'medicos' => $medicos,
                     'tiposEstudio' => $tiposEstudio,
-                    'cronogramas' => $cronogramas,
-                    'diagnosticos' => $diagnosticos
+                    'cronogramas' => $cronogramas
                 ],
                 'message' => 'Datos obtenidos correctamente'
             ], 200);
         } catch (\Exception $e) {
+            \Log::error('Error en datosFormulario:', [
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine()
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Error al obtener los datos: ' . $e->getMessage()
@@ -537,9 +645,6 @@ class ServicioController extends Controller
         }
     }
 
-    /**
-     * Listar servicios por paciente
-     */
     public function porPaciente($codPa)
     {
         try {
@@ -561,13 +666,12 @@ class ServicioController extends Controller
         }
     }
 
-    /**
-     * Listar servicios por estado
-     */
     public function porEstado($estado)
     {
         try {
-            $servicios = Servicio::with(['paciente', 'medico', 'tipoEstudio'])
+            $this->actualizarEstadosAutomaticos();
+
+            $servicios = Servicio::with(['paciente', 'medico', 'tipoEstudio', 'diagnosticos'])
                 ->where('estado', $estado)
                 ->orderBy('fechaSol', 'desc')
                 ->get();
@@ -585,20 +689,17 @@ class ServicioController extends Controller
         }
     }
 
-    /**
-     * Estadísticas de servicios
-     */
     public function estadisticas()
     {
         try {
+            $this->actualizarEstadosAutomaticos();
             $hoy = date('Y-m-d');
 
             $stats = [
                 'hoy' => Servicio::whereDate('fechaSol', $hoy)->count(),
                 'programados' => Servicio::where('estado', 'Programado')->count(),
                 'enProceso' => Servicio::where('estado', 'EnProceso')->count(),
-                'atendidos' => Servicio::where('estado', 'Atendido')->whereDate('fechaAten', $hoy)->count(),
-                'tiposEstudio' => TipoEstudio::count(),
+                'atendidos' => Servicio::where('estado', 'Atendido')->count(),
                 'porEstado' => Servicio::select('estado', DB::raw('count(*) as total'))
                     ->groupBy('estado')
                     ->get(),
@@ -620,9 +721,6 @@ class ServicioController extends Controller
         }
     }
 
-    /**
-     * Eliminar servicio
-     */
     public function destroy($id)
     {
         try {
@@ -637,10 +735,7 @@ class ServicioController extends Controller
 
             DB::beginTransaction();
 
-            // Eliminar relaciones con diagnósticos
             $servicio->diagnosticos()->detach();
-
-            // Eliminar el servicio
             $servicio->delete();
 
             DB::commit();
