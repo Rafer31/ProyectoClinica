@@ -2,339 +2,208 @@
 @section('title', 'Inicio - Supervisor')
 @section('content')
     <div class="space-y-6">
-        <!-- Encabezado -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2">
-                        <span class="material-icons align-middle text-4xl text-blue-600">dashboard</span>
-                        Panel de Control
-                    </h1>
-                    <p class="text-gray-600">Bienvenido, {{ Auth::user()->nomPer }} {{ Auth::user()->paternoPer }}</p>
-                    <p class="text-sm text-gray-500">{{ now()->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</p>
-                </div>
-
-                <!-- Botón Generar Reporte -->
-                <div class="relative">
-                    <button id="btn-menu-reporte"
-                        class="flex items-center gap-2 px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all hover:shadow-lg">
-                        <span class="material-icons">picture_as_pdf</span>
-                        <span class="font-medium">Generar Reporte</span>
-                        <span class="material-icons text-sm">expand_more</span>
-                    </button>
-
-                    <!-- Menú Desplegable -->
-                    <div id="menu-reporte"
-                        class="hidden absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
-                        <div class="py-2">
-                            <a href="{{ route('personal.reportes.dia') }}" target="_blank"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                                <span class="material-icons text-blue-600">today</span>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Reporte del Día</p>
-                                    <p class="text-xs text-gray-500">{{ now()->format('d/m/Y') }}</p>
-                                </div>
-                            </a>
-                            <a href="{{ route('personal.reportes.semana') }}" target="_blank"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                                <span class="material-icons text-green-600">date_range</span>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Reporte Semanal</p>
-                                    <p class="text-xs text-gray-500">Últimos 7 días</p>
-                                </div>
-                            </a>
-                            <a href="{{ route('personal.reportes.mes') }}" target="_blank"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition">
-                                <span class="material-icons text-purple-600">calendar_month</span>
-                                <div>
-                                    <p class="text-sm font-medium text-gray-900">Reporte Mensual</p>
-                                    <p class="text-xs text-gray-500">{{ now()->format('F Y') }}</p>
-                                </div>
-                            </a>
+        <!-- Hero de Bienvenida -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-2xl p-8 text-white">
+            <div class="flex items-center justify-between">
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center backdrop-blur-sm">
+                            <span class="material-icons text-4xl">admin_panel_settings</span>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold">¡Bienvenido, {{ Auth::user()->nomPer }}!</h1>
+                            <p class="text-blue-100 text-lg">Panel de Supervisión - Sistema Clínica</p>
                         </div>
                     </div>
+                    <p class="text-blue-50 max-w-2xl text-lg">
+                        Desde este panel puedes administrar el personal del sistema y visualizar estadísticas importantes de la clínica.
+                    </p>
+                    <div class="flex items-center gap-2 text-sm text-blue-100">
+                        <span class="material-icons text-lg">event</span>
+                        <span>{{ now()->isoFormat('dddd, D [de] MMMM [de] YYYY') }}</span>
+                    </div>
+                </div>
+                <div class="hidden lg:block">
+                    <div class="w-48 h-48 bg-white bg-opacity-10 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <span class="material-icons" style="font-size: 120px; opacity: 0.3;">
+                            supervisor_account
+                        </span>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <!-- Tarjetas de estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Pacientes Hoy -->
-            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <span class="material-icons text-2xl">today</span>
-                    </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">HOY</span>
-                </div>
-                <p class="text-3xl font-bold mb-1" id="stat-hoy">0</p>
-                <p class="text-sm opacity-90">Pacientes Atendidos</p>
+        <!-- Accesos Rápidos -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center gap-2 mb-6">
+                <span class="material-icons text-blue-600 text-3xl">rocket_launch</span>
+                <h2 class="text-2xl font-bold text-gray-800">Accesos Rápidos</h2>
             </div>
-
-            <!-- Pacientes Esta Semana -->
-            <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <span class="material-icons text-2xl">date_range</span>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Gestión de Personal -->
+                <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}" 
+                   class="group bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1 hover:border-blue-400">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <span class="material-icons text-white text-2xl">badge</span>
+                        </div>
+                        <span class="material-icons text-blue-400 group-hover:text-blue-600 transition-colors">arrow_forward</span>
                     </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">SEMANA</span>
-                </div>
-                <p class="text-3xl font-bold mb-1" id="stat-semana">0</p>
-                <p class="text-sm opacity-90">Últimos 7 días</p>
-            </div>
-
-            <!-- Pacientes Este Mes -->
-            <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <span class="material-icons text-2xl">calendar_month</span>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Gestión de Personal</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Administra los usuarios del sistema, crea nuevos accesos, modifica roles y gestiona el personal clínico.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Crear usuarios</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Editar perfiles</span>
+                        <span class="px-3 py-1 bg-blue-100 text-blue-700 text-xs font-medium rounded-full">Asignar roles</span>
                     </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">MES</span>
-                </div>
-                <p class="text-3xl font-bold mb-1" id="stat-mes">0</p>
-                <p class="text-sm opacity-90">{{ now()->format('F Y') }}</p>
-            </div>
+                </a>
 
-            <!-- Total General -->
-            <div class="bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg shadow-lg p-6 text-white">
-                <div class="flex items-center justify-between mb-3">
-                    <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center">
-                        <span class="material-icons text-2xl">analytics</span>
+                <!-- Estadísticas -->
+                <a href="{{ route('supervisor.estadisticas.estadisticas') }}" 
+                   class="group bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1 hover:border-purple-400">
+                    <div class="flex items-start justify-between mb-4">
+                        <div class="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
+                            <span class="material-icons text-white text-2xl">bar_chart</span>
+                        </div>
+                        <span class="material-icons text-purple-400 group-hover:text-purple-600 transition-colors">arrow_forward</span>
                     </div>
-                    <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded">TOTAL</span>
-                </div>
-                <p class="text-3xl font-bold mb-1" id="stat-total">0</p>
-                <p class="text-sm opacity-90">Todos los pacientes</p>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Estadísticas del Sistema</h3>
+                    <p class="text-gray-600 text-sm mb-4">
+                        Visualiza reportes, gráficos y métricas importantes sobre el funcionamiento de la clínica.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">Reportes</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">Gráficos</span>
+                        <span class="px-3 py-1 bg-purple-100 text-purple-700 text-xs font-medium rounded-full">Métricas</span>
+                    </div>
+                </a>
             </div>
         </div>
 
-        <!-- Gráficos y Detalles -->
+        <!-- Guía de Funcionalidades -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <!-- Servicios por Estado -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <span class="material-icons text-blue-600">assignment</span>
-                    Servicios por Estado
-                </h3>
-                <div class="space-y-3" id="servicios-estado">
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-amber-600">schedule</span>
-                            </div>
-                            <span class="text-sm font-medium text-gray-700">Programados</span>
+            <!-- Tu Rol como Supervisor -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-icons text-blue-600 text-2xl">info</span>
+                    <h3 class="text-xl font-bold text-gray-800">Tu Rol como Supervisor</h3>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-start gap-3 p-3 bg-blue-50 rounded-lg">
+                        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="material-icons text-white text-sm">verified_user</span>
                         </div>
-                        <span class="text-xl font-bold text-gray-900" id="estado-programado">0</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-1">Control Total de Accesos</h4>
+                            <p class="text-sm text-gray-600">Tienes la capacidad de crear, modificar y gestionar todos los usuarios del sistema clínico.</p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-blue-600">pending_actions</span>
-                            </div>
-                            <span class="text-sm font-medium text-gray-700">En Proceso</span>
+                    <div class="flex items-start gap-3 p-3 bg-indigo-50 rounded-lg">
+                        <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="material-icons text-white text-sm">analytics</span>
                         </div>
-                        <span class="text-xl font-bold text-gray-900" id="estado-proceso">0</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-1">Monitoreo y Análisis</h4>
+                            <p class="text-sm text-gray-600">Accede a estadísticas detalladas para tomar decisiones informadas sobre el personal.</p>
+                        </div>
                     </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-green-600">check_circle</span>
-                            </div>
-                            <span class="text-sm font-medium text-gray-700">Atendidos</span>
+                    <div class="flex items-start gap-3 p-3 bg-purple-50 rounded-lg">
+                        <div class="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-1">
+                            <span class="material-icons text-white text-sm">security</span>
                         </div>
-                        <span class="text-xl font-bold text-gray-900" id="estado-atendido">0</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-                                <span class="material-icons text-purple-600">done_all</span>
-                            </div>
-                            <span class="text-sm font-medium text-gray-700">Entregados</span>
+                        <div>
+                            <h4 class="font-semibold text-gray-800 mb-1">Seguridad del Sistema</h4>
+                            <p class="text-sm text-gray-600">Garantiza que solo el personal autorizado tenga acceso a las funciones correspondientes.</p>
                         </div>
-                        <span class="text-xl font-bold text-gray-900" id="estado-entregado">0</span>
                     </div>
                 </div>
             </div>
 
-            <!-- Tipos de Seguro -->
-            <div class="bg-white rounded-lg shadow p-6">
-                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <span class="material-icons text-blue-600">security</span>
-                    Distribución por Tipo de Seguro
-                </h3>
-                <div class="space-y-3" id="tipos-seguro">
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span class="text-sm font-medium text-gray-700">Asegurado - Emergencia</span>
-                        <span class="text-xl font-bold text-red-600" id="aseg-emergencia">0</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span class="text-sm font-medium text-gray-700">Asegurado - Regular</span>
-                        <span class="text-xl font-bold text-green-600" id="aseg-regular">0</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span class="text-sm font-medium text-gray-700">No Asegurado - Emergencia</span>
-                        <span class="text-xl font-bold text-orange-600" id="noaseg-emergencia">0</span>
-                    </div>
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <span class="text-sm font-medium text-gray-700">No Asegurado - Regular</span>
-                        <span class="text-xl font-bold text-blue-600" id="noaseg-regular">0</span>
-                    </div>
+            <!-- Acciones Rápidas -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <div class="flex items-center gap-2 mb-4">
+                    <span class="material-icons text-blue-600 text-2xl">bolt</span>
+                    <h3 class="text-xl font-bold text-gray-800">Acciones Rápidas</h3>
+                </div>
+                <div class="space-y-3">
+                    <a href="{{ route('supervisor.gestion-personal.agregar') }}" 
+                       class="flex items-center gap-3 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg hover:shadow-md transition-all group">
+                        <div class="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span class="material-icons text-white">person_add</span>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Agregar Nuevo Personal</h4>
+                            <p class="text-xs text-gray-500">Crear un nuevo usuario en el sistema</p>
+                        </div>
+                        <span class="material-icons text-green-600 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                    </a>
+
+                    <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}" 
+                       class="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg hover:shadow-md transition-all group">
+                        <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span class="material-icons text-white">edit</span>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Ver Todo el Personal</h4>
+                            <p class="text-xs text-gray-500">Lista completa de usuarios del sistema</p>
+                        </div>
+                        <span class="material-icons text-blue-600 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                    </a>
+
+                    <a href="{{ route('supervisor.estadisticas.estadisticas') }}" 
+                       class="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-lg hover:shadow-md transition-all group">
+                        <div class="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <span class="material-icons text-white">insights</span>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-800">Ver Estadísticas</h4>
+                            <p class="text-xs text-gray-500">Análisis y reportes del sistema</p>
+                        </div>
+                        <span class="material-icons text-purple-600 group-hover:translate-x-1 transition-transform">chevron_right</span>
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Últimos Servicios -->
-        <div class="bg-white rounded-lg shadow">
-            <div class="p-6 border-b border-gray-200">
-                <h3 class="text-lg font-bold text-gray-900 flex items-center gap-2">
-                    <span class="material-icons text-blue-600">history</span>
-                    Últimos Servicios Atendidos
-                </h3>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-sm">
-                    <thead class="bg-gray-50 border-b">
-                        <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nro. Servicio</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipo Estudio</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fecha</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ultimos-servicios" class="divide-y divide-gray-200">
-                        <tr>
-                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                                <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600">
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+        <!-- Información del Sistema -->
+        <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl border border-gray-200 p-6">
+            <div class="flex items-start gap-4">
+                <div class="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <span class="material-icons text-white text-2xl">lightbulb</span>
+                </div>
+                <div>
+                    <h3 class="text-lg font-bold text-gray-800 mb-2">💡 Consejo</h3>
+                    <p class="text-gray-700 mb-3">
+                        Como supervisor, tu responsabilidad principal es mantener actualizada la información del personal. 
+                        Asegúrate de revisar regularmente los accesos y roles asignados para garantizar la seguridad del sistema.
+                    </p>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-white text-gray-700 text-xs font-medium rounded-full border border-gray-300">
+                            <span class="material-icons text-xs align-middle">check_circle</span> Revisa permisos periódicamente
+                        </span>
+                        <span class="px-3 py-1 bg-white text-gray-700 text-xs font-medium rounded-full border border-gray-300">
+                            <span class="material-icons text-xs align-middle">check_circle</span> Mantén datos actualizados
+                        </span>
+                        <span class="px-3 py-1 bg-white text-gray-700 text-xs font-medium rounded-full border border-gray-300">
+                            <span class="material-icons text-xs align-middle">check_circle</span> Monitorea estadísticas
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        // Menú desplegable de reportes
-        document.getElementById('btn-menu-reporte').addEventListener('click', function (e) {
-            e.stopPropagation();
-            document.getElementById('menu-reporte').classList.toggle('hidden');
-        });
-
-        // Cerrar menú al hacer clic fuera
-        document.addEventListener('click', function () {
-            document.getElementById('menu-reporte').classList.add('hidden');
-        });
-
-        // Cargar estadísticas
-        async function cargarEstadisticas() {
-            try {
-                const response = await fetch('/api/personal/home/estadisticas');
-                const data = await response.json();
-
-                if (data.success) {
-                    const stats = data.data;
-
-                    // Estadísticas principales
-                    document.getElementById('stat-hoy').textContent = stats.hoy || 0;
-                    document.getElementById('stat-semana').textContent = stats.semana || 0;
-                    document.getElementById('stat-mes').textContent = stats.mes || 0;
-                    document.getElementById('stat-total').textContent = stats.total || 0;
-
-                    // Servicios por estado
-                    document.getElementById('estado-programado').textContent = stats.porEstado?.Programado || 0;
-                    document.getElementById('estado-proceso').textContent = stats.porEstado?.EnProceso || 0;
-                    document.getElementById('estado-atendido').textContent = stats.porEstado?.Atendido || 0;
-                    document.getElementById('estado-entregado').textContent = stats.porEstado?.Entregado || 0;
-
-                    // Tipos de seguro
-                    document.getElementById('aseg-emergencia').textContent = stats.porTipoAseg?.AsegEmergencia || 0;
-                    document.getElementById('aseg-regular').textContent = stats.porTipoAseg?.AsegRegular || 0;
-                    document.getElementById('noaseg-emergencia').textContent = stats.porTipoAseg?.NoAsegEmergencia || 0;
-                    document.getElementById('noaseg-regular').textContent = stats.porTipoAseg?.NoAsegRegular || 0;
-
-                    // Últimos servicios
-                    renderUltimosServicios(stats.ultimosServicios || []);
-                }
-            } catch (error) {
-                console.error('Error al cargar estadísticas:', error);
-            }
+    <style>
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
-        function formatFecha(fechaStr) {
-            if (!fechaStr) return '—';
-
-            // Si ya es número (timestamp)
-            if (typeof fechaStr === 'number') {
-                const d = new Date(fechaStr);
-                if (!isNaN(d)) return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }).format(d);
-                return '—';
-            }
-
-            // Si viene en formato ISO o con espacio en lugar de 'T', normalizamos
-            let s = String(fechaStr).trim();
-
-            // Si viene en formato DD/MM/YYYY → convertir a YYYY-MM-DD
-            const ddmmyyyy = /^(\d{2})\/(\d{2})\/(\d{4})$/;
-            if (ddmmyyyy.test(s)) {
-                const [, dd, mm, yyyy] = s.match(ddmmyyyy);
-                s = `${yyyy}-${mm}-${dd}`;
-            }
-
-            // Si viene como 'YYYY-MM-DD' sin hora, añadimos 'T00:00:00' para que sea ISO
-            const ymd = /^(\d{4})-(\d{2})-(\d{2})$/;
-            if (ymd.test(s)) s = s + 'T00:00:00';
-
-            // Reemplazar espacio entre fecha y hora por 'T' (p. ej. '2025-11-13 08:00:00')
-            s = s.replace(' ', 'T');
-
-            const d = new Date(s);
-            if (isNaN(d)) return '—';
-
-            return new Intl.DateTimeFormat('es-ES', { day: '2-digit', month: 'long', year: 'numeric' }).format(d);
+        
+        .group:hover .material-icons {
+            animation: float 2s ease-in-out infinite;
         }
-
-        function renderUltimosServicios(servicios) {
-            const tbody = document.getElementById('ultimos-servicios');
-
-            if (servicios.length === 0) {
-                tbody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="px-6 py-8 text-center text-gray-500">
-                        No hay servicios recientes
-                    </td>
-                </tr>
-            `;
-                return;
-            }
-
-            tbody.innerHTML = servicios.map(servicio => {
-                const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''}`;
-                const fecha = formatFecha(servicio.fechaAten);
-
-                let estadoClass = '';
-                if (servicio.estado === 'Programado') estadoClass = 'bg-amber-100 text-amber-800';
-                else if (servicio.estado === 'EnProceso') estadoClass = 'bg-blue-100 text-blue-800';
-                else if (servicio.estado === 'Atendido') estadoClass = 'bg-green-100 text-green-800';
-                else estadoClass = 'bg-purple-100 text-purple-800';
-
-                return `
-                <tr class="hover:bg-gray-50">
-                    <td class="px-6 py-4 whitespace-nowrap font-medium">${servicio.nroServ}</td>
-                    <td class="px-6 py-4">${paciente}</td>
-                    <td class="px-6 py-4">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
-                    <td class="px-6 py-4">${fecha}</td>
-                    <td class="px-6 py-4">
-                        <span class="px-2 py-1 text-xs font-medium rounded-full ${estadoClass}">
-                            ${servicio.estado}
-                        </span>
-                    </td>
-                </tr>
-            `;
-            }).join('');
-        }
-
-        // Cargar al iniciar
-        document.addEventListener('DOMContentLoaded', cargarEstadisticas);
-    </script>
+    </style>
 @endsection

@@ -54,7 +54,7 @@ $breadcrumbs = [
         const submitBtn = document.querySelector('button[type="submit"]');
         const originalText = submitBtn.innerText;
         submitBtn.disabled = true;
-        submitBtn.innerText = 'Guardando...';
+        submitBtn.innerHTML = '<span class="material-icons animate-spin mr-2">refresh</span>Guardando...';
 
         let data = {
             usuarioPer: document.getElementById('usuarioPer').value.trim(),
@@ -68,23 +68,19 @@ $breadcrumbs = [
         const isEdit = @json(isset($personal) && $personal);
         const personalId = @json(isset($personal) ? $personal->codPer : null);
 
-        // Solo agregar clavePer si no es edición o si se proporcionó una nueva contraseña
         const clavePer = document.getElementById('clavePer').value.trim();
         const clavePerConfirm = document.getElementById('clavePer_confirmation').value.trim();
 
         if (!isEdit) {
-            // En creación, la contraseña es obligatoria
             data.clavePer = clavePer;
         } else if (clavePer) {
-            // En edición, solo si se proporciona
             data.clavePer = clavePer;
         }
 
-        // Validar que las contraseñas coincidan si se proporcionaron
         if (clavePer && clavePer !== clavePerConfirm) {
             mostrarError('Las contraseñas no coinciden');
             submitBtn.disabled = false;
-            submitBtn.innerText = originalText;
+            submitBtn.innerHTML = originalText;
             return;
         }
 
@@ -114,7 +110,7 @@ $breadcrumbs = [
             });
         } finally {
             submitBtn.disabled = false;
-            submitBtn.innerText = originalText;
+            submitBtn.innerHTML = originalText;
         }
     });
 
@@ -122,7 +118,6 @@ $breadcrumbs = [
         const alerta = document.getElementById('alerta');
         const errorContainer = document.getElementById('errorContainer');
 
-        // Limpiar errores previos
         document.querySelectorAll('.border-red-500').forEach(el => {
             el.classList.remove('border-red-500');
         });
@@ -131,10 +126,15 @@ $breadcrumbs = [
         });
 
         if (res.success) {
-            alerta.className = "p-4 mt-4 rounded-lg bg-green-100 border border-green-400 text-green-800 flex items-center";
+            alerta.className = "p-6 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-400 text-green-800 flex items-center shadow-lg";
             alerta.innerHTML = `
-                <span class="material-icons mr-2">check_circle</span>
-                <span>${res.message}</span>
+                <div class="flex-shrink-0 w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mr-4">
+                    <span class="material-icons text-white text-2xl">check_circle</span>
+                </div>
+                <div>
+                    <p class="font-bold text-lg">${res.message}</p>
+                    <p class="text-sm text-green-700 mt-1">Redirigiendo...</p>
+                </div>
             `;
             alerta.classList.remove('hidden');
             errorContainer.classList.add('hidden');
@@ -144,10 +144,14 @@ $breadcrumbs = [
             }, 1500);
 
         } else {
-            alerta.className = "p-4 mt-4 rounded-lg bg-red-100 border border-red-400 text-red-800 flex items-center";
+            alerta.className = "p-6 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-400 text-red-800 flex items-center shadow-lg";
             alerta.innerHTML = `
-                <span class="material-icons mr-2">error</span>
-                <span>${res.message ?? "Error al guardar"}</span>
+                <div class="flex-shrink-0 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                    <span class="material-icons text-white text-2xl">error</span>
+                </div>
+                <div>
+                    <p class="font-bold text-lg">${res.message ?? "Error al guardar"}</p>
+                </div>
             `;
             alerta.classList.remove('hidden');
 
@@ -161,7 +165,7 @@ $breadcrumbs = [
                         inputElement.classList.add('border-red-500');
 
                         const errorMsg = document.createElement('p');
-                        errorMsg.className = 'text-red-600 text-sm mt-1 error-message';
+                        errorMsg.className = 'text-red-600 text-sm mt-1 error-message font-medium';
                         errorMsg.innerText = res.errors[campo][0];
                         inputElement.parentElement.appendChild(errorMsg);
                     }
@@ -174,9 +178,9 @@ $breadcrumbs = [
                 erroresHtml += '</ul>';
                 errorContainer.innerHTML = `
                     <div class="flex items-start">
-                        <span class="material-icons text-red-600 mr-2">warning</span>
+                        <span class="material-icons text-red-600 mr-3 mt-1">warning</span>
                         <div>
-                            <p class="font-semibold mb-2">Por favor corrige los siguientes errores:</p>
+                            <p class="font-bold mb-2 text-lg">Por favor corrige los siguientes errores:</p>
                             ${erroresHtml}
                         </div>
                     </div>
@@ -189,16 +193,19 @@ $breadcrumbs = [
 
     function mostrarError(mensaje) {
         const alerta = document.getElementById('alerta');
-        alerta.className = "p-4 mt-4 rounded-lg bg-red-100 border border-red-400 text-red-800 flex items-center";
+        alerta.className = "p-6 rounded-xl bg-gradient-to-r from-red-50 to-pink-50 border-2 border-red-400 text-red-800 flex items-center shadow-lg";
         alerta.innerHTML = `
-            <span class="material-icons mr-2">error</span>
-            <span>${mensaje}</span>
+            <div class="flex-shrink-0 w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mr-4">
+                <span class="material-icons text-white text-2xl">error</span>
+            </div>
+            <div>
+                <p class="font-bold text-lg">${mensaje}</p>
+            </div>
         `;
         alerta.classList.remove('hidden');
         alerta.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
 
-    // Mostrar/ocultar campos de contraseña
     function togglePassword(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
@@ -215,116 +222,136 @@ $breadcrumbs = [
 @endpush
 
 <div class="space-y-6">
-    <!-- Encabezado -->
-    <div class="bg-white rounded-lg shadow-md p-6">
+    <!-- Hero Section -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-2xl p-8 text-white">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-                    <span class="material-icons text-4xl text-indigo-600 mr-3">
+                <h1 class="text-4xl font-bold mb-2 flex items-center gap-3">
+                    <span class="material-icons text-5xl">
                         {{ isset($personal) ? 'edit' : 'person_add' }}
                     </span>
                     {{ isset($personal) ? 'Editar Personal de Salud' : 'Agregar Nuevo Personal' }}
                 </h1>
-                <p class="text-gray-600 ml-14">
+                <p class="text-blue-100 text-lg">
                     {{ isset($personal) ? 'Actualiza la información del personal de salud' : 'Completa el formulario para registrar nuevo personal en el sistema' }}
                 </p>
+            </div>
+            <div class="hidden lg:block">
+                <div class="w-32 h-32 bg-white bg-opacity-20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <span class="material-icons" style="font-size: 80px; opacity: 0.5;">
+                        {{ isset($personal) ? 'edit_note' : 'person_add_alt_1' }}
+                    </span>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Alertas -->
     <div id="alerta" class="hidden"></div>
-    <div id="errorContainer" class="hidden p-4 rounded-lg bg-red-50 border border-red-200 text-red-800"></div>
+    <div id="errorContainer" class="hidden p-6 rounded-xl bg-red-50 border-2 border-red-200 text-red-800"></div>
 
     <!-- Formulario -->
-    <div class="bg-white rounded-lg shadow-md p-6">
-        <form id="formPersonal" class="space-y-6">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+        <form id="formPersonal" class="space-y-8">
             @csrf
 
             <!-- Información de Cuenta -->
             <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center border-b pb-2">
-                    <span class="material-icons mr-2 text-indigo-600">account_circle</span>
-                    Información de Cuenta
-                </h2>
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-100">
+                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="material-icons text-white text-2xl">account_circle</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Información de Cuenta</h2>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <!-- Usuario -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Usuario <span class="text-red-600">*</span>
                         </label>
-                        <input type="text" name="usuarioPer" id="usuarioPer"
-                            value="{{ old('usuarioPer', $personal->usuarioPer ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5
-                                   transition duration-150"
-                            placeholder="Ej: jperez"
-                            {{ isset($personal) ? 'readonly' : '' }}
-                            required>
+                        <div class="relative">
+                            <span class="material-icons absolute left-3 top-3.5 text-gray-400">person</span>
+                            <input type="text" name="usuarioPer" id="usuarioPer"
+                                value="{{ old('usuarioPer', $personal->usuarioPer ?? '') }}"
+                                class="pl-11 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
+                                       transition duration-150"
+                                placeholder="Ej: jperez"
+                                {{ isset($personal) ? 'readonly' : '' }}
+                                required>
+                        </div>
                         @if(isset($personal))
-                            <p class="text-xs text-gray-500 mt-1">El usuario no puede ser modificado</p>
+                            <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                                <span class="material-icons text-xs">lock</span>
+                                El usuario no puede ser modificado
+                            </p>
                         @endif
                     </div>
 
                     <!-- Rol -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Rol <span class="text-red-600">*</span>
                         </label>
-                        <select name="codRol" id="codRol"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5
-                                   transition duration-150"
-                            required>
-                            <option value="">Seleccione un rol...</option>
-                        </select>
+                        <div class="relative">
+                            <span class="material-icons absolute left-3 top-3.5 text-gray-400">work</span>
+                            <select name="codRol" id="codRol"
+                                class="pl-11 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
+                                       transition duration-150"
+                                required>
+                                <option value="">Seleccione un rol...</option>
+                            </select>
+                        </div>
                     </div>
 
                     <!-- Contraseña -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Contraseña
                             @if(!isset($personal))
                                 <span class="text-red-600">*</span>
                             @else
-                                <span class="text-gray-500">(dejar en blanco para mantener la actual)</span>
+                                <span class="text-gray-500 text-xs font-normal">(dejar en blanco para mantener la actual)</span>
                             @endif
                         </label>
                         <div class="relative">
+                            <span class="material-icons absolute left-3 top-3.5 text-gray-400">lock</span>
                             <input type="password" name="clavePer" id="clavePer"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                       focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 pr-10
+                                class="pl-11 pr-11 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
                                        transition duration-150"
                                 placeholder="Mínimo 6 caracteres"
                                 {{ isset($personal) ? '' : 'required' }}>
                             <button type="button"
                                 onclick="togglePassword('clavePer', 'iconClavePer')"
                                 class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700">
-                                <span class="material-icons text-sm" id="iconClavePer">visibility</span>
+                                <span class="material-icons" id="iconClavePer">visibility</span>
                             </button>
                         </div>
                     </div>
 
                     <!-- Confirmar Contraseña -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Confirmar Contraseña
                             @if(!isset($personal))
                                 <span class="text-red-600">*</span>
                             @endif
                         </label>
                         <div class="relative">
+                            <span class="material-icons absolute left-3 top-3.5 text-gray-400">lock_outline</span>
                             <input type="password" name="clavePer_confirmation" id="clavePer_confirmation"
-                                class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                       focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 pr-10
+                                class="pl-11 pr-11 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
                                        transition duration-150"
                                 placeholder="Repite la contraseña"
                                 {{ isset($personal) ? '' : 'required' }}>
                             <button type="button"
                                 onclick="togglePassword('clavePer_confirmation', 'iconClavePerConf')"
                                 class="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-500 hover:text-gray-700">
-                                <span class="material-icons text-sm" id="iconClavePerConf">visibility</span>
+                                <span class="material-icons" id="iconClavePerConf">visibility</span>
                             </button>
                         </div>
                     </div>
@@ -333,35 +360,40 @@ $breadcrumbs = [
 
             <!-- Información Personal -->
             <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center border-b pb-2">
-                    <span class="material-icons mr-2 text-indigo-600">badge</span>
-                    Información Personal
-                </h2>
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-100">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="material-icons text-white text-2xl">badge</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Información Personal</h2>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <!-- Nombre -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Nombre <span class="text-red-600">*</span>
                         </label>
-                        <input type="text" name="nomPer" id="nomPer"
-                            value="{{ old('nomPer', $personal->nomPer ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5
-                                   transition duration-150"
-                            placeholder="Ej: Juan Carlos"
-                            required>
+                        <div class="relative">
+                            <span class="material-icons absolute left-3 top-3.5 text-gray-400">badge</span>
+                            <input type="text" name="nomPer" id="nomPer"
+                                value="{{ old('nomPer', $personal->nomPer ?? '') }}"
+                                class="pl-11 bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                       focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
+                                       transition duration-150"
+                                placeholder="Ej: Juan Carlos"
+                                required>
+                        </div>
                     </div>
 
                     <!-- Apellido Paterno -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Apellido Paterno <span class="text-red-600">*</span>
                         </label>
                         <input type="text" name="paternoPer" id="paternoPer"
                             value="{{ old('paternoPer', $personal->paternoPer ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5
+                            class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
                                    transition duration-150"
                             placeholder="Ej: Pérez"
                             required>
@@ -369,13 +401,13 @@ $breadcrumbs = [
 
                     <!-- Apellido Materno -->
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Apellido Materno
                         </label>
                         <input type="text" name="maternoPer" id="maternoPer"
                             value="{{ old('maternoPer', $personal->maternoPer ?? '') }}"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5
+                            class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
                                    transition duration-150"
                             placeholder="Ej: García">
                     </div>
@@ -384,26 +416,28 @@ $breadcrumbs = [
 
             <!-- Estado -->
             <div>
-                <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center border-b pb-2">
-                    <span class="material-icons mr-2 text-indigo-600">toggle_on</span>
-                    Estado de Acceso
-                </h2>
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b-2 border-gray-100">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <span class="material-icons text-white text-2xl">toggle_on</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">Estado de Acceso</h2>
+                </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                        <label class="block mb-2 text-sm font-medium text-gray-900">
+                        <label class="block mb-2 text-sm font-bold text-gray-900">
                             Estado <span class="text-red-600">*</span>
                         </label>
                         <select name="estado" id="estado"
-                            class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5
+                            class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl
+                                   focus:ring-2 focus:ring-blue-500 focus:border-blue-500 block w-full p-3
                                    transition duration-150"
                             required>
                             <option value="activo" {{ old('estado', $personal->estado ?? 'activo') === 'activo' ? 'selected' : '' }}>
-                                Activo - Puede acceder al sistema
+                                ✅ Activo - Puede acceder al sistema
                             </option>
                             <option value="inactivo" {{ old('estado', $personal->estado ?? '') === 'inactivo' ? 'selected' : '' }}>
-                                Inactivo - No puede acceder al sistema
+                                ❌ Inactivo - No puede acceder al sistema
                             </option>
                         </select>
                     </div>
@@ -411,18 +445,18 @@ $breadcrumbs = [
             </div>
 
             <!-- Botones -->
-            <div class="flex justify-end space-x-4 pt-6 border-t">
+            <div class="flex justify-end space-x-4 pt-6 border-t-2 border-gray-100">
                 <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}"
-                    class="px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300
-                          rounded-lg hover:bg-gray-50 transition duration-150 flex items-center">
-                    <span class="material-icons text-sm mr-1">close</span>
+                    class="px-8 py-3 text-sm font-bold text-gray-700 bg-white border-2 border-gray-300
+                          rounded-xl hover:bg-gray-50 hover:shadow-lg transition-all duration-200 flex items-center">
+                    <span class="material-icons mr-2">close</span>
                     Cancelar
                 </a>
 
                 <button type="submit"
-                    class="px-6 py-2.5 text-sm font-medium text-white bg-indigo-600
-                           rounded-lg hover:bg-indigo-700 transition duration-150 flex items-center shadow-md">
-                    <span class="material-icons text-sm mr-1">{{ isset($personal) ? 'save' : 'add' }}</span>
+                    class="px-8 py-3 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600
+                           rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 flex items-center shadow-lg hover:shadow-xl">
+                    <span class="material-icons mr-2">{{ isset($personal) ? 'save' : 'add' }}</span>
                     {{ isset($personal) ? 'Actualizar Personal' : 'Guardar Personal' }}
                 </button>
             </div>
@@ -430,12 +464,14 @@ $breadcrumbs = [
     </div>
 
     <!-- Información Adicional -->
-    <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-        <div class="flex items-start">
-            <span class="material-icons text-indigo-600 mr-3">info</span>
-            <div class="text-sm text-indigo-800">
-                <p class="font-semibold mb-1">Información importante:</p>
-                <ul class="list-disc list-inside space-y-1">
+    <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-2xl p-6 shadow-lg">
+        <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center">
+                <span class="material-icons text-white text-2xl">info</span>
+            </div>
+            <div class="text-sm text-blue-900">
+                <p class="font-bold text-lg mb-3">💡 Información importante:</p>
+                <ul class="list-disc list-inside space-y-2">
                     <li>Todos los campos marcados con <strong class="text-red-600">*</strong> son obligatorios</li>
                     <li>El usuario debe ser único en el sistema</li>
                     <li>La contraseña debe tener al menos 6 caracteres</li>

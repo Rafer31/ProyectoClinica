@@ -83,49 +83,60 @@
                         const esSupervisor = p.rol && p.rol.nombreRol.toLowerCase().includes('supervisor');
 
                         const fila = `
-                            <tr class="bg-white border-b hover:bg-gray-50 transition-colors">
+                            <tr class="bg-white border-b hover:bg-blue-50 transition-all duration-200">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-10 w-10">
-                                            <div class="h-10 w-10 rounded-full ${p.estado === 'activo' ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center">
-                                                <span class="material-icons ${p.estado === 'activo' ? 'text-blue-600' : 'text-gray-400'}">person</span>
+                                        <div class="flex-shrink-0 h-12 w-12">
+                                            <div class="h-12 w-12 rounded-xl ${p.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
+                                                <span class="material-icons text-white text-xl">person</span>
                                             </div>
                                         </div>
                                         <div class="ml-4">
-                                            <div class="text-sm font-medium text-gray-900">${nombreCompleto}</div>
-                                            <div class="text-sm text-gray-500">Usuario: ${p.usuarioPer || 'N/A'}</div>
+                                            <div class="text-sm font-semibold text-gray-900">${nombreCompleto}</div>
+                                            <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                <span class="material-icons text-xs">badge</span>
+                                                ${p.usuarioPer || 'N/A'}
+                                            </div>
                                         </div>
                                     </div>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-purple-100 text-purple-800">
+                                    <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
+                                        <span class="material-icons text-xs mr-1">work</span>
                                         ${rolNombre}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4">
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${estadoClass}">
+                                    <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg ${estadoClass} border ${p.estado === 'activo' ? 'border-green-300' : 'border-red-300'}">
+                                        <span class="material-icons text-xs mr-1">${p.estado === 'activo' ? 'check_circle' : 'block'}</span>
                                         ${p.estado === 'activo' ? 'Activo' : 'Inactivo'}
                                     </span>
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-500">
                                     <div class="flex items-center gap-2">
                                         <button onclick="verDetalle(${p.codPer})"
-                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors duration-200 border border-blue-200"
+                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 border border-blue-200"
                                             title="Ver detalles">
-                                            <span class="material-icons text-base mr-1">visibility</span>
+                                            <span class="material-icons text-sm mr-1">visibility</span>
                                             Ver
                                         </button>
                                         <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}/editar/${p.codPer}"
-                                            class="inline-flex items-center px-3 py-2 text-sm font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 transition-colors duration-200 border border-green-200"
+                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 border border-green-200"
                                             title="Editar">
-                                            <span class="material-icons text-base mr-1">edit</span>
+                                            <span class="material-icons text-sm mr-1">edit</span>
                                             Editar
                                         </a>
+                                        <button onclick="abrirModalAsignacion(${p.codPer})"
+                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:shadow-md transition-all duration-200 border border-indigo-200"
+                                            title="Asignar Consultorio">
+                                            <span class="material-icons text-sm mr-1">meeting_room</span>
+                                            Asignar
+                                        </button>
                                         ${!esSupervisor ? `
                                         <button onclick="cambiarEstado(${p.codPer}, '${p.estado}')"
-                                            class="inline-flex items-center px-3 py-2 text-sm font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg transition-colors duration-200 border"
+                                            class="inline-flex items-center px-3 py-2 text-xs font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg hover:shadow-md transition-all duration-200 border"
                                             title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
-                                            <span class="material-icons text-base mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
+                                            <span class="material-icons text-sm mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
                                             ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
                                         </button>
                                         ` : ''}
@@ -159,7 +170,6 @@
                 const nombreCompleto = `${personal.nomPer || ''} ${personal.paternoPer || ''} ${personal.maternoPer || ''}`.trim();
                 const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
 
-                // Mostrar modal de confirmación
                 const modal = document.getElementById('modalCambiarEstado');
                 document.getElementById('nombrePersonalEstado').textContent = nombreCompleto;
                 document.getElementById('usuarioPersonalEstado').textContent = personal.usuarioPer || 'N/A';
@@ -221,68 +231,94 @@
                 }
             }
 
-            async function toggleAccesoSistema() {
-                const modal = document.getElementById('modalToggleAcceso');
+            // Funciones para asignación de consultorio
+            let consultoriosDisponibles = [];
+
+            async function abrirModalAsignacion(codPer) {
+                const personal = personalData.find(p => p.codPer === codPer);
+                if (!personal) return;
+
+                const nombreCompleto = `${personal.nomPer || ''} ${personal.paternoPer || ''} ${personal.maternoPer || ''}`.trim();
+                
+                document.getElementById('nombrePersonalAsignacion').textContent = nombreCompleto;
+                document.getElementById('codPerAsignacion').value = codPer;
+
+                // Cargar consultorios
+                await cargarConsultorios();
+
+                const modal = document.getElementById('modalAsignacion');
                 modal.classList.remove('hidden');
             }
 
-            function cerrarModalToggle() {
-                const modal = document.getElementById('modalToggleAcceso');
-                modal.classList.add('hidden');
+            async function cargarConsultorios() {
+                try {
+                    const response = await fetch('/api/consultorios');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        consultoriosDisponibles = data.data;
+                        const select = document.getElementById('codConsAsignacion');
+                        select.innerHTML = '<option value="">Seleccione un consultorio...</option>';
+
+                        consultoriosDisponibles.forEach(cons => {
+                            const option = document.createElement('option');
+                            option.value = cons.codCons;
+                            option.textContent = `Consultorio ${cons.numCons}`;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar consultorios:', error);
+                }
             }
 
-            async function confirmarToggleAcceso(accion) {
-                const modal = document.getElementById('modalToggleAcceso');
+            function cerrarModalAsignacion() {
+                const modal = document.getElementById('modalAsignacion');
                 modal.classList.add('hidden');
+                document.getElementById('formAsignacion').reset();
+            }
+
+            async function guardarAsignacion() {
+                const codPer = document.getElementById('codPerAsignacion').value;
+                const codCons = document.getElementById('codConsAsignacion').value;
+                const fechaInicio = document.getElementById('fechaInicio').value;
+                const fechaFin = document.getElementById('fechaFin').value;
+
+                if (!codCons || !fechaInicio) {
+                    mostrarAlerta('error', 'Por favor complete todos los campos obligatorios');
+                    return;
+                }
+
                 mostrarLoader(true);
 
                 try {
-                    // Obtener todos los usuarios no supervisores
-                    const personalNoSupervisor = personalData.filter(p => {
-                        return p.rol && !p.rol.nombreRol.toLowerCase().includes('supervisor');
+                    const response = await fetch('/api/asignaciones-consultorio', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            codPer: codPer,
+                            codCons: codCons,
+                            fechaInicio: fechaInicio,
+                            fechaFin: fechaFin,
+                            codServ: 1 // Ajusta según tu lógica
+                        })
                     });
 
-                    let errores = 0;
-                    let exitosos = 0;
+                    const data = await response.json();
 
-                    for (const persona of personalNoSupervisor) {
-                        // Solo cambiar si es necesario
-                        const debeSerActivo = accion === 'activar';
-                        const estadoActual = persona.estado === 'activo';
-
-                        if (debeSerActivo !== estadoActual) {
-                            try {
-                                const response = await fetch(`/api/personal-salud/${persona.codPer}/cambiar-estado`, {
-                                    method: 'PATCH',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'Accept': 'application/json',
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                                    }
-                                });
-
-                                const data = await response.json();
-                                if (data.success) {
-                                    exitosos++;
-                                } else {
-                                    errores++;
-                                }
-                            } catch (error) {
-                                errores++;
-                            }
-                        }
-                    }
-
-                    if (errores === 0) {
-                        mostrarAlerta('success', `Acceso al sistema ${accion === 'activar' ? 'habilitado' : 'bloqueado'} correctamente para ${exitosos} usuario(s)`);
+                    if (data.success) {
+                        mostrarAlerta('success', 'Consultorio asignado exitosamente');
+                        cerrarModalAsignacion();
                     } else {
-                        mostrarAlerta('error', `Se procesaron ${exitosos} usuarios correctamente, pero ${errores} fallaron`);
+                        mostrarAlerta('error', data.message);
                     }
-
-                    cargarPersonal();
                 } catch (error) {
                     console.error('Error:', error);
-                    mostrarAlerta('error', 'Error al cambiar el acceso del personal');
+                    mostrarAlerta('error', 'Error al asignar el consultorio');
                 } finally {
                     mostrarLoader(false);
                 }
@@ -297,55 +333,58 @@
 
                 const modal = document.getElementById('modalDetalle');
                 const contenido = `
-                    <div class="space-y-4">
-                        <div class="flex items-center space-x-4">
-                            <div class="h-16 w-16 rounded-full ${personal.estado === 'activo' ? 'bg-blue-100' : 'bg-gray-100'} flex items-center justify-center">
-                                <span class="material-icons ${personal.estado === 'activo' ? 'text-blue-600' : 'text-gray-400'} text-3xl">person</span>
+                    <div class="space-y-6">
+                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                            <div class="h-20 w-20 rounded-xl ${personal.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
+                                <span class="material-icons ${personal.estado === 'activo' ? 'text-white' : 'text-white'} text-4xl">person</span>
                             </div>
                             <div>
-                                <h3 class="text-xl font-bold text-gray-900">${nombreCompleto}</h3>
-                                <p class="text-gray-500">ID: ${personal.codPer}</p>
+                                <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
+                                <p class="text-gray-600 flex items-center gap-1 mt-1">
+                                    <span class="material-icons text-sm">badge</span>
+                                    ID: ${personal.codPer}
+                                </p>
                             </div>
                         </div>
 
-                        <div class="grid grid-cols-2 gap-4 pt-4 border-t">
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Usuario</p>
-                                <p class="text-gray-900">${personal.usuarioPer || 'N/A'}</p>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Usuario</p>
+                                <p class="text-gray-900 font-semibold">${personal.usuarioPer || 'N/A'}</p>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Rol</p>
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800">
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Rol</p>
+                                <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 inline-block">
                                     ${rolNombre}
                                 </span>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Nombre</p>
-                                <p class="text-gray-900">${personal.nomPer || 'N/A'}</p>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Nombre</p>
+                                <p class="text-gray-900 font-semibold">${personal.nomPer || 'N/A'}</p>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Apellido Paterno</p>
-                                <p class="text-gray-900">${personal.paternoPer || 'N/A'}</p>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Paterno</p>
+                                <p class="text-gray-900 font-semibold">${personal.paternoPer || 'N/A'}</p>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Apellido Materno</p>
-                                <p class="text-gray-900">${personal.maternoPer || 'N/A'}</p>
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Materno</p>
+                                <p class="text-gray-900 font-semibold">${personal.maternoPer || 'N/A'}</p>
                             </div>
-                            <div>
-                                <p class="text-sm font-medium text-gray-500">Estado</p>
-                                <span class="px-2 py-1 text-xs font-semibold rounded-full ${personal.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            <div class="p-4 bg-gray-50 rounded-lg">
+                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Estado</p>
+                                <span class="px-3 py-1 text-xs font-semibold rounded-lg ${personal.estado === 'activo' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'} inline-block">
                                     ${personal.estado === 'activo' ? 'Activo' : 'Inactivo'}
                                 </span>
                             </div>
                         </div>
 
                         <div class="flex justify-end space-x-3 pt-4 border-t">
-                            <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                                <span class="material-icons text-base mr-1">close</span>
+                            <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                                <span class="material-icons text-sm mr-1">close</span>
                                 Cerrar
                             </button>
-                            <a href="/personal/gestion-personal/editar/${personal.codPer}" class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors duration-200 shadow-sm">
-                                <span class="material-icons text-base mr-1">edit</span>
+                            <a href="/personal/gestion-personal/editar/${personal.codPer}" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                                <span class="material-icons text-sm mr-1">edit</span>
                                 Editar
                             </a>
                         </div>
@@ -373,10 +412,10 @@
                     info: 'bg-blue-100 border-blue-400 text-blue-800'
                 };
 
-                alerta.className = `p-4 rounded-lg border flex items-center ${colores[tipo]} mb-4`;
+                alerta.className = `p-4 rounded-xl border-2 flex items-center shadow-lg ${colores[tipo]} mb-4`;
                 alerta.innerHTML = `
                     <span class="material-icons mr-2">${iconos[tipo]}</span>
-                    <span>${mensaje}</span>
+                    <span class="font-medium">${mensaje}</span>
                 `;
                 alerta.classList.remove('hidden');
 
@@ -407,93 +446,95 @@
         <!-- Alerta -->
         <div id="alerta" class="hidden"></div>
 
-        <!-- Estadísticas -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-indigo-100 rounded-lg p-3">
-                        <span class="material-icons text-indigo-600 text-3xl">people</span>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Total Personal</p>
-                        <p class="text-2xl font-bold text-gray-900" id="stat-total">0</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-green-100 rounded-lg p-3">
-                        <span class="material-icons text-green-600 text-3xl">check_circle</span>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Personal Activo</p>
-                        <p class="text-2xl font-bold text-gray-900" id="stat-activos">0</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-lg shadow p-6">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0 bg-red-100 rounded-lg p-3">
-                        <span class="material-icons text-red-600 text-3xl">block</span>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-sm font-medium text-gray-500">Personal Inactivo</p>
-                        <p class="text-2xl font-bold text-gray-900" id="stat-inactivos">0</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Encabezado y Filtros -->
-        <div class="bg-white rounded-lg shadow p-6">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+        <!-- Hero Section -->
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl shadow-2xl p-8 text-white">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center">
-                        <span class="material-icons text-4xl text-indigo-600 mr-3">admin_panel_settings</span>
+                    <h1 class="text-4xl font-bold mb-2 flex items-center gap-3">
+                        <span class="material-icons text-5xl">admin_panel_settings</span>
                         Gestión de Personal de Salud
                     </h1>
-                    <p class="text-gray-600" id="resultados-count">Cargando...</p>
+                    <p class="text-blue-100 text-lg">Administra el personal clínico y sus asignaciones</p>
                 </div>
-                <div class="mt-4 md:mt-0 flex gap-3">
-                    <button onclick="toggleAccesoSistema()"
-                        class="inline-flex items-center px-5 py-2.5 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-md hover:shadow-lg font-medium">
-                        <span class="material-icons mr-2">lock</span>
-                        Control de Acceso
-                    </button>
+                <div class="hidden lg:flex gap-3">
+               
                     <a href="{{ route('supervisor.gestion-personal.agregar') }}"
-                        class="inline-flex items-center px-5 py-2.5 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors shadow-md hover:shadow-lg font-medium">
+                        class="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-xl hover:shadow-xl transition-all font-medium">
                         <span class="material-icons mr-2">person_add</span>
                         Agregar Personal
                     </a>
                 </div>
             </div>
+        </div>
 
-            <!-- Filtros -->
+        <!-- Estadísticas -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500 hover:shadow-xl transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl p-4 shadow-lg">
+                        <span class="material-icons text-white text-3xl">people</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase">Total Personal</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-total">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-green-500 hover:shadow-xl transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl p-4 shadow-lg">
+                        <span class="material-icons text-white text-3xl">check_circle</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase">Personal Activo</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-activos">0</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500 hover:shadow-xl transition-shadow">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 bg-gradient-to-br from-red-500 to-pink-600 rounded-xl p-4 shadow-lg">
+                        <span class="material-icons text-white text-3xl">block</span>
+                    </div>
+                    <div class="ml-4">
+                        <p class="text-sm font-medium text-gray-500 uppercase">Personal Inactivo</p>
+                        <p class="text-3xl font-bold text-gray-900" id="stat-inactivos">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center gap-2 mb-4">
+                <span class="material-icons text-blue-600 text-2xl">filter_list</span>
+                <h2 class="text-xl font-bold text-gray-800">Filtros de Búsqueda</h2>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Buscar</label>
                     <div class="relative">
-                        <span class="material-icons absolute left-3 top-2.5 text-gray-400">search</span>
+                        <span class="material-icons absolute left-3 top-3 text-gray-400">search</span>
                         <input type="text" id="busqueda" placeholder="Buscar por nombre o usuario..."
-                            class="pl-10 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5">
+                            class="pl-10 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2.5 transition">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Rol</label>
                     <select id="filtroRol"
-                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5">
+                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2.5 transition">
                         <option value="">Todos los roles</option>
-                        <!-- Roles dinámicos se cargarían desde la API -->
                     </select>
                 </div>
 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
                     <select id="filtroEstado"
-                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2.5">
+                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 p-2.5 transition">
                         <option value="">Todos los estados</option>
                         <option value="activo">Activo</option>
                         <option value="inactivo">Inactivo</option>
@@ -502,37 +543,48 @@
             </div>
 
             <div class="mt-4">
-                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-indigo-600 hover:text-indigo-800 font-medium">
+                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
                     <span class="material-icons text-sm mr-1">clear</span>
                     Limpiar filtros
                 </button>
+                <span class="text-gray-500 ml-2" id="resultados-count">Cargando...</span>
             </div>
         </div>
 
         <!-- Loader -->
         <div id="loader" class="flex justify-center items-center py-12">
-            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            <div class="relative">
+                <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+                <div class="absolute top-0 left-0 h-16 w-16 rounded-full border-4 border-blue-200"></div>
+            </div>
         </div>
 
         <!-- Mensaje sin datos -->
-        <div id="no-data" class="hidden bg-white rounded-lg shadow p-12">
+        <div id="no-data" class="hidden bg-white rounded-xl shadow-lg p-12">
             <div class="flex flex-col items-center justify-center">
-                <span class="material-icons text-gray-300" style="font-size: 120px;">people</span>
-                <p class="text-gray-600 text-lg mt-4 font-medium">No hay personal registrado</p>
-                <p class="text-gray-500 text-sm mt-2">Comienza agregando personal de salud al sistema</p>
+                <div class="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-6">
+                    <span class="material-icons text-blue-400" style="font-size: 80px;">people</span>
+                </div>
+                <p class="text-gray-800 text-xl font-bold mb-2">No hay personal registrado</p>
+                <p class="text-gray-500 text-sm mb-6">Comienza agregando personal de salud al sistema</p>
+                <a href="{{ route('supervisor.gestion-personal.agregar') }}" 
+                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl font-medium">
+                    <span class="material-icons mr-2">person_add</span>
+                    Agregar Personal
+                </a>
             </div>
         </div>
 
         <!-- Tabla de personal -->
-        <div class="bg-white rounded-lg shadow overflow-hidden" id="tabla-container">
+        <div class="bg-white rounded-xl shadow-lg overflow-hidden" id="tabla-container">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gray-50 border-b-2 border-gray-200">
+                    <thead class="text-xs text-gray-700 uppercase bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                         <tr>
-                            <th scope="col" class="px-6 py-4">Personal</th>
-                            <th scope="col" class="px-6 py-4">Rol</th>
-                            <th scope="col" class="px-6 py-4">Estado</th>
-                            <th scope="col" class="px-6 py-4">Acciones</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Personal</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Rol</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Estado</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="tabla-personal"></tbody>
@@ -542,11 +594,14 @@
     </div>
 
     <!-- Modal Detalle -->
-    <div id="modalDetalle" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-full max-w-2xl shadow-lg rounded-lg bg-white">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-2xl font-bold text-gray-900">Detalle del Personal</h3>
-                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600">
+    <div id="modalDetalle" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="relative mx-auto p-6 border-0 w-full max-w-2xl shadow-2xl rounded-2xl bg-white">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+                <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <span class="material-icons text-blue-600">person</span>
+                    Detalle del Personal
+                </h3>
+                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition">
                     <span class="material-icons">close</span>
                 </button>
             </div>
@@ -555,34 +610,34 @@
     </div>
 
     <!-- Modal Cambiar Estado -->
-    <div id="modalCambiarEstado" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-        <div class="relative mx-auto p-6 border w-full max-w-md shadow-xl rounded-lg bg-white">
+    <div id="modalCambiarEstado" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="relative mx-auto p-6 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
             <div class="flex justify-center mb-4">
-                <div class="rounded-full bg-yellow-100 p-3">
-                    <span class="material-icons text-yellow-600 text-4xl">warning</span>
+                <div class="rounded-full bg-gradient-to-br from-yellow-100 to-orange-100 p-4 shadow-lg">
+                    <span class="material-icons text-yellow-600 text-5xl">warning</span>
                 </div>
             </div>
 
-            <h3 class="text-xl font-bold text-gray-900 text-center mb-2">¿Cambiar estado?</h3>
+            <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">¿Cambiar estado?</h3>
 
             <div class="text-center mb-6">
                 <p class="text-gray-600 mb-3">Estás a punto de <span id="estadoNuevoText" class="font-semibold"></span> a:</p>
-                <div class="bg-gray-50 rounded-lg p-4 mb-3">
-                    <p class="font-semibold text-gray-900" id="nombrePersonalEstado"></p>
-                    <p class="text-sm text-gray-600">Usuario: <span id="usuarioPersonalEstado"></span></p>
+                <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3 border border-gray-200">
+                    <p class="font-bold text-gray-900 text-lg" id="nombrePersonalEstado"></p>
+                    <p class="text-sm text-gray-600 mt-1">Usuario: <span id="usuarioPersonalEstado" class="font-semibold"></span></p>
                     <p class="text-sm text-gray-600">Estado actual: <span id="estadoActualText" class="font-semibold"></span></p>
                 </div>
-                <p id="accionEstadoTexto" class="text-sm text-yellow-600 font-medium"></p>
+                <p id="accionEstadoTexto" class="text-sm font-medium"></p>
             </div>
 
             <div class="flex gap-3">
                 <button onclick="cerrarModalEstado()"
-                    class="flex-1 inline-flex justify-center items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                    class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:shadow-md transition-all duration-200">
                     <span class="material-icons text-base mr-1">close</span>
                     Cancelar
                 </button>
                 <button onclick="confirmarCambioEstado()"
-                    class="flex-1 inline-flex justify-center items-center px-4 py-2.5 text-sm font-medium text-white bg-yellow-600 rounded-lg hover:bg-yellow-700 transition-colors duration-200 shadow-sm">
+                    class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl">
                     <span class="material-icons text-base mr-1">swap_horiz</span>
                     Confirmar
                 </button>
@@ -590,58 +645,74 @@
         </div>
     </div>
 
-    <!-- Modal Toggle Acceso Sistema -->
-    <div id="modalToggleAcceso" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
-        <div class="relative mx-auto p-6 border w-full max-w-lg shadow-xl rounded-lg bg-white">
-            <div class="flex justify-center mb-4">
-                <div class="rounded-full bg-purple-100 p-3">
-                    <span class="material-icons text-purple-600 text-4xl">lock</span>
-                </div>
+    <!-- Modal Asignación de Consultorio -->
+    <div id="modalAsignacion" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="relative mx-auto p-6 border-0 w-full max-w-lg shadow-2xl rounded-2xl bg-white">
+            <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
+                <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                    <span class="material-icons text-indigo-600">meeting_room</span>
+                    Asignar Consultorio
+                </h3>
+                <button onclick="cerrarModalAsignacion()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition">
+                    <span class="material-icons">close</span>
+                </button>
             </div>
 
-            <h3 class="text-xl font-bold text-gray-900 text-center mb-2">Control de Acceso al Sistema</h3>
+            <div class="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-xl border border-indigo-200">
+                <p class="text-sm text-gray-600 mb-1">Personal:</p>
+                <p class="font-bold text-gray-900 text-lg" id="nombrePersonalAsignacion"></p>
+            </div>
 
-            <div class="text-center mb-6">
-                <p class="text-gray-600 mb-4">Selecciona la acción que deseas realizar para todo el personal (excepto supervisores):</p>
+            <form id="formAsignacion" class="space-y-4">
+                <input type="hidden" id="codPerAsignacion">
 
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                    <div class="flex items-start">
-                        <span class="material-icons text-blue-600 mr-2 mt-0.5">info</span>
-                        <div class="text-sm text-blue-800 text-left">
-                            <p class="font-semibold mb-1">Información importante:</p>
-                            <ul class="list-disc list-inside space-y-1">
-                                <li>Esta acción afectará a todo el personal no supervisor</li>
-                                <li>Los supervisores mantienen siempre su acceso</li>
-                                <li>Puedes revertir esta acción en cualquier momento</li>
-                            </ul>
-                        </div>
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Consultorio <span class="text-red-600">*</span>
+                    </label>
+                    <select id="codConsAsignacion" required
+                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
+                        <option value="">Seleccione un consultorio...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Fecha de Inicio <span class="text-red-600">*</span>
+                    </label>
+                    <input type="date" id="fechaInicio" required
+                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        Fecha de Fin <span class="text-gray-500 text-xs">(Opcional)</span>
+                    </label>
+                    <input type="date" id="fechaFin"
+                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
+                </div>
+
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 flex items-start gap-3">
+                    <span class="material-icons text-blue-600 mt-0.5">info</span>
+                    <div class="text-sm text-blue-800">
+                        <p class="font-semibold mb-1">Información:</p>
+                        <p>Si no especificas una fecha de fin, la asignación será indefinida hasta que la modifiques.</p>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <button onclick="confirmarToggleAcceso('bloquear')"
-                        class="flex flex-col items-center justify-center p-4 bg-red-50 border-2 border-red-200 rounded-lg hover:bg-red-100 transition-colors duration-200 group">
-                        <span class="material-icons text-red-600 text-3xl mb-2 group-hover:scale-110 transition-transform">block</span>
-                        <span class="font-semibold text-red-800">Bloquear Acceso</span>
-                        <span class="text-xs text-red-600 mt-1">Desactivar a todos</span>
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="cerrarModalAsignacion()"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <span class="material-icons text-base mr-1">close</span>
+                        Cancelar
                     </button>
-
-                    <button onclick="confirmarToggleAcceso('activar')"
-                        class="flex flex-col items-center justify-center p-4 bg-green-50 border-2 border-green-200 rounded-lg hover:bg-green-100 transition-colors duration-200 group">
-                        <span class="material-icons text-green-600 text-3xl mb-2 group-hover:scale-110 transition-transform">check_circle</span>
-                        <span class="font-semibold text-green-800">Habilitar Acceso</span>
-                        <span class="text-xs text-green-600 mt-1">Activar a todos</span>
+                    <button type="button" onclick="guardarAsignacion()"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <span class="material-icons text-base mr-1">save</span>
+                        Asignar
                     </button>
                 </div>
-            </div>
-
-            <div class="flex justify-center">
-                <button onclick="cerrarModalToggle()"
-                    class="inline-flex items-center px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                    <span class="material-icons text-base mr-1">close</span>
-                    Cancelar
-                </button>
-            </div>
+            </form>
         </div>
     </div>
 
