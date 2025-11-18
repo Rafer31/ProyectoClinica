@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Rol;
 use Illuminate\Http\Request;
-
+use Illuminate\Routing\Controller;
 class RolController extends Controller
 {
     /**

@@ -12,7 +12,7 @@
         <script>
             let personalData = [];
             let personalFiltrado = [];
-
+            let asignacionesActivas = {};
             document.addEventListener("DOMContentLoaded", function () {
                 cargarPersonal();
 
@@ -26,16 +26,31 @@
                 mostrarLoader(true);
 
                 try {
-                    const response = await fetch('/api/personal-salud');
-                    const data = await response.json();
+                    // Cargar personal y asignaciones en paralelo
+                    const [responsePersonal, responseAsignaciones] = await Promise.all([
+                        fetch('/api/personal-salud'),
+                        fetch('/api/asignaciones-consultorio/activas')
+                    ]);
 
-                    if (data.success) {
-                        personalData = data.data;
+                    const dataPersonal = await responsePersonal.json();
+                    const dataAsignaciones = await responseAsignaciones.json();
+
+                    if (dataPersonal.success) {
+                        personalData = dataPersonal.data;
                         personalFiltrado = [...personalData];
+
+                        // Crear un mapa de asignaciones por codPer
+                        if (dataAsignaciones.success) {
+                            asignacionesActivas = {};
+                            dataAsignaciones.data.forEach(asignacion => {
+                                asignacionesActivas[asignacion.codPer] = asignacion;
+                            });
+                        }
+
                         renderPersonal(personalFiltrado);
                         actualizarEstadisticas();
                     } else {
-                        mostrarAlerta('error', data.message);
+                        mostrarAlerta('error', dataPersonal.message);
                     }
                 } catch (error) {
                     console.error('Error en la API:', error);
@@ -82,68 +97,90 @@
                         const estadoClass = p.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
                         const esSupervisor = p.rol && p.rol.nombreRol.toLowerCase().includes('supervisor');
 
+                        // Obtener consultorio asignado
+                        const asignacion = asignacionesActivas[p.codPer];
+                        let consultorioHTML = '';
+                        if (asignacion && asignacion.consultorio) {
+                            consultorioHTML = `
+                                                                            <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border border-blue-200">
+                                                                                <span class="material-icons text-xs mr-1">meeting_room</span>
+                                                                                Consultorio ${asignacion.consultorio.numCons}
+                                                                            </span>
+                                                                        `;
+                        } else {
+                            consultorioHTML = `
+                                                                            <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
+                                                                                <span class="material-icons text-xs mr-1">block</span>
+                                                                                Sin asignar
+                                                                            </span>
+                                                                        `;
+                        }
+
                         const fila = `
-                            <tr class="bg-white border-b hover:bg-blue-50 transition-all duration-200">
-                                <td class="px-6 py-4">
-                                    <div class="flex items-center">
-                                        <div class="flex-shrink-0 h-12 w-12">
-                                            <div class="h-12 w-12 rounded-xl ${p.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
-                                                <span class="material-icons text-white text-xl">person</span>
-                                            </div>
-                                        </div>
-                                        <div class="ml-4">
-                                            <div class="text-sm font-semibold text-gray-900">${nombreCompleto}</div>
-                                            <div class="text-xs text-gray-500 flex items-center gap-1">
-                                                <span class="material-icons text-xs">badge</span>
-                                                ${p.usuarioPer || 'N/A'}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
-                                        <span class="material-icons text-xs mr-1">work</span>
-                                        ${rolNombre}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4">
-                                    <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg ${estadoClass} border ${p.estado === 'activo' ? 'border-green-300' : 'border-red-300'}">
-                                        <span class="material-icons text-xs mr-1">${p.estado === 'activo' ? 'check_circle' : 'block'}</span>
-                                        ${p.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-500">
-                                    <div class="flex items-center gap-2">
-                                        <button onclick="verDetalle(${p.codPer})"
-                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 border border-blue-200"
-                                            title="Ver detalles">
-                                            <span class="material-icons text-sm mr-1">visibility</span>
-                                            Ver
-                                        </button>
-                                        <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}/editar/${p.codPer}"
-                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 border border-green-200"
-                                            title="Editar">
-                                            <span class="material-icons text-sm mr-1">edit</span>
-                                            Editar
-                                        </a>
-                                        <button onclick="abrirModalAsignacion(${p.codPer})"
-                                            class="inline-flex items-center px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:shadow-md transition-all duration-200 border border-indigo-200"
-                                            title="Asignar Consultorio">
-                                            <span class="material-icons text-sm mr-1">meeting_room</span>
-                                            Asignar
-                                        </button>
-                                        ${!esSupervisor ? `
-                                        <button onclick="cambiarEstado(${p.codPer}, '${p.estado}')"
-                                            class="inline-flex items-center px-3 py-2 text-xs font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg hover:shadow-md transition-all duration-200 border"
-                                            title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
-                                            <span class="material-icons text-sm mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
-                                            ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                                        </button>
-                                        ` : ''}
-                                    </div>
-                                </td>
-                            </tr>
-                        `;
+                                                                        <tr class="bg-white border-b hover:bg-blue-50 transition-all duration-200">
+                                                                            <td class="px-6 py-4">
+                                                                                <div class="flex items-center">
+                                                                                    <div class="flex-shrink-0 h-12 w-12">
+                                                                                        <div class="h-12 w-12 rounded-xl ${p.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
+                                                                                            <span class="material-icons text-white text-xl">person</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <div class="ml-4">
+                                                                                        <div class="text-sm font-semibold text-gray-900">${nombreCompleto}</div>
+                                                                                        <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                                                            <span class="material-icons text-xs">badge</span>
+                                                                                            ${p.usuarioPer || 'N/A'}
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </td>
+                                                                            <td class="px-6 py-4">
+                                                                                <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
+                                                                                    <span class="material-icons text-xs mr-1">work</span>
+                                                                                    ${rolNombre}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td class="px-6 py-4">
+                                                                                ${consultorioHTML}
+                                                                            </td>
+                                                                            <td class="px-6 py-4">
+                                                                                <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg ${estadoClass} border ${p.estado === 'activo' ? 'border-green-300' : 'border-red-300'}">
+                                                                                    <span class="material-icons text-xs mr-1">${p.estado === 'activo' ? 'check_circle' : 'block'}</span>
+                                                                                    ${p.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                                                                </span>
+                                                                            </td>
+                                                                            <td class="px-6 py-4 text-sm text-gray-500">
+                                                                                <div class="flex items-center gap-2">
+                                                                                    <button onclick="verDetalle(${p.codPer})"
+                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 border border-blue-200"
+                                                                                        title="Ver detalles">
+                                                                                        <span class="material-icons text-sm mr-1">visibility</span>
+                                                                                        Ver
+                                                                                    </button>
+                                                                                    <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}/editar/${p.codPer}"
+                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 border border-green-200"
+                                                                                        title="Editar">
+                                                                                        <span class="material-icons text-sm mr-1">edit</span>
+                                                                                        Editar
+                                                                                    </a>
+                                                                                    <button onclick="abrirModalAsignacion(${p.codPer})"
+                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:shadow-md transition-all duration-200 border border-indigo-200"
+                                                                                        title="Asignar Consultorio">
+                                                                                        <span class="material-icons text-sm mr-1">meeting_room</span>
+                                                                                        Asignar
+                                                                                    </button>
+                                                                                    ${!esSupervisor ? `
+                                                                                    <button onclick="cambiarEstado(${p.codPer}, '${p.estado}')"
+                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg hover:shadow-md transition-all duration-200 border"
+                                                                                        title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
+                                                                                        <span class="material-icons text-sm mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
+                                                                                        ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                                                                                    </button>
+                                                                                    ` : ''}
+                                                                                </div>
+                                                                            </td>
+                                                                        </tr>
+                                                                    `;
                         tbody.innerHTML += fila;
                     });
                 } else {
@@ -152,6 +189,7 @@
                     resultadosCount.textContent = 'No se encontraron resultados';
                 }
             }
+
 
             function actualizarEstadisticas() {
                 const total = personalData.length;
@@ -162,33 +200,80 @@
                 document.getElementById('stat-activos').textContent = activos;
                 document.getElementById('stat-inactivos').textContent = inactivos;
             }
-
-            async function cambiarEstado(id, estadoActual) {
+            function cambiarEstado(id, estadoActual) {
                 const personal = personalData.find(p => p.codPer === id);
                 if (!personal) return;
 
                 const nombreCompleto = `${personal.nomPer || ''} ${personal.paternoPer || ''} ${personal.maternoPer || ''}`.trim();
                 const nuevoEstado = estadoActual === 'activo' ? 'inactivo' : 'activo';
 
-                const modal = document.getElementById('modalCambiarEstado');
-                document.getElementById('nombrePersonalEstado').textContent = nombreCompleto;
-                document.getElementById('usuarioPersonalEstado').textContent = personal.usuarioPer || 'N/A';
-                document.getElementById('estadoActualText').textContent = estadoActual === 'activo' ? 'activo' : 'inactivo';
-                document.getElementById('estadoNuevoText').textContent = nuevoEstado === 'activo' ? 'activar' : 'desactivar';
+                const modal = document.getElementById('modalConfirmacionEstado');
+                document.getElementById('nombrePersonalConfirm').textContent = nombreCompleto;
+                document.getElementById('usuarioPersonalConfirm').textContent = personal.usuarioPer || 'N/A';
+                document.getElementById('estadoActualConfirm').textContent = estadoActual === 'activo' ? 'activo' : 'inactivo';
+                document.getElementById('estadoNuevoConfirm').textContent = nuevoEstado === 'activo' ? 'activar' : 'desactivar';
 
-                const accionTexto = document.getElementById('accionEstadoTexto');
+                const accionTexto = document.getElementById('accionEstadoTextoConfirm');
+                const iconoAccion = document.getElementById('iconoAccionEstado');
+                const btnConfirmar = document.getElementById('btnConfirmarEstado');
+
                 if (nuevoEstado === 'inactivo') {
                     accionTexto.className = 'text-sm text-red-600 font-medium';
                     accionTexto.textContent = 'Esta persona no podrá acceder al sistema hasta que sea reactivada';
+                    iconoAccion.textContent = 'block';
+                    iconoAccion.className = 'material-icons text-red-600 text-5xl';
+                    btnConfirmar.className = 'flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-pink-600 rounded-xl hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl';
                 } else {
                     accionTexto.className = 'text-sm text-green-600 font-medium';
                     accionTexto.textContent = 'Esta persona podrá acceder nuevamente al sistema';
+                    iconoAccion.textContent = 'check_circle';
+                    iconoAccion.className = 'material-icons text-green-600 text-5xl';
+                    btnConfirmar.className = 'flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl';
                 }
 
                 modal.classList.remove('hidden');
                 modal.dataset.personalId = id;
             }
+            function cerrarModalConfirmacionEstado() {
+                const modal = document.getElementById('modalConfirmacionEstado');
+                modal.classList.add('hidden');
+                delete modal.dataset.personalId;
+            }
+            async function confirmarCambioEstadoIndividual() {
+                const modal = document.getElementById('modalConfirmacionEstado');
+                const id = modal.dataset.personalId;
 
+                if (!id) return;
+
+                modal.classList.add('hidden');
+                mostrarLoader(true);
+
+                try {
+                    const response = await fetch(`/api/personal-salud/${id}/cambiar-estado`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        mostrarAlerta('success', data.message);
+                        cargarPersonal();
+                    } else {
+                        mostrarAlerta('error', data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('error', 'Error al cambiar el estado');
+                } finally {
+                    mostrarLoader(false);
+                    delete modal.dataset.personalId;
+                }
+            }
             function cerrarModalEstado() {
                 const modal = document.getElementById('modalCambiarEstado');
                 modal.classList.add('hidden');
@@ -239,11 +324,11 @@
                 if (!personal) return;
 
                 const nombreCompleto = `${personal.nomPer || ''} ${personal.paternoPer || ''} ${personal.maternoPer || ''}`.trim();
-                
+
                 document.getElementById('nombrePersonalAsignacion').textContent = nombreCompleto;
                 document.getElementById('codPerAsignacion').value = codPer;
 
-                // Cargar consultorios
+                // Solo cargar consultorios
                 await cargarConsultorios();
 
                 const modal = document.getElementById('modalAsignacion');
@@ -278,6 +363,7 @@
                 document.getElementById('formAsignacion').reset();
             }
 
+
             async function guardarAsignacion() {
                 const codPer = document.getElementById('codPerAsignacion').value;
                 const codCons = document.getElementById('codConsAsignacion').value;
@@ -300,11 +386,10 @@
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
                         },
                         body: JSON.stringify({
-                            codPer: codPer,
-                            codCons: codCons,
+                            codPer: parseInt(codPer),
+                            codCons: parseInt(codCons),
                             fechaInicio: fechaInicio,
-                            fechaFin: fechaFin,
-                            codServ: 1 // Ajusta según tu lógica
+                            fechaFin: fechaFin || null
                         })
                     });
 
@@ -313,8 +398,10 @@
                     if (data.success) {
                         mostrarAlerta('success', 'Consultorio asignado exitosamente');
                         cerrarModalAsignacion();
+                        // Recargar para actualizar la tabla con el nuevo consultorio
+                        await cargarPersonal();
                     } else {
-                        mostrarAlerta('error', data.message);
+                        mostrarAlerta('error', data.message || 'Error al asignar el consultorio');
                     }
                 } catch (error) {
                     console.error('Error:', error);
@@ -324,6 +411,185 @@
                 }
             }
 
+            function toggleAccesoSistema() {
+                const modal = document.getElementById('modalToggleAcceso');
+                modal.classList.remove('hidden');
+            }
+            function cerrarModalToggle() {
+                const modal = document.getElementById('modalToggleAcceso');
+                modal.classList.add('hidden');
+            }
+            function abrirConfirmacionMasiva(accion) {
+                // Cerrar el modal de selección
+                cerrarModalToggle();
+
+                const modal = document.getElementById('modalConfirmacionMasiva');
+                const accionTexto = document.getElementById('accionMasivaTexto');
+                const iconoMasivo = document.getElementById('iconoAccionMasiva');
+                const btnConfirmarMasivo = document.getElementById('btnConfirmarMasivo');
+
+                // Contar personal que será afectado
+                const personalNoSupervisor = personalData.filter(p => {
+                    return p.rol && !p.rol.nombreRol.toLowerCase().includes('supervisor');
+                });
+
+                const nuevoEstado = accion === 'bloquear' ? 'inactivo' : 'activo';
+                const personalAfectado = personalNoSupervisor.filter(p => p.estado !== nuevoEstado);
+
+                document.getElementById('cantidadAfectada').textContent = personalAfectado.length;
+                document.getElementById('accionMasivaLabel').textContent = accion === 'bloquear' ? 'desactivar' : 'activar';
+
+                if (accion === 'bloquear') {
+                    accionTexto.className = 'text-sm text-red-600 font-medium mt-2';
+                    accionTexto.textContent = 'Estas personas no podrán acceder al sistema hasta que sean reactivadas';
+                    iconoMasivo.textContent = 'block';
+                    iconoMasivo.className = 'material-icons text-red-600 text-6xl';
+                    btnConfirmarMasivo.className = 'flex-1 inline-flex justify-center items-center px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-red-600 to-pink-600 rounded-xl hover:from-red-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl';
+                } else {
+                    accionTexto.className = 'text-sm text-green-600 font-medium mt-2';
+                    accionTexto.textContent = 'Estas personas podrán acceder nuevamente al sistema';
+                    iconoMasivo.textContent = 'check_circle';
+                    iconoMasivo.className = 'material-icons text-green-600 text-6xl';
+                    btnConfirmarMasivo.className = 'flex-1 inline-flex justify-center items-center px-6 py-3 text-sm font-medium text-white bg-gradient-to-r from-green-600 to-emerald-600 rounded-xl hover:from-green-700 hover:to-emerald-700 transition-all duration-200 shadow-lg hover:shadow-xl';
+                }
+
+                modal.dataset.accion = accion;
+                modal.classList.remove('hidden');
+            }
+            function cerrarModalConfirmacionMasiva() {
+                const modal = document.getElementById('modalConfirmacionMasiva');
+                modal.classList.add('hidden');
+                delete modal.dataset.accion;
+            }
+            async function confirmarCambioMasivo() {
+                const modal = document.getElementById('modalConfirmacionMasiva');
+                const accion = modal.dataset.accion;
+
+                if (!accion) return;
+
+                cerrarModalConfirmacionMasiva();
+                mostrarLoader(true);
+
+                try {
+                    const nuevoEstado = accion === 'bloquear' ? 'inactivo' : 'activo';
+
+                    // Obtener todo el personal que no es supervisor
+                    const personalNoSupervisor = personalData.filter(p => {
+                        return p.rol && !p.rol.nombreRol.toLowerCase().includes('supervisor');
+                    });
+
+                    let exitosos = 0;
+                    let errores = 0;
+
+                    // Cambiar estado a cada uno
+                    for (const personal of personalNoSupervisor) {
+                        // Solo cambiar si el estado es diferente al deseado
+                        if (personal.estado !== nuevoEstado) {
+                            try {
+                                const response = await fetch(`/api/personal-salud/${personal.codPer}/cambiar-estado`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    }
+                                });
+
+                                if (response.ok) {
+                                    exitosos++;
+                                } else {
+                                    errores++;
+                                }
+                            } catch (error) {
+                                console.error(`Error al cambiar estado de ${personal.codPer}:`, error);
+                                errores++;
+                            }
+                        }
+                    }
+
+                    if (exitosos > 0) {
+                        mostrarAlerta('success', `${exitosos} personal(es) ${nuevoEstado === 'activo' ? 'activado(s)' : 'desactivado(s)'} exitosamente`);
+                    }
+
+                    if (errores > 0) {
+                        mostrarAlerta('error', `${errores} error(es) al cambiar estados`);
+                    }
+
+                    // Recargar la lista
+                    await cargarPersonal();
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('error', 'Error al cambiar estados del personal');
+                } finally {
+                    mostrarLoader(false);
+                }
+            }
+            async function confirmarToggleAcceso(accion) {
+                const mensaje = accion === 'bloquear'
+                    ? '¿Estás seguro de desactivar a todo el personal (excepto supervisores)?'
+                    : '¿Estás seguro de activar a todo el personal?';
+
+                if (!confirm(mensaje)) return;
+
+                cerrarModalToggle();
+                mostrarLoader(true);
+
+                try {
+                    const nuevoEstado = accion === 'bloquear' ? 'inactivo' : 'activo';
+
+                    // Obtener todo el personal que no es supervisor
+                    const personalNoSupervisor = personalData.filter(p => {
+                        return p.rol && !p.rol.nombreRol.toLowerCase().includes('supervisor');
+                    });
+
+                    let exitosos = 0;
+                    let errores = 0;
+
+                    // Cambiar estado a cada uno
+                    for (const personal of personalNoSupervisor) {
+                        // Solo cambiar si el estado es diferente al deseado
+                        if (personal.estado !== nuevoEstado) {
+                            try {
+                                const response = await fetch(`/api/personal-salud/${personal.codPer}/cambiar-estado`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Accept': 'application/json',
+                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                    }
+                                });
+
+                                if (response.ok) {
+                                    exitosos++;
+                                } else {
+                                    errores++;
+                                }
+                            } catch (error) {
+                                console.error(`Error al cambiar estado de ${personal.codPer}:`, error);
+                                errores++;
+                            }
+                        }
+                    }
+
+                    if (exitosos > 0) {
+                        mostrarAlerta('success', `${exitosos} personal(es) ${nuevoEstado === 'activo' ? 'activado(s)' : 'desactivado(s)'} exitosamente`);
+                    }
+
+                    if (errores > 0) {
+                        mostrarAlerta('error', `${errores} error(es) al cambiar estados`);
+                    }
+
+                    // Recargar la lista
+                    await cargarPersonal();
+
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('error', 'Error al cambiar estados del personal');
+                } finally {
+                    mostrarLoader(false);
+                }
+            }
             function verDetalle(id) {
                 const personal = personalData.find(p => p.codPer === id);
                 if (!personal) return;
@@ -331,69 +597,105 @@
                 const nombreCompleto = `${personal.nomPer || ''} ${personal.paternoPer || ''} ${personal.maternoPer || ''}`.trim();
                 const rolNombre = personal.rol ? personal.rol.nombreRol : 'Sin rol';
 
+                // Obtener consultorio asignado
+                const asignacion = asignacionesActivas[personal.codPer];
+                let consultorioInfo = '';
+                if (asignacion && asignacion.consultorio) {
+                    const fechaInicio = new Date(asignacion.fechaInicio).toLocaleDateString('es-ES');
+                    const fechaFin = asignacion.fechaFin ? new Date(asignacion.fechaFin).toLocaleDateString('es-ES') : 'Indefinido';
+
+                    consultorioInfo = `
+                                                    <div class="col-span-2 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
+                                                        <p class="text-xs font-medium text-gray-500 uppercase mb-2">Consultorio Asignado</p>
+                                                        <div class="flex items-center gap-2 mb-2">
+                                                            <span class="material-icons text-blue-600">meeting_room</span>
+                                                            <p class="text-gray-900 font-semibold text-lg">Consultorio ${asignacion.consultorio.numCons}</p>
+                                                        </div>
+                                                        <div class="text-xs text-gray-600 space-y-1">
+                                                            <p><span class="font-medium">Desde:</span> ${fechaInicio}</p>
+                                                            <p><span class="font-medium">Hasta:</span> ${fechaFin}</p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                } else {
+                    consultorioInfo = `
+                                                    <div class="col-span-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                        <p class="text-xs font-medium text-gray-500 uppercase mb-2">Consultorio Asignado</p>
+                                                        <div class="flex items-center gap-2">
+                                                            <span class="material-icons text-gray-400">block</span>
+                                                            <p class="text-gray-600 font-semibold">Sin consultorio asignado</p>
+                                                        </div>
+                                                    </div>
+                                                `;
+                }
+
                 const modal = document.getElementById('modalDetalle');
                 const contenido = `
-                    <div class="space-y-6">
-                        <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
-                            <div class="h-20 w-20 rounded-xl ${personal.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
-                                <span class="material-icons ${personal.estado === 'activo' ? 'text-white' : 'text-white'} text-4xl">person</span>
-                            </div>
-                            <div>
-                                <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
-                                <p class="text-gray-600 flex items-center gap-1 mt-1">
-                                    <span class="material-icons text-sm">badge</span>
-                                    ID: ${personal.codPer}
-                                </p>
-                            </div>
-                        </div>
+                                                <div class="space-y-6">
+                                                    <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                                                        <div class="h-20 w-20 rounded-xl ${personal.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
+                                                            <span class="material-icons ${personal.estado === 'activo' ? 'text-white' : 'text-white'} text-4xl">person</span>
+                                                        </div>
+                                                        <div>
+                                                            <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
+                                                            <p class="text-gray-600 flex items-center gap-1 mt-1">
+                                                                <span class="material-icons text-sm">badge</span>
+                                                                ID: ${personal.codPer}
+                                                            </p>
+                                                        </div>
+                                                    </div>
 
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Usuario</p>
-                                <p class="text-gray-900 font-semibold">${personal.usuarioPer || 'N/A'}</p>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Rol</p>
-                                <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 inline-block">
-                                    ${rolNombre}
-                                </span>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Nombre</p>
-                                <p class="text-gray-900 font-semibold">${personal.nomPer || 'N/A'}</p>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Paterno</p>
-                                <p class="text-gray-900 font-semibold">${personal.paternoPer || 'N/A'}</p>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Materno</p>
-                                <p class="text-gray-900 font-semibold">${personal.maternoPer || 'N/A'}</p>
-                            </div>
-                            <div class="p-4 bg-gray-50 rounded-lg">
-                                <p class="text-xs font-medium text-gray-500 uppercase mb-1">Estado</p>
-                                <span class="px-3 py-1 text-xs font-semibold rounded-lg ${personal.estado === 'activo' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'} inline-block">
-                                    ${personal.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                                </span>
-                            </div>
-                        </div>
+                                                    <div class="grid grid-cols-2 gap-4">
+                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Usuario</p>
+                                                            <p class="text-gray-900 font-semibold">${personal.usuarioPer || 'N/A'}</p>
+                                                        </div>
+                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Rol</p>
+                                                            <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 inline-block">
+                                                                ${rolNombre}
+                                                            </span>
+                                                        </div>
+                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Nombre</p>
+                                                            <p class="text-gray-900 font-semibold">${personal.nomPer || 'N/A'}</p>
+                                                        </div>
+                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Paterno</p>
+                                                            <p class="text-gray-900 font-semibold">${personal.paternoPer || 'N/A'}</p>
+                                                        </div>
+                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Materno</p>
+                                                            <p class="text-gray-900 font-semibold">${personal.maternoPer || 'N/A'}</p>
+                                                        </div>
+                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Estado</p>
+                                                            <span class="px-3 py-1 text-xs font-semibold rounded-lg ${personal.estado === 'activo' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'} inline-block">
+                                                                ${personal.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                                            </span>
+                                                        </div>
 
-                        <div class="flex justify-end space-x-3 pt-4 border-t">
-                            <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200">
-                                <span class="material-icons text-sm mr-1">close</span>
-                                Cerrar
-                            </button>
-                            <a href="/personal/gestion-personal/editar/${personal.codPer}" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
-                                <span class="material-icons text-sm mr-1">edit</span>
-                                Editar
-                            </a>
-                        </div>
-                    </div>
-                `;
+                                                        ${consultorioInfo}
+                                                    </div>
+
+                                                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                                                        <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                                                            <span class="material-icons text-sm mr-1">close</span>
+                                                            Cerrar
+                                                        </button>
+                                                        <a href="/supervisor/gestion-personal/editar/${personal.codPer}" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                                                            <span class="material-icons text-sm mr-1">edit</span>
+                                                            Editar
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            `;
 
                 document.getElementById('modalContenido').innerHTML = contenido;
                 modal.classList.remove('hidden');
             }
+
+
 
             function cerrarModal() {
                 document.getElementById('modalDetalle').classList.add('hidden');
@@ -414,15 +716,16 @@
 
                 alerta.className = `p-4 rounded-xl border-2 flex items-center shadow-lg ${colores[tipo]} mb-4`;
                 alerta.innerHTML = `
-                    <span class="material-icons mr-2">${iconos[tipo]}</span>
-                    <span class="font-medium">${mensaje}</span>
-                `;
+                <span class="material-icons mr-2">${iconos[tipo]}</span>
+                <span class="font-medium">${mensaje}</span>
+            `;
                 alerta.classList.remove('hidden');
 
                 setTimeout(() => {
                     alerta.classList.add('hidden');
                 }, 5000);
             }
+
 
             function mostrarLoader(mostrar) {
                 const loader = document.getElementById('loader');
@@ -457,7 +760,16 @@
                     <p class="text-blue-100 text-lg">Administra el personal clínico y sus asignaciones</p>
                 </div>
                 <div class="hidden lg:flex gap-3">
-               
+                    <a href="{{ route('supervisor.gestion-personal.consultorios') }}"
+                        class="inline-flex items-center px-6 py-3 bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-xl hover:bg-opacity-30 transition-all shadow-lg hover:shadow-xl font-medium">
+                        <span class="material-icons mr-2">meeting_room</span>
+                        Consultorios
+                    </a>
+                    <button onclick="toggleAccesoSistema()"
+                        class="inline-flex items-center px-6 py-3 bg-white bg-opacity-20 backdrop-blur-sm text-white rounded-xl hover:bg-opacity-30 transition-all shadow-lg hover:shadow-xl font-medium">
+                        <span class="material-icons mr-2">lock</span>
+                        Control de Acceso
+                    </button>
                     <a href="{{ route('supervisor.gestion-personal.agregar') }}"
                         class="inline-flex items-center px-6 py-3 bg-white text-blue-600 rounded-xl hover:shadow-xl transition-all font-medium">
                         <span class="material-icons mr-2">person_add</span>
@@ -543,7 +855,8 @@
             </div>
 
             <div class="mt-4">
-                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
+                <button onclick="limpiarFiltros()"
+                    class="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
                     <span class="material-icons text-sm mr-1">clear</span>
                     Limpiar filtros
                 </button>
@@ -562,13 +875,14 @@
         <!-- Mensaje sin datos -->
         <div id="no-data" class="hidden bg-white rounded-xl shadow-lg p-12">
             <div class="flex flex-col items-center justify-center">
-                <div class="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-6">
+                <div
+                    class="w-32 h-32 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-full flex items-center justify-center mb-6">
                     <span class="material-icons text-blue-400" style="font-size: 80px;">people</span>
                 </div>
                 <p class="text-gray-800 text-xl font-bold mb-2">No hay personal registrado</p>
                 <p class="text-gray-500 text-sm mb-6">Comienza agregando personal de salud al sistema</p>
-                <a href="{{ route('supervisor.gestion-personal.agregar') }}" 
-                   class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl font-medium">
+                <a href="{{ route('supervisor.gestion-personal.agregar') }}"
+                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl font-medium">
                     <span class="material-icons mr-2">person_add</span>
                     Agregar Personal
                 </a>
@@ -579,7 +893,8 @@
         <div class="bg-white rounded-xl shadow-lg overflow-hidden" id="tabla-container">
             <div class="overflow-x-auto">
                 <table class="w-full text-sm text-left text-gray-500">
-                    <thead class="text-xs text-gray-700 uppercase bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
+                    <thead
+                        class="text-xs text-gray-700 uppercase bg-gradient-to-r from-gray-50 to-gray-100 border-b-2 border-gray-200">
                         <tr>
                             <th scope="col" class="px-6 py-4 font-bold">Personal</th>
                             <th scope="col" class="px-6 py-4 font-bold">Rol</th>
@@ -594,14 +909,16 @@
     </div>
 
     <!-- Modal Detalle -->
-    <div id="modalDetalle" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+    <div id="modalDetalle"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="relative mx-auto p-6 border-0 w-full max-w-2xl shadow-2xl rounded-2xl bg-white">
             <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
                 <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <span class="material-icons text-blue-600">person</span>
                     Detalle del Personal
                 </h3>
-                <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition">
+                <button onclick="cerrarModal()"
+                    class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition">
                     <span class="material-icons">close</span>
                 </button>
             </div>
@@ -610,7 +927,8 @@
     </div>
 
     <!-- Modal Cambiar Estado -->
-    <div id="modalCambiarEstado" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+    <div id="modalCambiarEstado"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="relative mx-auto p-6 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
             <div class="flex justify-center mb-4">
                 <div class="rounded-full bg-gradient-to-br from-yellow-100 to-orange-100 p-4 shadow-lg">
@@ -621,11 +939,14 @@
             <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">¿Cambiar estado?</h3>
 
             <div class="text-center mb-6">
-                <p class="text-gray-600 mb-3">Estás a punto de <span id="estadoNuevoText" class="font-semibold"></span> a:</p>
+                <p class="text-gray-600 mb-3">Estás a punto de <span id="estadoNuevoText" class="font-semibold"></span> a:
+                </p>
                 <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3 border border-gray-200">
                     <p class="font-bold text-gray-900 text-lg" id="nombrePersonalEstado"></p>
-                    <p class="text-sm text-gray-600 mt-1">Usuario: <span id="usuarioPersonalEstado" class="font-semibold"></span></p>
-                    <p class="text-sm text-gray-600">Estado actual: <span id="estadoActualText" class="font-semibold"></span></p>
+                    <p class="text-sm text-gray-600 mt-1">Usuario: <span id="usuarioPersonalEstado"
+                            class="font-semibold"></span></p>
+                    <p class="text-sm text-gray-600">Estado actual: <span id="estadoActualText"
+                            class="font-semibold"></span></p>
                 </div>
                 <p id="accionEstadoTexto" class="text-sm font-medium"></p>
             </div>
@@ -646,14 +967,16 @@
     </div>
 
     <!-- Modal Asignación de Consultorio -->
-    <div id="modalAsignacion" class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+    <div id="modalAsignacion"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="relative mx-auto p-6 border-0 w-full max-w-lg shadow-2xl rounded-2xl bg-white">
             <div class="flex justify-between items-center mb-6 pb-4 border-b-2 border-gray-100">
                 <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <span class="material-icons text-indigo-600">meeting_room</span>
                     Asignar Consultorio
                 </h3>
-                <button onclick="cerrarModalAsignacion()" class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition">
+                <button onclick="cerrarModalAsignacion()"
+                    class="text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg p-2 transition">
                     <span class="material-icons">close</span>
                 </button>
             </div>
@@ -713,6 +1036,65 @@
                     </button>
                 </div>
             </form>
+        </div>
+    </div>
+
+    <!-- Modal Toggle Acceso Sistema -->
+    <div id="modalToggleAcceso"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="relative mx-auto p-6 border-0 w-full max-w-lg shadow-2xl rounded-2xl bg-white">
+            <div class="flex justify-center mb-4">
+                <div class="rounded-full bg-gradient-to-br from-purple-100 to-pink-100 p-4 shadow-lg">
+                    <span class="material-icons text-purple-600 text-5xl">lock</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Control de Acceso al Sistema</h3>
+
+            <div class="text-center mb-6">
+                <p class="text-gray-600 mb-4">Selecciona la acción que deseas realizar para todo el personal (excepto
+                    supervisores):</p>
+
+                <div class="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 mb-4">
+                    <div class="flex items-start">
+                        <span class="material-icons text-blue-600 mr-2 mt-0.5">info</span>
+                        <div class="text-sm text-blue-800 text-left">
+                            <p class="font-semibold mb-1">Información importante:</p>
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>Esta acción afectará a todo el personal no supervisor</li>
+                                <li>Los supervisores mantienen siempre su acceso</li>
+                                <li>Puedes revertir esta acción en cualquier momento</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="confirmarToggleAcceso('bloquear')"
+                        class="flex flex-col items-center justify-center p-4 bg-red-50 border-2 border-red-200 rounded-xl hover:bg-red-100 transition-colors duration-200 group">
+                        <span
+                            class="material-icons text-red-600 text-3xl mb-2 group-hover:scale-110 transition-transform">block</span>
+                        <span class="font-semibold text-red-800">Bloquear Acceso</span>
+                        <span class="text-xs text-red-600 mt-1">Desactivar a todos</span>
+                    </button>
+
+                    <button onclick="confirmarToggleAcceso('activar')"
+                        class="flex flex-col items-center justify-center p-4 bg-green-50 border-2 border-green-200 rounded-xl hover:bg-green-100 transition-colors duration-200 group">
+                        <span
+                            class="material-icons text-green-600 text-3xl mb-2 group-hover:scale-110 transition-transform">check_circle</span>
+                        <span class="font-semibold text-green-800">Habilitar Acceso</span>
+                        <span class="text-xs text-green-600 mt-1">Activar a todos</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex justify-center">
+                <button onclick="cerrarModalToggle()"
+                    class="inline-flex items-center px-6 py-2.5 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 transition-colors duration-200">
+                    <span class="material-icons text-base mr-1">close</span>
+                    Cancelar
+                </button>
+            </div>
         </div>
     </div>
 

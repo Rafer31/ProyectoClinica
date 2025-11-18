@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Diagnostico;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class DiagnosticoController extends Controller

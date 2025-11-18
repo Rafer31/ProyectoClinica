@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\Personal\ServicioPdfController;
+use App\Http\Controllers\EstadisticasSupervisorController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\PacienteController;
@@ -9,6 +10,9 @@ use App\Http\Controllers\MedicoController;
 use App\Http\Controllers\ServicioController;
 use App\Http\Controllers\PersonalSaludController;
 use App\Http\Controllers\RolController;
+use App\Http\Controllers\ConsultorioController;
+use App\Http\Controllers\AsignacionConsultorioController;
+use App\Http\Controllers\ServicioApiController;
 use Illuminate\Support\Facades\Auth;
 
 // Página inicial -> redirige al login
@@ -57,9 +61,17 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('supervisor.gestion-personal.form-personal', compact('personal'));
         })->name('gestion-personal.editar');
 
+        // ==========================================
+        // CONSULTORIOS - NUEVO
+        // ==========================================
+        Route::get('/gestion-personal/consultorios', function () {
+            return view('supervisor.gestion-personal.consultorios');
+        })->name('gestion-personal.consultorios');
+
         Route::get('/clinicas', function () {
             return view('supervisor.clinicas.clinicas');
         })->name('clinicas.clinicas');
+
         Route::get('/estadisticas', function () {
             return view('supervisor.estadisticas.estadisticas');
         })->name('estadisticas.estadisticas');
@@ -166,7 +178,21 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
     Route::prefix('api')->name('api.')->group(function () {
 
         // ==========================================
-        // API PERSONAL DE SALUD - NUEVO
+        // API ESTADÍSTICAS DEL SUPERVISOR - NUEVO
+        // ==========================================
+        Route::prefix('supervisor/estadisticas')->name('supervisor.estadisticas.')->group(function () {
+            Route::get('/generales', [EstadisticasSupervisorController::class, 'estadisticasGenerales'])
+                ->name('generales');
+            Route::get('/personal', [EstadisticasSupervisorController::class, 'estadisticasPersonal'])
+                ->name('personal');
+            Route::get('/personal/reporte-pdf', [EstadisticasSupervisorController::class, 'generarReportePersonal'])
+                ->name('personal.reporte-pdf');
+            Route::get('/personal/lista', [EstadisticasSupervisorController::class, 'listarPersonal'])
+                ->name('personal.lista');
+        });
+
+        // ==========================================
+        // API PERSONAL DE SALUD
         // ==========================================
         Route::prefix('personal-salud')->name('personal-salud.')->group(function () {
             Route::get('/', [PersonalSaludController::class, 'index'])->name('index');
@@ -178,13 +204,40 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         });
 
         // ==========================================
-        // API ROLES - NUEVO
+        // API ROLES
         // ==========================================
         Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
 
-        Route::prefix('supervisor')->name('supervisor.')->group(function () {
-            // Rutas para el supervisor
+        // ==========================================
+        // API CONSULTORIOS - NUEVO
+        // ==========================================
+        Route::prefix('consultorios')->name('consultorios.')->group(function () {
+            Route::get('/', [ConsultorioController::class, 'index'])->name('index');
+            Route::get('/disponibles', [ConsultorioController::class, 'disponibles'])->name('disponibles');
+            Route::get('/{id}', [ConsultorioController::class, 'show'])->name('show');
+            Route::post('/', [ConsultorioController::class, 'store'])->name('store');
+            Route::put('/{id}', [ConsultorioController::class, 'update'])->name('update');
+            Route::delete('/{id}', [ConsultorioController::class, 'destroy'])->name('destroy');
         });
+
+        // ==========================================
+        // API ASIGNACIONES DE CONSULTORIO - NUEVO
+        // ==========================================
+        Route::prefix('asignaciones-consultorio')->name('asignaciones-consultorio.')->group(function () {
+            Route::get('/', [AsignacionConsultorioController::class, 'index'])->name('index');
+            Route::get('/activas', [AsignacionConsultorioController::class, 'activas'])->name('activas');
+            Route::get('/personal/{codPer}', [AsignacionConsultorioController::class, 'porPersonal'])->name('porPersonal');
+            Route::get('/consultorio/{codCons}', [AsignacionConsultorioController::class, 'porConsultorio'])->name('porConsultorio');
+            Route::get('/{id}', [AsignacionConsultorioController::class, 'show'])->name('show');
+            Route::post('/', [AsignacionConsultorioController::class, 'store'])->name('store');
+            Route::put('/{id}', [AsignacionConsultorioController::class, 'update'])->name('update');
+            Route::delete('/{id}', [AsignacionConsultorioController::class, 'destroy'])->name('destroy');
+        });
+
+        // ==========================================
+        // API SERVICIOS DISPONIBLES - NUEVO
+        // ==========================================
+        Route::get('/servicios-disponibles', [App\Http\Controllers\ServicioApiController::class, 'index'])->name('servicios.disponibles');
 
         Route::get('/usuario-actual', function () {
             $user = Auth::user();

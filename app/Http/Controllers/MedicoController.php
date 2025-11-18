@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Medico;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Routing\Controller;
 class MedicoController extends Controller
 {
     /**

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AsignacionConsultorio;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
 
 class AsignacionConsultorioController extends Controller
@@ -14,7 +15,7 @@ class AsignacionConsultorioController extends Controller
     public function index()
     {
         try {
-            $asignaciones = AsignacionConsultorio::with(['personal', 'consultorio', 'servicio'])
+            $asignaciones = AsignacionConsultorio::with(['personal', 'consultorio'])
                 ->orderBy('idAsignacion', 'desc')
                 ->get();
 
@@ -37,7 +38,7 @@ class AsignacionConsultorioController extends Controller
     public function show($id)
     {
         try {
-            $asignacion = AsignacionConsultorio::with(['personal', 'consultorio', 'servicio'])
+            $asignacion = AsignacionConsultorio::with(['personal', 'consultorio'])
                 ->find($id);
 
             if (!$asignacion) {
@@ -70,7 +71,6 @@ class AsignacionConsultorioController extends Controller
             'fechaFin' => 'nullable|date|after_or_equal:fechaInicio',
             'codPer' => 'required|exists:PersonalSalud,codPer',
             'codCons' => 'required|exists:Consultorio,codCons',
-            'codServ' => 'required|exists:Servicio,codServ'
         ], [
             'fechaInicio.required' => 'La fecha de inicio es obligatoria',
             'fechaFin.after_or_equal' => 'La fecha fin debe ser posterior o igual a la fecha de inicio',
@@ -78,8 +78,6 @@ class AsignacionConsultorioController extends Controller
             'codPer.exists' => 'El personal seleccionado no existe',
             'codCons.required' => 'El consultorio es obligatorio',
             'codCons.exists' => 'El consultorio seleccionado no existe',
-            'codServ.required' => 'El servicio es obligatorio',
-            'codServ.exists' => 'El servicio seleccionado no existe'
         ]);
 
         if ($validator->fails()) {
@@ -92,7 +90,7 @@ class AsignacionConsultorioController extends Controller
 
         try {
             $asignacion = AsignacionConsultorio::create($request->all());
-            $asignacion->load(['personal', 'consultorio', 'servicio']);
+            $asignacion->load(['personal', 'consultorio']);
 
             return response()->json([
                 'success' => true,
@@ -127,7 +125,6 @@ class AsignacionConsultorioController extends Controller
             if ($request->has('fechaFin')) $rules['fechaFin'] = 'nullable|date|after_or_equal:fechaInicio';
             if ($request->has('codPer')) $rules['codPer'] = 'exists:PersonalSalud,codPer';
             if ($request->has('codCons')) $rules['codCons'] = 'exists:Consultorio,codCons';
-            if ($request->has('codServ')) $rules['codServ'] = 'exists:Servicio,codServ';
 
             $validator = Validator::make($request->all(), $rules);
 
@@ -139,9 +136,9 @@ class AsignacionConsultorioController extends Controller
                 ], 422);
             }
 
-            $asignacion->fill($request->only(['fechaInicio', 'fechaFin', 'codPer', 'codCons', 'codServ']));
+            $asignacion->fill($request->only(['fechaInicio', 'fechaFin', 'codPer', 'codCons']));
             $asignacion->save();
-            $asignacion->load(['personal', 'consultorio', 'servicio']);
+            $asignacion->load(['personal', 'consultorio']);
 
             return response()->json([
                 'success' => true,
@@ -162,7 +159,7 @@ class AsignacionConsultorioController extends Controller
     public function activas()
     {
         try {
-            $asignaciones = AsignacionConsultorio::with(['personal', 'consultorio', 'servicio'])
+            $asignaciones = AsignacionConsultorio::with(['personal', 'consultorio'])
                 ->activas()
                 ->get();
 
@@ -185,7 +182,7 @@ class AsignacionConsultorioController extends Controller
     public function porPersonal($codPer)
     {
         try {
-            $asignaciones = AsignacionConsultorio::with(['consultorio', 'servicio'])
+            $asignaciones = AsignacionConsultorio::with(['consultorio'])
                 ->porPersonal($codPer)
                 ->orderBy('fechaInicio', 'desc')
                 ->get();
@@ -209,7 +206,7 @@ class AsignacionConsultorioController extends Controller
     public function porConsultorio($codCons)
     {
         try {
-            $asignaciones = AsignacionConsultorio::with(['personal', 'servicio'])
+            $asignaciones = AsignacionConsultorio::with(['personal'])
                 ->porConsultorio($codCons)
                 ->orderBy('fechaInicio', 'desc')
                 ->get();

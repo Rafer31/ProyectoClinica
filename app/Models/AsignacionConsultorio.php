@@ -18,7 +18,6 @@ class AsignacionConsultorio extends Model
         'fechaFin',
         'codPer',
         'codCons',
-        'codServ'
     ];
 
     protected $casts = [
@@ -39,11 +38,6 @@ class AsignacionConsultorio extends Model
     }
 
     // Relación con Servicio
-    public function servicio()
-    {
-        return $this->belongsTo(Servicio::class, 'codServ', 'codServ');
-    }
-
     // Scopes útiles
     public function scopePorPersonal($query, $codPer)
     {
@@ -55,10 +49,7 @@ class AsignacionConsultorio extends Model
         return $query->where('codCons', $codCons);
     }
 
-    public function scopePorServicio($query, $codServ)
-    {
-        return $query->where('codServ', $codServ);
-    }
+
 
     public function scopeActivas($query)
     {

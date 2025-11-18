@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Requisito;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Routing\Controller;
 class RequisitoController extends Controller
 {
     /**

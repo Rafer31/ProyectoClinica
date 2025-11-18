@@ -6,7 +6,7 @@ use App\Models\PersonalSalud;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Routing\Controller;
 class PersonalSaludController extends Controller
 {
     /**

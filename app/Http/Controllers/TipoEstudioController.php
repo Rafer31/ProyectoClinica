@@ -6,7 +6,7 @@ use App\Models\TipoEstudio;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use Illuminate\Routing\Controller;
 class TipoEstudioController extends Controller
 {
     /**
