@@ -114,11 +114,15 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         });
 
         // ==========================================
-        // RUTAS DE CRONOGRAMAS (SOLO VISTAS)
+        // RUTAS DE CRONOGRAMAS (VISTAS) - ACTUALIZADO
         // ==========================================
         Route::get('/cronogramas', function () {
             return view('personal.cronogramas.cronogramas');
         })->name('cronogramas.cronogramas');
+
+        Route::get('/cronogramas/calendario', function () {
+            return view('personal.cronogramas.calendario-horarios');
+        })->name('cronogramas.calendario');
 
         // ==========================================
         // RUTAS DE PACIENTES
@@ -235,10 +239,8 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         });
 
         // ==========================================
-        // API SERVICIOS DISPONIBLES - NUEVO
+        // API USUARIO ACTUAL
         // ==========================================
-        Route::get('/servicios-disponibles', [App\Http\Controllers\ServicioApiController::class, 'index'])->name('servicios.disponibles');
-
         Route::get('/usuario-actual', function () {
             $user = Auth::user();
             if (!$user) {
@@ -342,7 +344,9 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::get('/estadisticas', [ServicioController::class, 'estadisticas'])->name('estadisticas');
                 Route::get('/paciente/{codPa}', [ServicioController::class, 'porPaciente'])->name('porPaciente');
                 Route::get('/estado/{estado}', [ServicioController::class, 'porEstado'])->name('porEstado');
-
+                Route::get('/horarios-disponibles/{fechaCrono}', [ServicioController::class, 'horariosDisponibles']);
+                Route::get('/por-fecha-cronograma/{fechaCrono}', [ServicioController::class, 'serviciosPorFechaCronograma']);
+Route::patch('/{id}/cambiar-horario', [ServicioController::class, 'cambiarHorario'])->name('cambiarHorario');
                 // Cambios de estado
                 Route::patch('/{id}/cancelar', [ServicioController::class, 'cancelar'])->name('cancelar');
                 Route::patch('/{id}/entregar', [ServicioController::class, 'entregar'])->name('entregar');

@@ -23,6 +23,7 @@ return new class extends Migration {
             $table->unsignedInteger('codPa')->nullable();
             $table->unsignedInteger('codMed')->nullable();
             $table->unsignedInteger('codTest')->nullable();
+            $table->time('horaCrono')->nullable();
             $table->date('fechaCrono')->nullable();
 
             $table->foreign('codPa')->references('codPa')->on('Paciente')->onDelete('set null');

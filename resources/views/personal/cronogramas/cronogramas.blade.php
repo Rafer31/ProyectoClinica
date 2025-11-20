@@ -21,11 +21,21 @@
                     </h1>
                     <p class="text-gray-600 ml-15">Gestiona los horarios semanales de atención médica</p>
                 </div>
-                <button onclick="abrirModalCrear()"
-                    class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
-                    <span class="material-icons">add_circle</span>
-                    <span class="font-semibold">Nuevo Cronograma</span>
-                </button>
+                <div class="flex gap-3">
+                    <!-- Botón Ver Calendario de Horarios -->
+                    <a href="{{ route('personal.cronogramas.calendario') }}"
+                        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        <span class="material-icons">schedule</span>
+                        <span class="font-semibold">Ver Calendario de Horarios</span>
+                    </a>
+
+                    <!-- Botón Nuevo Cronograma -->
+                    <button onclick="abrirModalCrear()"
+                        class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all transform hover:scale-105 shadow-lg hover:shadow-xl">
+                        <span class="material-icons">add_circle</span>
+                        <span class="font-semibold">Nuevo Cronograma</span>
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -480,15 +490,15 @@
             hoyDate.setHours(0, 0, 0, 0);
 
 
-        let html = '';
+            let html = '';
 
             // Encabezados de días
             dias.forEach(dia => {
                 html += `
-            <div class="bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-4 text-center border-b-2 border-teal-700 shadow-sm">
-                <span class="text-sm font-bold text-white">${dia}</span>
-            </div>
-        `;
+                <div class="bg-gradient-to-br from-emerald-500 to-teal-600 px-4 py-4 text-center border-b-2 border-teal-700 shadow-sm">
+                    <span class="text-sm font-bold text-white">${dia}</span>
+                </div>
+            `;
             });
 
             // Días de la semana con cronogramas
@@ -498,7 +508,7 @@
                 fecha.setHours(0, 0, 0, 0);
 
 
-          const fechaStr = formatearFecha(fecha);
+                const fechaStr = formatearFecha(fecha);
                 const esHoy = fechaStr === hoy;
                 const esPasado = fecha < hoyDate;
                 const cronograma = cronogramas.find(c => c.fechaCrono === fechaStr);
@@ -540,88 +550,88 @@
                     else claseProgreso = 'alto';
 
                     contenido = `
-                <div class="dia-calendario dia-con-cronograma ${bordeDia}" onclick="verDetalleCronograma('${fechaStr}', ${JSON.stringify(cronograma).replace(/"/g, '&quot;')})">
-                    <div class="cronograma-card">
-                        <div class="estado-badge ${colorEstado}"></div>
-                        <div class="flex justify-between items-start mb-3">
-                            <span class="text-3xl font-bold text-gray-800">${fecha.getDate()}</span>
-                            <span class="text-xs px-3 py-1 rounded-lg ${badgeColor} font-bold shadow-md">
-                                ${textoEstado}
-                            </span>
-                        </div>
-                        <div class="space-y-3 flex-grow">
-                            <div class="turnos-info px-3 py-3 shadow-sm">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-bold text-emerald-900">Turnos Normales</span>
-                                    <span class="material-icons text-sm text-emerald-600">${iconoEstado}</span>
-                                </div>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-2xl font-bold text-emerald-700">${cronograma.cantDispo}</span>
-                                    <span class="text-xs text-gray-700 font-medium">disponibles</span>
-                                </div>
-                                <div class="text-xs text-gray-700 font-medium mt-1">
-                                    ${atendidos} de ${totalFichas} atendidos
-                                </div>
+                    <div class="dia-calendario dia-con-cronograma ${bordeDia}" onclick="verDetalleCronograma('${fechaStr}', ${JSON.stringify(cronograma).replace(/"/g, '&quot;')})">
+                        <div class="cronograma-card">
+                            <div class="estado-badge ${colorEstado}"></div>
+                            <div class="flex justify-between items-start mb-3">
+                                <span class="text-3xl font-bold text-gray-800">${fecha.getDate()}</span>
+                                <span class="text-xs px-3 py-1 rounded-lg ${badgeColor} font-bold shadow-md">
+                                    ${textoEstado}
+                                </span>
                             </div>
-                            <div class="emergencia-info px-3 py-3 shadow-sm">
-                                <div class="flex justify-between items-center mb-2">
-                                    <span class="text-xs font-bold text-red-900 flex items-center gap-1">
-                                        <span class="material-icons text-xs">local_hospital</span>
-                                        Emergencia
-                                    </span>
+                            <div class="space-y-3 flex-grow">
+                                <div class="turnos-info px-3 py-3 shadow-sm">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs font-bold text-emerald-900">Turnos Normales</span>
+                                        <span class="material-icons text-sm text-emerald-600">${iconoEstado}</span>
+                                    </div>
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-2xl font-bold text-emerald-700">${cronograma.cantDispo}</span>
+                                        <span class="text-xs text-gray-700 font-medium">disponibles</span>
+                                    </div>
+                                    <div class="text-xs text-gray-700 font-medium mt-1">
+                                        ${atendidos} de ${totalFichas} atendidos
+                                    </div>
                                 </div>
-                                <div class="flex items-baseline gap-1">
-                                    <span class="text-2xl font-bold text-red-700">${fichasEmergencia}</span>
-                                    <span class="text-xs text-gray-700 font-medium">atendidos</span>
+                                <div class="emergencia-info px-3 py-3 shadow-sm">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs font-bold text-red-900 flex items-center gap-1">
+                                            <span class="material-icons text-xs">local_hospital</span>
+                                            Emergencia
+                                        </span>
+                                    </div>
+                                    <div class="flex items-baseline gap-1">
+                                        <span class="text-2xl font-bold text-red-700">${fichasEmergencia}</span>
+                                        <span class="text-xs text-gray-700 font-medium">atendidos</span>
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="progreso-bar-container">
-                                <div class="progreso-bar ${claseProgreso}" style="width: ${porcentaje}%"></div>
+                                <div class="progreso-bar-container">
+                                    <div class="progreso-bar ${claseProgreso}" style="width: ${porcentaje}%"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
+                `;
                 } else {
                     // Día sin cronograma
                     if (esPasado) {
                         // Día pasado - Mostrar como no disponible
                         contenido = `
-                        <div class="dia-calendario ${bordeDia} opacity-50">
-                            <div class="p-4 h-full flex flex-col">
-                                <div class="flex justify-between items-start mb-3">
-                                    <span class="text-3xl font-bold text-gray-400">${fecha.getDate()}</span>
-                                    <span class="text-xs px-2 py-1 rounded-lg bg-gray-200 text-gray-500 font-bold">
-                                        Pasado
-                                    </span>
-                                </div>
-                                <div class="flex-grow flex items-center justify-center">
-                                    <div class="text-center">
-                                        <span class="material-icons text-gray-300 text-4xl block mb-2">event_busy</span>
-                                        <p class="text-xs text-gray-400 font-medium">Fecha no disponible</p>
+                            <div class="dia-calendario ${bordeDia} opacity-50">
+                                <div class="p-4 h-full flex flex-col">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <span class="text-3xl font-bold text-gray-400">${fecha.getDate()}</span>
+                                        <span class="text-xs px-2 py-1 rounded-lg bg-gray-200 text-gray-500 font-bold">
+                                            Pasado
+                                        </span>
+                                    </div>
+                                    <div class="flex-grow flex items-center justify-center">
+                                        <div class="text-center">
+                                            <span class="material-icons text-gray-300 text-4xl block mb-2">event_busy</span>
+                                            <p class="text-xs text-gray-400 font-medium">Fecha no disponible</p>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
                     } else {
                         // Día actual o futuro - Permitir crear cronograma
                         contenido = `
-                        <div class="dia-calendario ${bordeDia}">
-                            <div class="p-4 h-full flex flex-col">
-                                <div class="flex justify-between items-start mb-3">
-                                    <span class="text-3xl font-bold text-gray-700">${fecha.getDate()}</span>
-                                </div>
-                                <div class="flex-grow flex items-center justify-center">
-                                    <button onclick="crearCronogramaRapido('${fechaStr}')"
-                                        class="w-full py-4 text-sm text-teal-600 hover:bg-gradient-to-br hover:from-emerald-50 hover:to-teal-50 rounded-xl border-2 border-dashed border-teal-300 transition-all hover:border-teal-500 hover:shadow-md font-semibold">
-                                        <span class="material-icons text-2xl block mb-2">add_circle_outline</span>
-                                        <span>Crear cronograma</span>
-                                    </button>
+                            <div class="dia-calendario ${bordeDia}">
+                                <div class="p-4 h-full flex flex-col">
+                                    <div class="flex justify-between items-start mb-3">
+                                        <span class="text-3xl font-bold text-gray-700">${fecha.getDate()}</span>
+                                    </div>
+                                    <div class="flex-grow flex items-center justify-center">
+                                        <button onclick="crearCronogramaRapido('${fechaStr}')"
+                                            class="w-full py-4 text-sm text-teal-600 hover:bg-gradient-to-br hover:from-emerald-50 hover:to-teal-50 rounded-xl border-2 border-dashed border-teal-300 transition-all hover:border-teal-500 hover:shadow-md font-semibold">
+                                            <span class="material-icons text-2xl block mb-2">add_circle_outline</span>
+                                            <span>Crear cronograma</span>
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
                     }
                 }
 

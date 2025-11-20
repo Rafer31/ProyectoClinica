@@ -20,12 +20,13 @@ class Servicio extends Model
         'horaAten',
         'fechaEnt',
         'horaEnt',
-        'tipoAseg',  // CORRECTO
+        'tipoAseg',
         'nroFicha',
         'estado',
         'codPa',
         'codMed',
         'codTest',
+        'horaCrono',  // NUEVO CAMPO
         'fechaCrono'
     ];
 

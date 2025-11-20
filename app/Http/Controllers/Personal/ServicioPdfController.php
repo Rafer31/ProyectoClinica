@@ -7,7 +7,7 @@ use App\Models\Servicio;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 
-class ServicioPdfController extends Controller
+class ServicioPdfController extends \Illuminate\Routing\Controller
 {
     /**
      * Genera el PDF de la ficha del servicio con información del paciente

@@ -37,7 +37,30 @@
                 transform: translateY(0);
             }
         }
+
+        .horario-btn {
+            transition: all 0.2s ease;
+        }
+
+        .horario-btn:hover:not(:disabled) {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .horario-btn.selected {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            font-weight: bold;
+            border-color: #059669;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        }
+
+        .horario-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
+
 
     <div class="space-y-6">
         <!-- Alerta -->
@@ -202,7 +225,7 @@
                             <th scope="col" class="px-6 py-4 font-bold">Tipo Estudio</th>
                             <th scope="col" class="px-6 py-4 font-bold">Médico</th>
                             <th scope="col" class="px-6 py-4 font-bold">Tipo Seguro</th>
-                            <th scope="col" class="px-6 py-4 font-bold">Fecha Solicitud</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Fecha/Hora Crono</th>
                             <th scope="col" class="px-6 py-4 font-bold">Estado</th>
                             <th scope="col" class="px-6 py-4 font-bold text-center" style="min-width: 300px;">Acciones</th>
                         </tr>
@@ -270,9 +293,22 @@
                             </div>
                             <div class="text-xs mt-2 font-medium text-gray-500 text-center step-label-3">Estudio</div>
                         </div>
+                        <div class="step-line step-line-3 flex-1 h-1 bg-gray-300 mx-2"></div>
+                    </div>
+
+                    <!-- Step 4: NUEVO PASO PARA HORARIOS -->
+                    <div class="flex-1 flex items-center">
+                        <div class="relative flex flex-col items-center flex-1">
+                            <div
+                                class="step-circle step-4 flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300 bg-white text-gray-500 font-bold transition-all">
+                                <span class="step-number">4</span>
+                            </div>
+                            <div class="text-xs mt-2 font-medium text-gray-500 text-center step-label-4">Horario</div>
+                        </div>
                     </div>
                 </div>
             </div>
+
             <form id="form-servicio" class="space-y-6">
                 <!-- Paso 1: Información Básica -->
                 <div class="form-step active" data-step="1">
@@ -397,6 +433,42 @@
                             </select>
                         </div>
                     </div>
+                </div>
+
+                <!-- Paso 4: NUEVO - Selección de Horario -->
+                <div class="form-step hidden" data-step="4">
+                    <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-6 rounded-lg">
+                        <div class="flex items-center">
+                            <span class="material-icons text-teal-600 mr-2">schedule</span>
+                            <p class="text-sm text-teal-800 font-semibold">Seleccione el horario de atención</p>
+                        </div>
+                    </div>
+
+                    <div id="horarios-container" class="space-y-6">
+                        <!-- Horarios de Mañana -->
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <span class="material-icons text-amber-600">wb_sunny</span>
+                                Horarios de Mañana (08:00 - 12:00)
+                            </h4>
+                            <div class="grid grid-cols-5 gap-3" id="horarios-manana">
+                                <!-- Se llenarán dinámicamente -->
+                            </div>
+                        </div>
+
+                        <!-- Horarios de Tarde -->
+                        <div>
+                            <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                <span class="material-icons text-blue-600">wb_twilight</span>
+                                Horarios de Tarde (14:00 - 19:00)
+                            </h4>
+                            <div class="grid grid-cols-6 gap-3" id="horarios-tarde">
+                                <!-- Se llenarán dinámicamente -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <input type="hidden" id="horaCrono" name="horaCrono" required>
                 </div>
 
                 <!-- Botones de navegación -->
@@ -572,916 +644,991 @@
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
         <script>
-// Variables globales
-let serviciosData = [];
-let servicioActual = null;
-let pasoActual = 1;
-const totalPasos = 3;
-let datosFormulario = {};
-
-document.addEventListener('DOMContentLoaded', function () {
-    cargarServicios();
-    cargarEstadisticas();
-
-    // Event listeners
-    document.getElementById('buscar-servicio').addEventListener('input', filtrarServicios);
-    document.getElementById('filtro-estado').addEventListener('change', filtrarServicios);
-    document.getElementById('filtro-tipo-aseg').addEventListener('change', filtrarServicios);
-    document.getElementById('btn-nuevo-servicio').addEventListener('click', abrirModalNuevoServicio);
-    document.getElementById('btn-siguiente').addEventListener('click', siguientePaso);
-    document.getElementById('btn-anterior').addEventListener('click', anteriorPaso);
-    document.getElementById('form-servicio').addEventListener('submit', guardarServicio);
-    document.getElementById('fechaCrono').addEventListener('change', calcularNroFicha);
-    document.getElementById('btn-confirmar-cancelar').addEventListener('click', confirmarCancelarServicio);
-
-    // Contador de caracteres para diagnóstico
-    const textarea = document.getElementById('diagnostico-texto');
-    const contador = document.getElementById('caracteres-actuales');
-    textarea.addEventListener('input', function () {
-        const longitud = this.value.length;
-        contador.textContent = longitud;
-        if (longitud > 450) {
-            contador.parentElement.classList.add('text-red-600');
-            contador.parentElement.classList.remove('text-gray-600');
-        } else {
-            contador.parentElement.classList.add('text-gray-600');
-            contador.parentElement.classList.remove('text-red-600');
-        }
-    });
-});
-
-// ==========================================
-// FUNCIONES DE CARGA DE DATOS
-// ==========================================
-
-async function cargarServicios() {
-    mostrarLoader(true);
-    const tablaContainer = document.getElementById('tabla-container');
-    const noData = document.getElementById('no-data');
-
-    try {
-        const response = await fetch('/api/personal/servicios');
-        const data = await response.json();
-
-        if (data.success) {
-            // FILTRAR: Excluir servicios con estado "Atendido" y "Entregado"
-            serviciosData = data.data.filter(s =>
-                s.estado !== 'Atendido' && s.estado !== 'Entregado'
-            );
-
-            renderServicios(serviciosData);
-
-            if (serviciosData.length > 0) {
-                tablaContainer.classList.remove('hidden');
-                noData.classList.add('hidden');
-            } else {
-                tablaContainer.classList.add('hidden');
-                noData.classList.remove('hidden');
-            }
-        } else {
-            tablaContainer.classList.add('hidden');
-            noData.classList.remove('hidden');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarAlerta('Error al cargar los servicios', 'error');
-    } finally {
-        mostrarLoader(false);
-    }
-}
-
-async function cargarEstadisticas() {
-    try {
-        const response = await fetch('/api/personal/servicios/estadisticas');
-        const data = await response.json();
-
-        if (data.success) {
-            document.getElementById('stat-hoy').textContent = data.data.hoy || 0;
-            document.getElementById('stat-proceso').textContent = data.data.enProceso || 0;
-            document.getElementById('stat-programados').textContent = data.data.programados || 0;
-            document.getElementById('stat-atendidos').textContent = data.data.atendidos || 0;
-        }
-    } catch (error) {
-        console.error('Error al cargar estadísticas:', error);
-    }
-}
-
-// ==========================================
-// FUNCIONES DE RENDERIZADO
-// ==========================================
-
-function renderServicios(servicios) {
-    const tbody = document.getElementById('tabla-servicios');
-    tbody.innerHTML = '';
-
-    if (servicios.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="8" class="px-6 py-12 text-center">
-                    <div class="flex flex-col items-center gap-3">
-                        <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                            <span class="material-icons text-gray-400 text-3xl">inbox</span>
-                        </div>
-                        <p class="text-gray-500 font-medium">No se encontraron servicios</p>
-                    </div>
-                </td>
-            </tr>
-        `;
-        return;
-    }
-
-    servicios.forEach(servicio => {
-        const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''}`.trim();
-        const medico = `${servicio.medico?.nomMed || ''} ${servicio.medico?.paternoMed || ''}`.trim();
-
-        // Estados con colores
-        const estadoConfig = {
-            'Programado': { class: 'bg-orange-100 text-orange-700 border-orange-300', icon: 'schedule' },
-            'EnProceso': { class: 'bg-blue-100 text-blue-700 border-blue-300', icon: 'pending_actions' },
-            'Atendido': { class: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: 'check_circle' },
-            'Entregado': { class: 'bg-purple-100 text-purple-700 border-purple-300', icon: 'done_all' },
-            'Cancelado': { class: 'bg-red-100 text-red-700 border-red-300', icon: 'cancel' }
-        };
-
-        const estado = estadoConfig[servicio.estado] || estadoConfig['Programado'];
-
-        // Tipo de seguro con colores
-        const tipoAsegConfig = {
-            'AsegEmergencia': 'bg-red-100 text-red-700 border-red-300',
-            'AsegRegular': 'bg-emerald-100 text-emerald-700 border-emerald-300',
-            'NoAsegEmergencia': 'bg-orange-100 text-orange-700 border-orange-300',
-            'NoAsegRegular': 'bg-blue-100 text-blue-700 border-blue-300'
-        };
-
-        const tipoAsegClass = tipoAsegConfig[servicio.tipoAseg] || tipoAsegConfig['NoAsegRegular'];
-        const tipoAsegTexto = servicio.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ') || 'N/A';
-
-        const puedeEditar = servicio.estado !== 'Cancelado' && servicio.estado !== 'Entregado' && servicio.estado !== 'Atendido';
-
-        const fila = `
-            <tr class="border-b hover:bg-emerald-50 transition-colors">
-                <td class="px-6 py-4">
-                    <span class="font-bold text-emerald-600">${servicio.nroServ || 'N/A'}</span>
-                </td>
-                <td class="px-6 py-4">
-                    <div class="font-semibold text-gray-900">${paciente}</div>
-                    <div class="text-xs text-gray-500">${servicio.paciente?.nroHCI || 'Sin HCI'}</div>
-                </td>
-                <td class="px-6 py-4 text-gray-700">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
-                <td class="px-6 py-4 text-gray-700">${medico}</td>
-                <td class="px-6 py-4">
-                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${tipoAsegClass}">
-                        ${tipoAsegTexto}
-                    </span>
-                </td>
-                <td class="px-6 py-4 text-gray-600">${formatearFecha(servicio.fechaSol)}</td>
-                <td class="px-6 py-4">
-                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${estado.class} flex items-center gap-1 w-fit">
-                        <span class="material-icons text-xs">${estado.icon}</span>
-                        ${servicio.estado}
-                    </span>
-                </td>
-                <td class="px-6 py-4">
-                    <div class="flex items-center gap-2 justify-center">
-                        <button onclick="verDetalle(${servicio.codServ})"
-                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all border border-blue-200 hover:shadow-md"
-                            title="Ver detalles">
-                            <span class="material-icons text-base">visibility</span>
-                        </button>
-                        ${puedeEditar ? `
-                            <button onclick="abrirModalDiagnostico(${servicio.codServ})"
-                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
-                                title="Gestionar diagnóstico">
-                                <span class="material-icons text-base">medical_services</span>
-                            </button>
-                            <button onclick="confirmarCancelar(${servicio.codServ})"
-                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all border border-red-200 hover:shadow-md"
-                                title="Cancelar servicio">
-                                <span class="material-icons text-base">cancel</span>
-                            </button>
-                        ` : ''}
-                    </div>
-                </td>
-            </tr>
-        `;
-        tbody.innerHTML += fila;
-    });
-}
-
-function filtrarServicios() {
-    const busqueda = document.getElementById('buscar-servicio').value.toLowerCase();
-    const filtroEstado = document.getElementById('filtro-estado').value;
-    const filtroTipoAseg = document.getElementById('filtro-tipo-aseg').value;
-
-    const serviciosFiltrados = serviciosData.filter(s => {
-        const paciente = `${s.paciente?.nomPa || ''} ${s.paciente?.paternoPa || ''}`.toLowerCase();
-        const cumpleBusqueda =
-            s.nroServ?.toLowerCase().includes(busqueda) ||
-            paciente.includes(busqueda) ||
-            s.paciente?.nroHCI?.toLowerCase().includes(busqueda);
-
-        const cumpleEstado = !filtroEstado || s.estado === filtroEstado;
-        const cumpleTipoAseg = !filtroTipoAseg || s.tipoAseg === filtroTipoAseg;
-
-        return cumpleBusqueda && cumpleEstado && cumpleTipoAseg;
-    });
-
-    renderServicios(serviciosFiltrados);
-}
-
-// ==========================================
-// MODAL NUEVO SERVICIO
-// ==========================================
-
-async function abrirModalNuevoServicio() {
-    try {
-        mostrarLoader(true);
-
-        // Consultar SIEMPRE al servidor para datos frescos
-        const response = await fetch('/api/personal/servicios/datos-formulario');
-        const data = await response.json();
-
-        console.log('Datos del formulario actualizados:', data);
-
-        if (data.success) {
-            datosFormulario = data.data;
-
-            // Llenar selects
-            llenarSelect('codPa', datosFormulario.pacientes, 'codPa', (p) => `${p.nomPa} ${p.paternoPa || ''} - ${p.nroHCI || 'Sin HCI'}`);
-            llenarSelect('codMed', datosFormulario.medicos, 'codMed', (m) => `${m.nomMed} ${m.paternoMed || ''}`);
-            llenarSelect('codTest', datosFormulario.tiposEstudio, 'codTest', 'descripcion');
-            llenarSelect('fechaCrono', datosFormulario.cronogramas, 'fechaCrono');
-
-            // Verificar si hay cronogramas disponibles
-            if (!datosFormulario.cronogramas || datosFormulario.cronogramas.length === 0) {
-                mostrarAlerta('⚠️ No hay cronogramas disponibles. Por favor, cree un cronograma primero.', 'error');
-                mostrarLoader(false);
-                return;
-            }
-
-            console.log('Cronogramas disponibles:', datosFormulario.cronogramas);
-
-            // Resetear formulario
-            document.getElementById('form-servicio').reset();
-            pasoActual = 1;
-            mostrarPaso(1);
-
-            // Establecer fecha y hora actual
-            const ahora = new Date();
-            document.getElementById('fechaSol').valueAsDate = ahora;
-            document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
-
-            document.getElementById('modal-servicio').classList.remove('hidden');
-        } else {
-            mostrarAlerta(data.message || 'Error al cargar datos del formulario', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarAlerta('Error al cargar datos del formulario', 'error');
-    } finally {
-        mostrarLoader(false);
-    }
-}
-
-function llenarSelect(selectId, datos, valueKey, textKey) {
-    const select = document.getElementById(selectId);
-    const optionInicial = select.querySelector('option[value=""]');
-    select.innerHTML = '';
-
-    if (optionInicial) {
-        select.appendChild(optionInicial.cloneNode(true));
-    }
-
-    if (!datos || datos.length === 0) {
-        if (selectId === 'fechaCrono') {
-            const option = document.createElement('option');
-            option.value = '';
-            option.textContent = 'No hay cronogramas disponibles';
-            option.disabled = true;
-            select.appendChild(option);
-        }
-        return;
-    }
-
-    datos.forEach(item => {
-        const option = document.createElement('option');
-        option.value = item[valueKey];
-
-        if (selectId === 'fechaCrono') {
-            const fecha = formatearFechaCorta(item.fechaCrono);
-
-            // USAR cantDispo directamente (sin cálculos)
-            const fichasDisponibles = item.cantDispo || 0;
-
-            const fichasTexto = ` (${fichasDisponibles} ${fichasDisponibles === 1 ? 'ficha' : 'fichas'} disponible${fichasDisponibles === 1 ? '' : 's'})`;
-
-            option.textContent = `${fecha}${fichasTexto}`;
-
-            // Deshabilitar si NO tiene fichas
-            if (fichasDisponibles <= 0) {
-                option.disabled = true;
-                option.style.color = '#999';
-                option.style.fontStyle = 'italic';
-                option.textContent = `${fecha} - ❌ SIN CUPO`;
-            }
-            // Advertencia si quedan pocas fichas
-            else if (fichasDisponibles <= 3) {
-                option.style.color = '#f59e0b';
-                option.style.fontWeight = 'bold';
-            }
-        } else {
-            option.textContent = typeof textKey === 'function' ? textKey(item) : item[textKey];
-        }
-
-        select.appendChild(option);
-    });
-}
-
-async function calcularNroFicha() {
-    const fechaCrono = this.value;
-    const nroFichaInput = document.getElementById('nroFicha');
-
-    if (!fechaCrono) {
-        nroFichaInput.value = '';
-        return;
-    }
-
-    try {
-        console.log('Calculando ficha para:', fechaCrono);
-
-        const response = await fetch(`/api/personal/servicios/calcular-ficha/${fechaCrono}`);
-        const data = await response.json();
-
-        console.log('Respuesta del servidor:', data);
-
-        if (data.success) {
-            nroFichaInput.value = data.data.nroFicha;
-
-            // Mostrar cantDispo directamente
-            const cantDispo = data.data.cantDispo;
-
-            const infoDiv = nroFichaInput.nextElementSibling;
-            if (infoDiv && infoDiv.classList.contains('text-xs')) {
-                infoDiv.innerHTML = `
-                    <span class="material-icons text-xs">info</span>
-                    Fichas disponibles: ${cantDispo}
-                `;
-
-                // Cambiar color según disponibilidad
-                if (cantDispo <= 0) {
-                    infoDiv.classList.add('text-red-600');
-                    infoDiv.classList.remove('text-gray-500', 'text-orange-600');
-                    mostrarAlerta('⚠️ No hay fichas disponibles en este cronograma', 'error');
-                } else if (cantDispo <= 3) {
-                    infoDiv.classList.add('text-orange-600');
-                    infoDiv.classList.remove('text-gray-500', 'text-red-600');
-                } else {
-                    infoDiv.classList.add('text-gray-500');
-                    infoDiv.classList.remove('text-red-600', 'text-orange-600');
-                }
-            }
-        } else {
-            mostrarAlerta(data.message || 'No se pudo calcular el número de ficha', 'error');
-            nroFichaInput.value = '';
-        }
-    } catch (error) {
-        console.error('Error al calcular ficha:', error);
-        mostrarAlerta('Error al calcular el número de ficha', 'error');
-        nroFichaInput.value = '';
-    }
-}
-
-async function guardarServicio(e) {
-    e.preventDefault();
-
-    const datos = {
-        fechaSol: document.getElementById('fechaSol').value,
-        horaSol: document.getElementById('horaSol').value,
-        tipoAseg: document.getElementById('tipoAseg').value,
-        codPa: document.getElementById('codPa').value,
-        codMed: document.getElementById('codMed').value,
-        codTest: document.getElementById('codTest').value,
-        fechaCrono: document.getElementById('fechaCrono').value
-    };
-
-    try {
-        const response = await fetch('/api/personal/servicios', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify(datos)
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            mostrarAlerta('Servicio creado exitosamente', 'success');
-            cerrarModal('modal-servicio');
-            cargarServicios();
-            cargarEstadisticas();
-        } else {
-            mostrarAlerta(data.message || 'Error al crear el servicio', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarAlerta('Error al crear el servicio', 'error');
-    }
-}
-
-// ==========================================
-// STEPPER - NAVEGACIÓN ENTRE PASOS
-// ==========================================
-
-function siguientePaso() {
-    if (validarPasoActual()) {
-        pasoActual++;
-        mostrarPaso(pasoActual);
-    }
-}
-
-function anteriorPaso() {
-    pasoActual--;
-    mostrarPaso(pasoActual);
-}
-
-function validarPasoActual() {
-    if (pasoActual === 1) {
-        const fechaSol = document.getElementById('fechaSol').value;
-        const horaSol = document.getElementById('horaSol').value;
-        const tipoAseg = document.getElementById('tipoAseg').value;
-
-        if (!fechaSol || !horaSol || !tipoAseg) {
-            mostrarAlerta('Complete todos los campos obligatorios', 'error');
-            return false;
-        }
-    } else if (pasoActual === 2) {
-        const codPa = document.getElementById('codPa').value;
-        const codMed = document.getElementById('codMed').value;
-
-        if (!codPa || !codMed) {
-            mostrarAlerta('Seleccione el paciente y médico', 'error');
-            return false;
-        }
-    } else if (pasoActual === 3) {
-        const codTest = document.getElementById('codTest').value;
-        const fechaCrono = document.getElementById('fechaCrono').value;
-
-        if (!codTest || !fechaCrono) {
-            mostrarAlerta('Seleccione el tipo de estudio y cronograma', 'error');
-            return false;
-        }
-    }
-
-    return true;
-}
-
-function mostrarPaso(paso) {
-    // Ocultar todos los pasos
-    document.querySelectorAll('.form-step').forEach(step => {
-        step.classList.add('hidden');
-        step.classList.remove('active');
-    });
-
-    // Mostrar paso actual
-    const pasoElement = document.querySelector(`.form-step[data-step="${paso}"]`);
-    if (pasoElement) {
-        pasoElement.classList.remove('hidden');
-        pasoElement.classList.add('active');
-    }
-
-    // Actualizar stepper
-    actualizarStepper(paso);
-
-    // Actualizar botones
-    document.getElementById('btn-anterior').disabled = paso === 1;
-    document.getElementById('btn-siguiente').classList.toggle('hidden', paso === totalPasos);
-    document.getElementById('btn-guardar').classList.toggle('hidden', paso !== totalPasos);
-}
-
-function actualizarStepper(pasoActivo) {
-    for (let i = 1; i <= totalPasos; i++) {
-        const circle = document.querySelector(`.step-${i}`);
-        const label = document.querySelector(`.step-label-${i}`);
-        const line = document.querySelector(`.step-line-${i}`);
-
-        if (!circle || !label) continue;
-
-        if (i < pasoActivo) {
-            // Paso completado
-            circle.className = `step-circle step-${i} flex items-center justify-center w-12 h-12 rounded-full border-2 border-green-600 bg-green-600 text-white font-bold transition-all`;
-            circle.innerHTML = '<span class="material-icons text-xl">check</span>';
-            label.className = `text-xs mt-2 font-bold text-green-600 text-center step-label-${i}`;
-
-            if (line) {
-                line.className = `step-line step-line-${i} flex-1 h-1 bg-green-600 mx-2 transition-all`;
-            }
-        } else if (i === pasoActivo) {
-            // Paso actual
-            circle.className = `step-circle step-${i} flex items-center justify-center w-12 h-12 rounded-full border-2 border-emerald-600 bg-emerald-600 text-white font-bold transition-all shadow-lg`;
-            circle.innerHTML = `<span class="step-number text-xl">${i}</span>`;
-            label.className = `text-xs mt-2 font-bold text-emerald-600 text-center step-label-${i}`;
-
-            if (line) {
-                line.className = `step-line step-line-${i} flex-1 h-1 bg-gray-300 mx-2 transition-all`;
-            }
-        } else {
-            // Paso pendiente
-            circle.className = `step-circle step-${i} flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300 bg-white text-gray-500 font-bold transition-all`;
-            circle.innerHTML = `<span class="step-number text-xl">${i}</span>`;
-            label.className = `text-xs mt-2 font-medium text-gray-500 text-center step-label-${i}`;
-
-            if (line) {
-                line.className = `step-line step-line-${i} flex-1 h-1 bg-gray-300 mx-2 transition-all`;
-            }
-        }
-    }
-}
-
-// ==========================================
-// MODAL DIAGNÓSTICO
-// ==========================================
-
-async function abrirModalDiagnostico(codServ) {
-    const servicio = serviciosData.find(s => s.codServ === codServ);
-    if (!servicio) return;
-
-    servicioActual = servicio;
-    const modal = document.getElementById('modal-diagnostico');
-    const textarea = document.getElementById('diagnostico-texto');
-    const select = document.getElementById('tipo-diagnostico');
-
-    // Pre-llenar si ya tiene diagnóstico
-    if (servicio.diagnosticos && servicio.diagnosticos.length > 0) {
-        textarea.value = servicio.diagnosticos[0].descripDiag || '';
-        select.value = servicio.diagnosticos[0].pivot?.tipo || '';
-        document.getElementById('caracteres-actuales').textContent = textarea.value.length;
-    } else {
-        textarea.value = '';
-        select.value = '';
-        document.getElementById('caracteres-actuales').textContent = '0';
-    }
-
-    modal.classList.remove('hidden');
-}
-
-function cerrarModalDiagnostico() {
-    document.getElementById('modal-diagnostico').classList.add('hidden');
-    servicioActual = null;
-}
-
-async function guardarDiagnostico() {
-    const diagnosticoTexto = document.getElementById('diagnostico-texto').value.trim();
-    const tipoDiagnostico = document.getElementById('tipo-diagnostico').value;
-
-    if (!diagnosticoTexto) {
-        mostrarAlerta('Ingrese el diagnóstico', 'error');
-        return;
-    }
-
-    if (!tipoDiagnostico) {
-        mostrarAlerta('Seleccione el tipo de diagnóstico', 'error');
-        return;
-    }
-
-    if (!servicioActual) return;
-
-    try {
-        const response = await fetch(`/api/personal/servicios/${servicioActual.codServ}`, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-            },
-            body: JSON.stringify({
-                diagnosticoTexto: diagnosticoTexto,
-                tipoDiagnostico: tipoDiagnostico
-            })
-        });
-
-        const data = await response.json();
-
-        if (data.success) {
-            mostrarAlerta('✓ Diagnóstico guardado. El servicio ha pasado a estado "Atendido"', 'success');
-            cerrarModalDiagnostico();
-
-            setTimeout(() => {
+            // Variables globales
+            let serviciosData = [];
+            let servicioActual = null;
+            let pasoActual = 1;
+            const totalPasos = 4;  // Ahora son 4 pasos
+            let datosFormulario = {};
+            let horarioSeleccionado = null;
+          document.addEventListener('DOMContentLoaded', function () {
                 cargarServicios();
                 cargarEstadisticas();
-            }, 2000);
-        } else {
-            mostrarAlerta(data.message || 'Error al guardar el diagnóstico', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarAlerta('Error al guardar el diagnóstico', 'error');
-    }
-}
 
-// ==========================================
-// CANCELAR SERVICIO
-// ==========================================
+                // Event listeners
+                document.getElementById('buscar-servicio').addEventListener('input', filtrarServicios);
+                document.getElementById('filtro-estado').addEventListener('change', filtrarServicios);
+                document.getElementById('filtro-tipo-aseg').addEventListener('change', filtrarServicios);
+                document.getElementById('btn-nuevo-servicio').addEventListener('click', abrirModalNuevoServicio);
+                document.getElementById('btn-siguiente').addEventListener('click', siguientePaso);
+                document.getElementById('btn-anterior').addEventListener('click', anteriorPaso);
+                document.getElementById('form-servicio').addEventListener('submit', guardarServicio);
+                document.getElementById('btn-confirmar-cancelar').addEventListener('click', confirmarCancelarServicio);
+                document.getElementById('fechaCrono').addEventListener('change', async function () {
+                    await calcularNroFicha.call(this);
+                    await cargarHorariosDisponibles();
+                });
+            });
 
-function confirmarCancelar(codServ) {
-    servicioActual = serviciosData.find(s => s.codServ === codServ);
-    if (!servicioActual) return;
+            // ==========================================
+            // FUNCIONES DE CARGA DE DATOS
+            // ==========================================
 
-    document.getElementById('modal-cancelar').classList.remove('hidden');
-}
+            async function cargarServicios() {
+                mostrarLoader(true);
+                const tablaContainer = document.getElementById('tabla-container');
+                const noData = document.getElementById('no-data');
 
-async function confirmarCancelarServicio() {
-    if (!servicioActual) return;
+                try {
+                    const response = await fetch('/api/personal/servicios');
+                    const data = await response.json();
 
-    try {
-        const response = await fetch(`/api/personal/servicios/${servicioActual.codServ}/cancelar`, {
-            method: 'PATCH',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    if (data.success) {
+                        serviciosData = data.data.filter(s =>
+                            s.estado !== 'Atendido' && s.estado !== 'Entregado'
+                        );
+
+                        renderServicios(serviciosData);
+
+                        if (serviciosData.length > 0) {
+                            tablaContainer.classList.remove('hidden');
+                            noData.classList.add('hidden');
+                        } else {
+                            tablaContainer.classList.add('hidden');
+                            noData.classList.remove('hidden');
+                        }
+                    } else {
+                        tablaContainer.classList.add('hidden');
+                        noData.classList.remove('hidden');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al cargar los servicios', 'error');
+                } finally {
+                    mostrarLoader(false);
+                }
             }
-        });
 
-        const data = await response.json();
 
-        if (data.success) {
-            mostrarAlerta('Servicio cancelado exitosamente', 'success');
-            cerrarModal('modal-cancelar');
-            cargarServicios();
-            cargarEstadisticas();
-            servicioActual = null;
-        } else {
-            mostrarAlerta(data.message || 'Error al cancelar el servicio', 'error');
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        mostrarAlerta('Error al cancelar el servicio', 'error');
-    }
-}
+            async function cargarEstadisticas() {
+                try {
+                    const response = await fetch('/api/personal/servicios/estadisticas');
+                    const data = await response.json();
 
-// ==========================================
-// VER DETALLE
-// ==========================================
+                    if (data.success) {
+                        document.getElementById('stat-hoy').textContent = data.data.hoy || 0;
+                        document.getElementById('stat-proceso').textContent = data.data.enProceso || 0;
+                        document.getElementById('stat-programados').textContent = data.data.programados || 0;
+                        document.getElementById('stat-atendidos').textContent = data.data.atendidos || 0;
+                    }
+                } catch (error) {
+                    console.error('Error al cargar estadísticas:', error);
+                }
+            }
 
-async function verDetalle(codServ) {
-    const modal = document.getElementById('modal-detalle');
-    const contenido = document.getElementById('detalle-servicio-content');
+            // ==========================================
+            // FUNCIONES DE RENDERIZADO
+            // ==========================================
 
-    try {
-        modal.classList.remove('hidden');
-        contenido.innerHTML = `
-            <div class="text-center py-8">
-                <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-                <p class="mt-4 text-gray-600">Cargando información...</p>
-            </div>
-        `;
+            function renderServicios(servicios) {
+                const tbody = document.getElementById('tabla-servicios');
+                tbody.innerHTML = '';
 
-        const response = await fetch(`/api/personal/servicios/${codServ}`);
-        const data = await response.json();
+                if (servicios.length === 0) {
+                    tbody.innerHTML = `
+                                                                                                                    <tr>
+                                                                                                                        <td colspan="8" class="px-6 py-12 text-center">
+                                                                                                                            <div class="flex flex-col items-center gap-3">
+                                                                                                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                                                                                                                    <span class="material-icons text-gray-400 text-3xl">inbox</span>
+                                                                                                                                </div>
+                                                                                                                                <p class="text-gray-500 font-medium">No se encontraron servicios</p>
+                                                                                                                            </div>
+                                                                                                                        </td>
+                                                                                                                    </tr>
+                                                                                                                `;
+                    return;
+                }
 
-        if (data.success) {
-            const s = data.data;
-            const paciente = `${s.paciente?.nomPa || ''} ${s.paciente?.paternoPa || ''} ${s.paciente?.maternoPa || ''}`.trim();
-            const medico = `${s.medico?.nomMed || ''} ${s.medico?.paternoMed || ''}`.trim();
 
-            const estadoConfig = {
-                'Programado': { class: 'bg-orange-100 text-orange-700 border-orange-300', icon: 'schedule' },
-                'EnProceso': { class: 'bg-blue-100 text-blue-700 border-blue-300', icon: 'pending_actions' },
-                'Atendido': { class: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: 'check_circle' },
-                'Entregado': { class: 'bg-purple-100 text-purple-700 border-purple-300', icon: 'done_all' },
-                'Cancelado': { class: 'bg-red-100 text-red-700 border-red-300', icon: 'cancel' }
-            };
+                servicios.forEach(servicio => {
+                    const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''}`.trim();
+                    const medico = `${servicio.medico?.nomMed || ''} ${servicio.medico?.paternoMed || ''}`.trim();
 
-            const estado = estadoConfig[s.estado] || estadoConfig['Programado'];
+                    const estadoConfig = {
+                        'Programado': { class: 'bg-orange-100 text-orange-700 border-orange-300', icon: 'schedule' },
+                        'EnProceso': { class: 'bg-blue-100 text-blue-700 border-blue-300', icon: 'pending_actions' },
+                        'Atendido': { class: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: 'check_circle' },
+                        'Entregado': { class: 'bg-purple-100 text-purple-700 border-purple-300', icon: 'done_all' },
+                        'Cancelado': { class: 'bg-red-100 text-red-700 border-red-300', icon: 'cancel' }
+                    };
 
-            const diagnosticos = s.diagnosticos && s.diagnosticos.length > 0
-                ? s.diagnosticos.map(d => `
-                    <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
-                        <p class="text-sm font-medium text-gray-800 leading-relaxed">${d.descripDiag}</p>
-                        <span class="text-xs text-emerald-700 font-bold mt-2 inline-block">Tipo: ${d.pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico'}</span>
-                    </div>
-                `).join('')
-                : '<p class="text-gray-500 italic text-center py-4">Sin diagnósticos registrados</p>';
+                    const estado = estadoConfig[servicio.estado] || estadoConfig['Programado'];
 
-            contenido.innerHTML = `
-                <div class="space-y-6">
-                    <!-- Info General -->
-                    <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200">
-                        <div class="flex items-center justify-between mb-4">
-                            <h4 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                                <span class="material-icons text-emerald-600">info</span>
-                                Información General
-                            </h4>
-                            <span class="px-4 py-2 text-sm font-bold rounded-full border ${estado.class} flex items-center gap-1">
-                                <span class="material-icons text-xs">${estado.icon}</span>
-                                ${s.estado}
-                            </span>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Servicio</p>
-                                <p class="font-bold text-emerald-600 text-xl">${s.nroServ}</p>
+                    const tipoAsegConfig = {
+                        'AsegEmergencia': 'bg-red-100 text-red-700 border-red-300',
+                        'AsegRegular': 'bg-emerald-100 text-emerald-700 border-emerald-300',
+                        'NoAsegEmergencia': 'bg-orange-100 text-orange-700 border-orange-300',
+                        'NoAsegRegular': 'bg-blue-100 text-blue-700 border-blue-300'
+                    };
+
+                    const tipoAsegClass = tipoAsegConfig[servicio.tipoAseg] || tipoAsegConfig['NoAsegRegular'];
+                    const tipoAsegTexto = servicio.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ') || 'N/A';
+
+                    const puedeEditar = servicio.estado !== 'Cancelado' && servicio.estado !== 'Entregado' && servicio.estado !== 'Atendido';
+
+                    // Formatear horaCrono
+                    const horaCrono = servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : 'Sin hora';
+
+                    const fila = `
+                                                                                                            <tr class="border-b hover:bg-emerald-50 transition-colors">
+                                                                                                                <td class="px-6 py-4">
+                                                                                                                    <span class="font-bold text-emerald-600">${servicio.nroServ || 'N/A'}</span>
+                                                                                                                </td>
+                                                                                                                <td class="px-6 py-4">
+                                                                                                                    <div class="font-semibold text-gray-900">${paciente}</div>
+                                                                                                                    <div class="text-xs text-gray-500">${servicio.paciente?.nroHCI || 'Sin HCI'}</div>
+                                                                                                                </td>
+                                                                                                                <td class="px-6 py-4 text-gray-700">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
+                                                                                                                <td class="px-6 py-4 text-gray-700">${medico}</td>
+                                                                                                                <td class="px-6 py-4">
+                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${tipoAsegClass}">
+                                                                                                                        ${tipoAsegTexto}
+                                                                                                                    </span>
+                                                                                                                </td>
+                                                                                                                <td class="px-6 py-4">
+                                                                                                                    <div class="font-semibold text-gray-900">${formatearFecha(servicio.fechaCrono)}</div>
+                                                                                                                    <div class="text-xs text-teal-600 font-bold flex items-center gap-1">
+                                                                                                                        <span class="material-icons text-xs">schedule</span>
+                                                                                                                        ${horaCrono}
+                                                                                                                    </div>
+                                                                                                                </td>
+                                                                                                                <td class="px-6 py-4">
+                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${estado.class} flex items-center gap-1 w-fit">
+                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
+                                                                                                                        ${servicio.estado}
+                                                                                                                    </span>
+                                                                                                                </td>
+                                                                                                                <td class="px-6 py-4">
+                                                                                                                    <div class="flex items-center gap-2 justify-center">
+                                                                                                                        <button onclick="verDetalle(${servicio.codServ})"
+                                                                                                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all border border-blue-200 hover:shadow-md"
+                                                                                                                            title="Ver detalles">
+                                                                                                                            <span class="material-icons text-base">visibility</span>
+                                                                                                                        </button>
+                                                                                                                        ${puedeEditar ? `
+                                                                                                                            <button onclick="abrirModalDiagnostico(${servicio.codServ})"
+                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
+                                                                                                                                title="Gestionar diagnóstico">
+                                                                                                                                <span class="material-icons text-base">medical_services</span>
+                                                                                                                            </button>
+                                                                                                                            <button onclick="confirmarCancelar(${servicio.codServ})"
+                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all border border-red-200 hover:shadow-md"
+                                                                                                                                title="Cancelar servicio">
+                                                                                                                                <span class="material-icons text-base">cancel</span>
+                                                                                                                            </button>
+                                                                                                                        ` : ''}
+                                                                                                                    </div>
+                                                                                                                </td>
+                                                                                                            </tr>
+                                                                                                        `;
+                    tbody.innerHTML += fila;
+                });
+            }
+            function filtrarServicios() {
+                const busqueda = document.getElementById('buscar-servicio').value.toLowerCase();
+                const filtroEstado = document.getElementById('filtro-estado').value;
+                const filtroTipoAseg = document.getElementById('filtro-tipo-aseg').value;
+
+                const serviciosFiltrados = serviciosData.filter(s => {
+                    const paciente = `${s.paciente?.nomPa || ''} ${s.paciente?.paternoPa || ''}`.toLowerCase();
+                    const cumpleBusqueda =
+                        s.nroServ?.toLowerCase().includes(busqueda) ||
+                        paciente.includes(busqueda) ||
+                        s.paciente?.nroHCI?.toLowerCase().includes(busqueda);
+
+                    const cumpleEstado = !filtroEstado || s.estado === filtroEstado;
+                    const cumpleTipoAseg = !filtroTipoAseg || s.tipoAseg === filtroTipoAseg;
+
+                    return cumpleBusqueda && cumpleEstado && cumpleTipoAseg;
+                });
+
+                renderServicios(serviciosFiltrados);
+            }
+
+            // ==========================================
+            // MODAL NUEVO SERVICIO
+            // ==========================================
+
+            async function abrirModalNuevoServicio() {
+                try {
+                    mostrarLoader(true);
+
+                    const response = await fetch('/api/personal/servicios/datos-formulario');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        datosFormulario = data.data;
+
+                        llenarSelect('codPa', datosFormulario.pacientes, 'codPa', (p) => `${p.nomPa} ${p.paternoPa || ''} - ${p.nroHCI || 'Sin HCI'}`);
+                        llenarSelect('codMed', datosFormulario.medicos, 'codMed', (m) => `${m.nomMed} ${m.paternoMed || ''}`);
+                        llenarSelect('codTest', datosFormulario.tiposEstudio, 'codTest', 'descripcion');
+                        llenarSelect('fechaCrono', datosFormulario.cronogramas, 'fechaCrono');
+
+                        if (!datosFormulario.cronogramas || datosFormulario.cronogramas.length === 0) {
+                            mostrarAlerta('⚠️ No hay cronogramas disponibles. Por favor, cree un cronograma primero.', 'error');
+                            mostrarLoader(false);
+                            return;
+                        }
+
+                        document.getElementById('form-servicio').reset();
+                        pasoActual = 1;
+                        horarioSeleccionado = null;
+                        mostrarPaso(1);
+
+                        const ahora = new Date();
+                        document.getElementById('fechaSol').valueAsDate = ahora;
+                        document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
+
+                        document.getElementById('modal-servicio').classList.remove('hidden');
+                    } else {
+                        mostrarAlerta(data.message || 'Error al cargar datos del formulario', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al cargar datos del formulario', 'error');
+                } finally {
+                    mostrarLoader(false);
+                }
+            }
+
+
+            function llenarSelect(selectId, datos, valueKey, textKey) {
+                const select = document.getElementById(selectId);
+                const optionInicial = select.querySelector('option[value=""]');
+                select.innerHTML = '';
+
+                if (optionInicial) {
+                    select.appendChild(optionInicial.cloneNode(true));
+                }
+
+                if (!datos || datos.length === 0) {
+                    if (selectId === 'fechaCrono') {
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = 'No hay cronogramas disponibles';
+                        option.disabled = true;
+                        select.appendChild(option);
+                    }
+                    return;
+                }
+
+                datos.forEach(item => {
+                    const option = document.createElement('option');
+                    option.value = item[valueKey];
+
+                    if (selectId === 'fechaCrono') {
+                        const fecha = formatearFechaCorta(item.fechaCrono);
+                        const fichasDisponibles = item.cantDispo || 0;
+                        const fichasTexto = ` (${fichasDisponibles} ${fichasDisponibles === 1 ? 'ficha' : 'fichas'} disponible${fichasDisponibles === 1 ? '' : 's'})`;
+
+                        option.textContent = `${fecha}${fichasTexto}`;
+
+                        if (fichasDisponibles <= 0) {
+                            option.disabled = true;
+                            option.style.color = '#999';
+                            option.style.fontStyle = 'italic';
+                            option.textContent = `${fecha} - ❌ SIN CUPO`;
+                        } else if (fichasDisponibles <= 3) {
+                            option.style.color = '#f59e0b';
+                            option.style.fontWeight = 'bold';
+                        }
+                    } else {
+                        option.textContent = typeof textKey === 'function' ? textKey(item) : item[textKey];
+                    }
+
+                    select.appendChild(option);
+                });
+            }
+            // ==========================================
+            // FUNCIONES DE HORARIOS
+            // ==========================================
+
+
+            async function cargarHorariosDisponibles() {
+                const fechaCrono = document.getElementById('fechaCrono').value;
+
+                if (!fechaCrono) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/api/personal/servicios/horarios-disponibles/${fechaCrono}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const horariosDisponibles = data.data.disponibles || [];
+                        const espaciosPorHora = data.data.espacios_por_hora || {};
+
+                        renderizarHorariosActualizado('horarios-manana', horariosDisponibles, espaciosPorHora, 8, 12);
+                        renderizarHorariosActualizado('horarios-tarde', horariosDisponibles, espaciosPorHora, 14, 20);
+                    } else {
+                        mostrarAlerta('Error al cargar horarios disponibles', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al cargar horarios disponibles', 'error');
+                }
+            }
+            function renderizarHorariosActualizado(containerId, horariosDisponibles, espaciosPorHora, horaInicio, horaFin) {
+                const container = document.getElementById(containerId);
+                container.innerHTML = '';
+
+                let hayHorarios = false;
+
+                for (let hora = horaInicio; hora <= horaFin; hora++) {
+                    const horario = sprintf('%02d:00:00', hora);
+                    const horarioFormateado = horario.substring(0, 5); // HH:MM
+
+                    const espacios = espaciosPorHora[horario];
+                    const espaciosDisponibles = espacios ? espacios.disponibles : 2;
+                    const totalOcupados = espacios ? espacios.total : 0;
+
+                    const estaDisponible = espaciosDisponibles > 0;
+                    hayHorarios = true;
+
+                    const button = document.createElement('button');
+                    button.type = 'button';
+                    button.className = `horario-btn px-4 py-3 rounded-lg border-2 font-semibold text-sm relative ${!estaDisponible
+                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                        : 'bg-white text-gray-700 border-gray-300 hover:border-emerald-500'
+                        }`;
+
+                    button.innerHTML = `
+                            <div class="font-bold text-base">${horarioFormateado}</div>
+                            <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
+                                ${espaciosDisponibles}/2 libres
                             </div>
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Ficha</p>
-                                <p class="font-bold text-gray-900 text-xl">${s.nroFicha || 'N/A'}</p>
+                        `;
+
+                    button.disabled = !estaDisponible;
+
+                    if (estaDisponible) {
+                        button.onclick = () => seleccionarHorario(horario, button);
+                    }
+
+                    container.appendChild(button);
+                }
+
+                if (!hayHorarios) {
+                    container.innerHTML = `
+                            <div class="col-span-full text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                <span class="material-icons text-gray-400 text-3xl block mb-2">event_busy</span>
+                                <p class="text-sm text-gray-500 font-medium">No hay horarios en este rango</p>
                             </div>
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Tipo de Seguro</p>
-                                <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
-                            </div>
-                            <div class="bg-white p-4 rounded-lg shadow-sm">
-                                <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Fecha Solicitud</p>
-                                <p class="font-bold text-gray-900">${formatearFecha(s.fechaSol)}</p>
-                                <p class="text-xs text-emerald-600 font-semibold mt-1">${s.horaSol || 'Sin hora'}</p>
-                            </div>
-                        </div>
-                    </div>
+                        `;
+                }
+            }
+            function sprintf(format, num) {
+                return format.replace('%02d', String(num).padStart(2, '0'));
+            }
+            function seleccionarHorario(horario, botonElement) {
+                // Remover selección previa
+                document.querySelectorAll('.horario-btn.selected').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
 
-                    <!-- Paciente y Médico -->
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
-                            <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span class="material-icons text-blue-600">person</span>
-                                Paciente
-                            </h4>
-                            <p class="text-gray-900 font-bold text-lg">${paciente}</p>
-                            <p class="text-sm text-blue-700 font-semibold mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
-                        </div>
-                        <div class="bg-purple-50 p-5 rounded-xl border border-purple-200">
-                            <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                <span class="material-icons text-purple-600">medical_services</span>
-                                Médico Solicitante
-                            </h4>
-                            <p class="text-gray-900 font-bold text-lg">${medico}</p>
-                            <p class="text-sm text-purple-700 font-semibold mt-1">${s.medico?.tipoMed || ''}</p>
-                        </div>
-                    </div>
+                // Seleccionar nuevo horario
+                botonElement.classList.add('selected');
+                horarioSeleccionado = horario;
+                document.getElementById('horaCrono').value = horario;
+            }
 
-                    <!-- Tipo de Estudio -->
-                    <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
-                        <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                            <span class="material-icons text-purple-600">science</span>
-                            Tipo de Estudio
-                        </h4>
-                        <p class="text-gray-900 font-bold text-xl">${s.tipo_estudio?.descripcion || 'N/A'}</p>
-                    </div>
+            async function calcularNroFicha() {
+                const fechaCrono = this.value;
+                const nroFichaInput = document.getElementById('nroFicha');
 
-                    <!-- Diagnósticos -->
-                    <div>
-                        <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                            <span class="material-icons text-emerald-600">assignment</span>
-                            Diagnósticos
-                        </h4>
-                        <div class="space-y-3">
-                            ${diagnosticos}
-                        </div>
-                    </div>
+                if (!fechaCrono) {
+                    nroFichaInput.value = '';
+                    return;
+                }
 
-                    <!-- Historial de Fechas -->
-                    <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                        <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <span class="material-icons text-gray-600">schedule</span>
-                            Historial del Proceso
-                        </h4>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="material-icons text-blue-600 text-sm">event</span>
-                                    <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Solicitud</p>
-                                </div>
-                                <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaSol)}</p>
-                                <div class="flex items-center gap-1 mt-2">
-                                    <span class="material-icons text-blue-600 text-xs">schedule</span>
-                                    <p class="text-sm text-blue-700 font-semibold">${s.horaSol || 'Sin hora'}</p>
-                                </div>
-                            </div>
+                try {
+                    const response = await fetch(`/api/personal/servicios/calcular-ficha/${fechaCrono}`);
+                    const data = await response.json();
 
-                            ${s.fechaAten ? `
-                            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="material-icons text-emerald-600 text-sm">check_circle</span>
-                                    <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Atención</p>
-                                </div>
-                                <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaAten)}</p>
-                                ${s.horaAten ? `
-                                <div class="flex items-center gap-1 mt-2">
-                                    <span class="material-icons text-emerald-600 text-xs">schedule</span>
-                                    <p class="text-sm text-emerald-700 font-semibold">${s.horaAten}</p>
-                                </div>
-                                ` : ''}
-                            </div>
-                            ` : ''}
+                    if (data.success) {
+                        nroFichaInput.value = data.data.nroFicha;
 
-                            ${s.fechaEnt ? `
-                            <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
-                                <div class="flex items-center gap-2 mb-2">
-                                    <span class="material-icons text-purple-600 text-sm">done_all</span>
-                                    <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Entrega</p>
-                                </div>
-                                <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaEnt)}</p>
-                                ${s.horaEnt ? `
-                                <div class="flex items-center gap-1 mt-2">
-                                    <span class="material-icons text-purple-600 text-xs">schedule</span>
-                                    <p class="text-sm text-purple-700 font-semibold">${s.horaEnt}</p>
-                                </div>
-                                ` : ''}
-                            </div>
-                            ` : ''}
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-    } catch (error) {
-        console.error('Error:', error);
-        contenido.innerHTML = `
-            <div class="text-center py-8">
-                <span class="material-icons text-red-500 text-6xl">error</span>
-                <p class="mt-4 text-red-600 font-semibold">Error al cargar la información</p>
-            </div>
-        `;
-    }
-}
+                        const cantDispo = data.data.cantDispo;
+                        const infoDiv = nroFichaInput.nextElementSibling;
 
-// ==========================================
-// UTILIDADES
-// ==========================================
+                        if (infoDiv && infoDiv.classList.contains('text-xs')) {
+                            infoDiv.innerHTML = `
+                                                            <span class="material-icons text-xs">info</span>
+                                                            Fichas disponibles: ${cantDispo}
+                                                        `;
 
-function cerrarModal(modalId) {
-    document.getElementById(modalId).classList.add('hidden');
-}
+                            if (cantDispo <= 0) {
+                                infoDiv.classList.add('text-red-600');
+                                infoDiv.classList.remove('text-gray-500', 'text-orange-600');
+                                mostrarAlerta('⚠️ No hay fichas disponibles en este cronograma', 'error');
+                            } else if (cantDispo <= 3) {
+                                infoDiv.classList.add('text-orange-600');
+                                infoDiv.classList.remove('text-gray-500', 'text-red-600');
+                            } else {
+                                infoDiv.classList.add('text-gray-500');
+                                infoDiv.classList.remove('text-red-600', 'text-orange-600');
+                            }
+                        }
+                    } else {
+                        mostrarAlerta(data.message || 'No se pudo calcular el número de ficha', 'error');
+                        nroFichaInput.value = '';
+                    }
+                } catch (error) {
+                    console.error('Error al calcular ficha:', error);
+                    mostrarAlerta('Error al calcular el número de ficha', 'error');
+                    nroFichaInput.value = '';
+                }
+            }
 
-function mostrarLoader(mostrar) {
-    document.getElementById('loader').classList.toggle('hidden', !mostrar);
-}
+            async function guardarServicio(e) {
+                e.preventDefault();
 
-function mostrarAlerta(mensaje, tipo = 'success') {
-    const alerta = document.getElementById('alerta');
-    const iconos = {
-        success: 'check_circle',
-        error: 'error',
-        info: 'info'
-    };
-    const colores = {
-        success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
-        error: 'bg-red-50 border-red-300 text-red-800',
-        info: 'bg-blue-50 border-blue-300 text-blue-800'
-    };
+                if (!horarioSeleccionado) {
+                    mostrarAlerta('Por favor seleccione un horario', 'error');
+                    return;
+                }
 
-    alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-md`;
-    alerta.innerHTML = `
-        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
-        <span class="font-semibold">${mensaje}</span>
-    `;
-    alerta.classList.remove('hidden');
+                const datos = {
+                    fechaSol: document.getElementById('fechaSol').value,
+                    horaSol: document.getElementById('horaSol').value,
+                    tipoAseg: document.getElementById('tipoAseg').value,
+                    codPa: document.getElementById('codPa').value,
+                    codMed: document.getElementById('codMed').value,
+                    codTest: document.getElementById('codTest').value,
+                    fechaCrono: document.getElementById('fechaCrono').value,
+                    horaCrono: horarioSeleccionado
+                };
 
-    setTimeout(() => alerta.classList.add('hidden'), 5000);
-}
+                try {
+                    const response = await fetch('/api/personal/servicios', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify(datos)
+                    });
 
-function formatearFecha(fecha) {
-    if (!fecha) return 'N/A';
-    const d = new Date(fecha);
-    return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-}
+                    const data = await response.json();
 
-function formatearFechaCorta(fecha) {
-    if (!fecha) return 'N/A';
+                    if (data.success) {
+                        mostrarAlerta('✅ Servicio creado exitosamente', 'success');
+                        cerrarModal('modal-servicio');
+                        cargarServicios();
+                        cargarEstadisticas();
+                        horarioSeleccionado = null;
+                    } else {
+                        mostrarAlerta(data.message || 'Error al crear el servicio', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al crear el servicio', 'error');
+                }
+            }
 
-    try {
-        // Crear fecha sin timezone
-        if (typeof fecha === 'string' && fecha.includes('-')) {
-            const fechaParts = fecha.split('-');
-            const año = parseInt(fechaParts[0]);
-            const mes = parseInt(fechaParts[1]) - 1;
-            const dia = parseInt(fechaParts[2]);
+            // ==========================================
+            // STEPPER - NAVEGACIÓN ENTRE PASOS
+            // ==========================================
 
-            const d = new Date(año, mes, dia);
+            function siguientePaso() {
+                if (validarPasoActual()) {
+                    pasoActual++;
+                    mostrarPaso(pasoActual);
+                }
+            }
 
-            const opciones = {
-                weekday: 'short',
-                day: '2-digit',
-                month: 'short',
-                year: 'numeric'
-            };
-            return d.toLocaleDateString('es-ES', opciones);
-        }
+            function anteriorPaso() {
+                pasoActual--;
+                mostrarPaso(pasoActual);
+            }
 
-        const d = new Date(fecha);
-        if (isNaN(d.getTime())) return 'N/A';
+            function validarPasoActual() {
+                if (pasoActual === 1) {
+                    const fechaSol = document.getElementById('fechaSol').value;
+                    const horaSol = document.getElementById('horaSol').value;
+                    const tipoAseg = document.getElementById('tipoAseg').value;
 
-        const opciones = {
-            weekday: 'short',
-            day: '2-digit',
-            month: 'short',
-            year: 'numeric'
-        };
-        return d.toLocaleDateString('es-ES', opciones);
-    } catch (error) {
-        console.error('Error al formatear fecha:', fecha, error);
-        return 'N/A';
-    }
-}
+                    if (!fechaSol || !horaSol || !tipoAseg) {
+                        mostrarAlerta('Complete todos los campos obligatorios', 'error');
+                        return false;
+                    }
+                } else if (pasoActual === 2) {
+                    const codPa = document.getElementById('codPa').value;
+                    const codMed = document.getElementById('codMed').value;
+
+                    if (!codPa || !codMed) {
+                        mostrarAlerta('Seleccione el paciente y médico', 'error');
+                        return false;
+                    }
+                } else if (pasoActual === 3) {
+                    const codTest = document.getElementById('codTest').value;
+                    const fechaCrono = document.getElementById('fechaCrono').value;
+
+                    if (!codTest || !fechaCrono) {
+                        mostrarAlerta('Seleccione el tipo de estudio y cronograma', 'error');
+                        return false;
+                    }
+                } else if (pasoActual === 4) {
+                    if (!horarioSeleccionado) {
+                        mostrarAlerta('Seleccione un horario', 'error');
+                        return false;
+                    }
+                }
+
+                return true;
+            }
+
+            function mostrarPaso(paso) {
+                document.querySelectorAll('.form-step').forEach(step => {
+                    step.classList.add('hidden');
+                    step.classList.remove('active');
+                });
+
+                const pasoElement = document.querySelector(`.form-step[data-step="${paso}"]`);
+                if (pasoElement) {
+                    pasoElement.classList.remove('hidden');
+                    pasoElement.classList.add('active');
+                }
+
+                actualizarStepper(paso);
+
+                document.getElementById('btn-anterior').disabled = paso === 1;
+                document.getElementById('btn-siguiente').classList.toggle('hidden', paso === totalPasos);
+                document.getElementById('btn-guardar').classList.toggle('hidden', paso !== totalPasos);
+            }
+
+            function actualizarStepper(pasoActivo) {
+                for (let i = 1; i <= totalPasos; i++) {
+                    const circle = document.querySelector(`.step-${i}`);
+                    const label = document.querySelector(`.step-label-${i}`);
+                    const line = document.querySelector(`.step-line-${i}`);
+
+                    if (!circle || !label) continue;
+
+                    if (i < pasoActivo) {
+                        circle.className = `step-circle step-${i} flex items-center justify-center w-12 h-12 rounded-full border-2 border-green-600 bg-green-600 text-white font-bold transition-all`;
+                        circle.innerHTML = '<span class="material-icons text-xl">check</span>';
+                        label.className = `text-xs mt-2 font-bold text-green-600 text-center step-label-${i}`;
+
+                        if (line) {
+                            line.className = `step-line step-line-${i} flex-1 h-1 bg-green-600 mx-2 transition-all`;
+                        }
+                    } else if (i === pasoActivo) {
+                        circle.className = `step-circle step-${i} flex items-center justify-center w-12 h-12 rounded-full border-2 border-emerald-600 bg-emerald-600 text-white font-bold transition-all shadow-lg`;
+                        circle.innerHTML = `<span class="step-number text-xl">${i}</span>`;
+                        label.className = `text-xs mt-2 font-bold text-emerald-600 text-center step-label-${i}`;
+
+                        if (line) {
+                            line.className = `step-line step-line-${i} flex-1 h-1 bg-gray-300 mx-2 transition-all`;
+                        }
+                    } else {
+                        circle.className = `step-circle step-${i} flex items-center justify-center w-12 h-12 rounded-full border-2 border-gray-300 bg-white text-gray-500 font-bold transition-all`;
+                        circle.innerHTML = `<span class="step-number text-xl">${i}</span>`;
+                        label.className = `text-xs mt-2 font-medium text-gray-500 text-center step-label-${i}`;
+
+                        if (line) {
+                            line.className = `step-line step-line-${i} flex-1 h-1 bg-gray-300 mx-2 transition-all`;
+                        }
+                    }
+                }
+            }
+            // ==========================================
+            // MODAL DIAGNÓSTICO
+            // ==========================================
+
+            async function abrirModalDiagnostico(codServ) {
+                const servicio = serviciosData.find(s => s.codServ === codServ);
+                if (!servicio) return;
+
+                servicioActual = servicio;
+                const modal = document.getElementById('modal-diagnostico');
+                const textarea = document.getElementById('diagnostico-texto');
+                const select = document.getElementById('tipo-diagnostico');
+
+                // Pre-llenar si ya tiene diagnóstico
+                if (servicio.diagnosticos && servicio.diagnosticos.length > 0) {
+                    textarea.value = servicio.diagnosticos[0].descripDiag || '';
+                    select.value = servicio.diagnosticos[0].pivot?.tipo || '';
+                    document.getElementById('caracteres-actuales').textContent = textarea.value.length;
+                } else {
+                    textarea.value = '';
+                    select.value = '';
+                    document.getElementById('caracteres-actuales').textContent = '0';
+                }
+
+                modal.classList.remove('hidden');
+            }
+
+            function cerrarModalDiagnostico() {
+                document.getElementById('modal-diagnostico').classList.add('hidden');
+                servicioActual = null;
+            }
+
+            async function guardarDiagnostico() {
+                const diagnosticoTexto = document.getElementById('diagnostico-texto').value.trim();
+                const tipoDiagnostico = document.getElementById('tipo-diagnostico').value;
+
+                if (!diagnosticoTexto) {
+                    mostrarAlerta('Ingrese el diagnóstico', 'error');
+                    return;
+                }
+
+                if (!tipoDiagnostico) {
+                    mostrarAlerta('Seleccione el tipo de diagnóstico', 'error');
+                    return;
+                }
+
+                if (!servicioActual) return;
+
+                try {
+                    const response = await fetch(`/api/personal/servicios/${servicioActual.codServ}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        },
+                        body: JSON.stringify({
+                            diagnosticoTexto: diagnosticoTexto,
+                            tipoDiagnostico: tipoDiagnostico
+                        })
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        mostrarAlerta('✓ Diagnóstico guardado. El servicio ha pasado a estado "Atendido"', 'success');
+                        cerrarModalDiagnostico();
+
+                        setTimeout(() => {
+                            cargarServicios();
+                            cargarEstadisticas();
+                        }, 2000);
+                    } else {
+                        mostrarAlerta(data.message || 'Error al guardar el diagnóstico', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al guardar el diagnóstico', 'error');
+                }
+            }
+
+            // ==========================================
+            // CANCELAR SERVICIO
+            // ==========================================
+
+            function confirmarCancelar(codServ) {
+                servicioActual = serviciosData.find(s => s.codServ === codServ);
+                if (!servicioActual) return;
+
+                document.getElementById('modal-cancelar').classList.remove('hidden');
+            }
+
+            async function confirmarCancelarServicio() {
+                if (!servicioActual) return;
+
+                try {
+                    const response = await fetch(`/api/personal/servicios/${servicioActual.codServ}/cancelar`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        mostrarAlerta('Servicio cancelado exitosamente', 'success');
+                        cerrarModal('modal-cancelar');
+                        cargarServicios();
+                        cargarEstadisticas();
+                        servicioActual = null;
+                    } else {
+                        mostrarAlerta(data.message || 'Error al cancelar el servicio', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al cancelar el servicio', 'error');
+                }
+            }
+
+            // ==========================================
+            // VER DETALLE
+            // ==========================================
+
+            async function verDetalle(codServ) {
+                const modal = document.getElementById('modal-detalle');
+                const contenido = document.getElementById('detalle-servicio-content');
+
+                try {
+                    modal.classList.remove('hidden');
+                    contenido.innerHTML = `
+                                                                                                                                                    <div class="text-center py-8">
+                                                                                                                                                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
+                                                                                                                                                        <p class="mt-4 text-gray-600">Cargando información...</p>
+                                                                                                                                                    </div>
+                                                                                                                                                `;
+
+                    const response = await fetch(`/api/personal/servicios/${codServ}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const s = data.data;
+                        const paciente = `${s.paciente?.nomPa || ''} ${s.paciente?.paternoPa || ''} ${s.paciente?.maternoPa || ''}`.trim();
+                        const medico = `${s.medico?.nomMed || ''} ${s.medico?.paternoMed || ''}`.trim();
+
+                        const estadoConfig = {
+                            'Programado': { class: 'bg-orange-100 text-orange-700 border-orange-300', icon: 'schedule' },
+                            'EnProceso': { class: 'bg-blue-100 text-blue-700 border-blue-300', icon: 'pending_actions' },
+                            'Atendido': { class: 'bg-emerald-100 text-emerald-700 border-emerald-300', icon: 'check_circle' },
+                            'Entregado': { class: 'bg-purple-100 text-purple-700 border-purple-300', icon: 'done_all' },
+                            'Cancelado': { class: 'bg-red-100 text-red-700 border-red-300', icon: 'cancel' }
+                        };
+
+                        const estado = estadoConfig[s.estado] || estadoConfig['Programado'];
+
+                        const diagnosticos = s.diagnosticos && s.diagnosticos.length > 0
+                            ? s.diagnosticos.map(d => `
+                                                                                                                                                            <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
+                                                                                                                                                                <p class="text-sm font-medium text-gray-800 leading-relaxed">${d.descripDiag}</p>
+                                                                                                                                                                <span class="text-xs text-emerald-700 font-bold mt-2 inline-block">Tipo: ${d.pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico'}</span>
+                                                                                                                                                            </div>
+                                                                                                                                                        `).join('')
+                            : '<p class="text-gray-500 italic text-center py-4">Sin diagnósticos registrados</p>';
+
+                        contenido.innerHTML = `
+                                                                                                                                                        <div class="space-y-6">
+                                                                                                                                                            <!-- Info General -->
+                                                                                                                                                            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200">
+                                                                                                                                                                <div class="flex items-center justify-between mb-4">
+                                                                                                                                                                    <h4 class="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                                                                                                                                                        <span class="material-icons text-emerald-600">info</span>
+                                                                                                                                                                        Información General
+                                                                                                                                                                    </h4>
+                                                                                                                                                                    <span class="px-4 py-2 text-sm font-bold rounded-full border ${estado.class} flex items-center gap-1">
+                                                                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
+                                                                                                                                                                        ${s.estado}
+                                                                                                                                                                    </span>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="grid grid-cols-2 gap-4">
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Servicio</p>
+                                                                                                                                                                        <p class="font-bold text-emerald-600 text-xl">${s.nroServ}</p>
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Ficha</p>
+                                                                                                                                                                        <p class="font-bold text-gray-900 text-xl">${s.nroFicha || 'N/A'}</p>
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Tipo de Seguro</p>
+                                                                                                                                                                        <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
+                                                                                                                                                                    </div>
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Fecha Solicitud</p>
+                                                                                                                                                                        <p class="font-bold text-gray-900">${formatearFecha(s.fechaSol)}</p>
+                                                                                                                                                                        <p class="text-xs text-emerald-600 font-semibold mt-1">${s.horaSol || 'Sin hora'}</p>
+                                                                                                                                                                    </div>
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+
+                                                                                                                                                            <!-- Paciente y Médico -->
+                                                                                                                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                                                                <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
+                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                                                                                                                                        <span class="material-icons text-blue-600">person</span>
+                                                                                                                                                                        Paciente
+                                                                                                                                                                    </h4>
+                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${paciente}</p>
+                                                                                                                                                                    <p class="text-sm text-blue-700 font-semibold mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
+                                                                                                                                                                </div>
+                                                                                                                                                                <div class="bg-purple-50 p-5 rounded-xl border border-purple-200">
+                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                                                                                                                                        <span class="material-icons text-purple-600">medical_services</span>
+                                                                                                                                                                        Médico Solicitante
+                                                                                                                                                                    </h4>
+                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${medico}</p>
+                                                                                                                                                                    <p class="text-sm text-purple-700 font-semibold mt-1">${s.medico?.tipoMed || ''}</p>
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+
+                                                                                                                                                            <!-- Tipo de Estudio -->
+                                                                                                                                                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
+                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                                                                                                                                    <span class="material-icons text-purple-600">science</span>
+                                                                                                                                                                    Tipo de Estudio
+                                                                                                                                                                </h4>
+                                                                                                                                                                <p class="text-gray-900 font-bold text-xl">${s.tipo_estudio?.descripcion || 'N/A'}</p>
+                                                                                                                                                            </div>
+
+                                                                                                                                                            <!-- Diagnósticos -->
+                                                                                                                                                            <div>
+                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                                                                                                                                                                    <span class="material-icons text-emerald-600">assignment</span>
+                                                                                                                                                                    Diagnósticos
+                                                                                                                                                                </h4>
+                                                                                                                                                                <div class="space-y-3">
+                                                                                                                                                                    ${diagnosticos}
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+
+                                                                                                                                                            <!-- Historial de Fechas -->
+                                                                                                                                                            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                                                                                                                                    <span class="material-icons text-gray-600">schedule</span>
+                                                                                                                                                                    Historial del Proceso
+                                                                                                                                                                </h4>
+                                                                                                                                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                            <span class="material-icons text-blue-600 text-sm">event</span>
+                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Solicitud</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaSol)}</p>
+                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
+                                                                                                                                                                            <span class="material-icons text-blue-600 text-xs">schedule</span>
+                                                                                                                                                                            <p class="text-sm text-blue-700 font-semibold">${s.horaSol || 'Sin hora'}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </div>
+
+                                                                                                                                                                    ${s.fechaAten ? `
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
+                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                            <span class="material-icons text-emerald-600 text-sm">check_circle</span>
+                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Atención</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaAten)}</p>
+                                                                                                                                                                        ${s.horaAten ? `
+                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
+                                                                                                                                                                            <span class="material-icons text-emerald-600 text-xs">schedule</span>
+                                                                                                                                                                            <p class="text-sm text-emerald-700 font-semibold">${s.horaAten}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        ` : ''}
+                                                                                                                                                                    </div>
+                                                                                                                                                                    ` : ''}
+
+                                                                                                                                                                    ${s.fechaEnt ? `
+                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
+                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                            <span class="material-icons text-purple-600 text-sm">done_all</span>
+                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Entrega</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaEnt)}</p>
+                                                                                                                                                                        ${s.horaEnt ? `
+                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
+                                                                                                                                                                            <span class="material-icons text-purple-600 text-xs">schedule</span>
+                                                                                                                                                                            <p class="text-sm text-purple-700 font-semibold">${s.horaEnt}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        ` : ''}
+                                                                                                                                                                    </div>
+                                                                                                                                                                    ` : ''}
+                                                                                                                                                                </div>
+                                                                                                                                                            </div>
+                                                                                                                                                        </div>
+                                                                                                                                                    `;
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    contenido.innerHTML = `
+                                                                                                                                                    <div class="text-center py-8">
+                                                                                                                                                        <span class="material-icons text-red-500 text-6xl">error</span>
+                                                                                                                                                        <p class="mt-4 text-red-600 font-semibold">Error al cargar la información</p>
+                                                                                                                                                    </div>
+                                                                                                                                                `;
+                }
+            }
+
+            // ==========================================
+            // UTILIDADES
+            // ==========================================
+
+            function cerrarModal(modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+                if (modalId === 'modal-servicio') {
+                    horarioSeleccionado = null;
+                }
+            }
+
+            function mostrarLoader(mostrar) {
+                document.getElementById('loader').classList.toggle('hidden', !mostrar);
+            }
+
+            function mostrarAlerta(mensaje, tipo = 'success') {
+                const alerta = document.getElementById('alerta');
+                const iconos = {
+                    success: 'check_circle',
+                    error: 'error',
+                    info: 'info'
+                };
+                const colores = {
+                    success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
+                    error: 'bg-red-50 border-red-300 text-red-800',
+                    info: 'bg-blue-50 border-blue-300 text-blue-800'
+                };
+
+                alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-md`;
+                alerta.innerHTML = `
+                                        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
+                                        <span class="font-semibold">${mensaje}</span>
+                                    `;
+                alerta.classList.remove('hidden');
+
+                setTimeout(() => alerta.classList.add('hidden'), 5000);
+            }
+
+            function formatearFecha(fecha) {
+                if (!fecha) return 'N/A';
+                const d = new Date(fecha);
+                return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+            }
+
+            function formatearFechaCorta(fecha) {
+                if (!fecha) return 'N/A';
+
+                try {
+                    if (typeof fecha === 'string' && fecha.includes('-')) {
+                        const fechaParts = fecha.split('-');
+                        const año = parseInt(fechaParts[0]);
+                        const mes = parseInt(fechaParts[1]) - 1;
+                        const dia = parseInt(fechaParts[2]);
+
+                        const d = new Date(año, mes, dia);
+
+                        const opciones = {
+                            weekday: 'short',
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric'
+                        };
+                        return d.toLocaleDateString('es-ES', opciones);
+                    }
+
+                    const d = new Date(fecha);
+                    if (isNaN(d.getTime())) return 'N/A';
+
+                    const opciones = {
+                        weekday: 'short',
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                    };
+                    return d.toLocaleDateString('es-ES', opciones);
+                } catch (error) {
+                    console.error('Error al formatear fecha:', fecha, error);
+                    return 'N/A';
+                }
+            }
         </script>
     @endpush
 @endsection
