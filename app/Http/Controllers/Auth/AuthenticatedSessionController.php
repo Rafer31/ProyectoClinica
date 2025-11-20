@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\ValidationException;
 use App\Models\Personal;
 use Illuminate\Routing\Controller;
+
 class AuthenticatedSessionController extends Controller
 {
     /**
@@ -33,7 +34,7 @@ class AuthenticatedSessionController extends Controller
         // Verificar si el usuario existe
         $user = \App\Models\PersonalSalud::where('usuarioPer', $request->usuarioPer)->first();
 
-        if (! $user) {
+        if (!$user) {
             throw ValidationException::withMessages([
                 'usuarioPer' => 'Las credenciales proporcionadas son incorrectas.',
             ]);
@@ -61,6 +62,8 @@ class AuthenticatedSessionController extends Controller
                 return redirect()->intended(route('supervisor.home'));
             } elseif ($user->codRol == 2) {
                 return redirect()->intended(route('personal.home'));
+            } elseif ($user->codRol == 3) {
+                return redirect()->intended(route('enfermera.home'));
             }
 
             // Si no tiene un rol válido

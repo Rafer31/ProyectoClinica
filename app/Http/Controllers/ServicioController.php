@@ -31,9 +31,9 @@ class ServicioController extends Controller
                 'cronograma:fechaCrono,cantDispo',
                 'diagnosticos'
             ])
-            ->orderBy('fechaSol', 'desc')
-            ->orderBy('horaSol', 'desc')
-            ->get();
+                ->orderBy('fechaSol', 'desc')
+                ->orderBy('horaSol', 'desc')
+                ->get();
 
             return response()->json([
                 'success' => true,
@@ -103,11 +103,14 @@ class ServicioController extends Controller
     public function horariosDisponibles($fechaCrono)
     {
         try {
-            // Horarios de 8:00 AM a 8:00 PM
+            // Horarios de 8:00 AM a 8:00 PM en intervalos de 30 minutos
             $todosHorarios = [];
-            for ($i = 8; $i <= 20; $i++) {
-                $todosHorarios[] = sprintf('%02d:00:00', $i);
+            for ($hora = 8; $hora <= 19; $hora++) {
+                $todosHorarios[] = sprintf('%02d:00:00', $hora);
+                $todosHorarios[] = sprintf('%02d:30:00', $hora);
             }
+            // Agregar las 8:00 PM (20:00)
+            $todosHorarios[] = '20:00:00';
 
             // Obtener horarios y contar cuántos servicios hay en cada uno
             $serviciosPorHora = Servicio::where('fechaCrono', $fechaCrono)
@@ -123,7 +126,8 @@ class ServicioController extends Controller
 
             foreach ($todosHorarios as $hora) {
                 $serviciosEnHora = $serviciosPorHora->get($hora)?->total ?? 0;
-                $espaciosDisponibles = 2 - $serviciosEnHora;
+                // CAMBIO: Ahora solo 1 espacio por slot de 30 minutos
+                $espaciosDisponibles = 1 - $serviciosEnHora;
 
                 $espaciosDisponiblesPorHora[$hora] = [
                     'total' => $serviciosEnHora,
@@ -154,7 +158,6 @@ class ServicioController extends Controller
             ], 500);
         }
     }
-
     /**
      * Obtener servicios por fecha de cronograma (para vista de calendario)
      */
@@ -166,10 +169,10 @@ class ServicioController extends Controller
                 'medico:codMed,nomMed,paternoMed',
                 'tipoEstudio:codTest,descripcion'
             ])
-            ->where('fechaCrono', $fechaCrono)
-            ->where('estado', '!=', 'Cancelado')
-            ->orderBy('horaCrono')
-            ->get();
+                ->where('fechaCrono', $fechaCrono)
+                ->where('estado', '!=', 'Cancelado')
+                ->orderBy('horaCrono')
+                ->get();
 
             // Agrupar por horario
             $serviciosPorHorario = [];
@@ -247,7 +250,7 @@ class ServicioController extends Controller
     /**
      * Registrar nuevo servicio con horaCrono
      */
-   public function store(Request $request)
+    public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'fechaSol' => 'required|date',
@@ -272,17 +275,17 @@ class ServicioController extends Controller
 
         DB::beginTransaction();
         try {
-            // Verificar que no haya más de 2 servicios en ese horario
+            // CAMBIO: Verificar que no haya más de 1 servicio en ese slot de 30 minutos
             $serviciosEnHorario = Servicio::where('fechaCrono', $request->fechaCrono)
                 ->where('horaCrono', $request->horaCrono)
                 ->where('estado', '!=', 'Cancelado')
                 ->count();
 
-            if ($serviciosEnHorario >= 2) {
+            if ($serviciosEnHorario >= 1) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'El horario seleccionado ya tiene 2 servicios programados (máximo permitido)'
+                    'message' => 'El horario seleccionado ya está ocupado (1 servicio por slot de 30 minutos)'
                 ], 422);
             }
 
@@ -320,7 +323,7 @@ class ServicioController extends Controller
 
             $nroFicha = $request->nroFicha ?: ($serviciosActivos + 1);
 
-            // Determinar estado inicial basado en fechaCrono y horaCrono
+            // Determinar estado inicial
             $fechaHoraCrono = Carbon::parse($request->fechaCrono . ' ' . $request->horaCrono);
             $ahora = Carbon::now();
             $estado = $fechaHoraCrono->lte($ahora) ? 'EnProceso' : 'Programado';
@@ -371,6 +374,7 @@ class ServicioController extends Controller
         }
     }
 
+
     /**
      * Actualizar servicio
      */
@@ -387,14 +391,22 @@ class ServicioController extends Controller
             }
 
             $rules = [];
-            if ($request->has('fechaSol')) $rules['fechaSol'] = 'date';
-            if ($request->has('nroServ')) $rules['nroServ'] = 'string|max:50|unique:Servicio,nroServ,' . $id . ',codServ';
-            if ($request->has('tipoAseg')) $rules['tipoAseg'] = 'in:AsegEmergencia,AsegRegular,NoAsegEmergencia,NoAsegRegular';
-            if ($request->has('codPa')) $rules['codPa'] = 'exists:Paciente,codPa';
-            if ($request->has('codMed')) $rules['codMed'] = 'exists:Medico,codMed';
-            if ($request->has('codTest')) $rules['codTest'] = 'exists:TipoEstudio,codTest';
-            if ($request->has('fechaCrono')) $rules['fechaCrono'] = 'exists:CronogramaAtencion,fechaCrono';
-            if ($request->has('horaCrono')) $rules['horaCrono'] = 'date_format:H:i:s';
+            if ($request->has('fechaSol'))
+                $rules['fechaSol'] = 'date';
+            if ($request->has('nroServ'))
+                $rules['nroServ'] = 'string|max:50|unique:Servicio,nroServ,' . $id . ',codServ';
+            if ($request->has('tipoAseg'))
+                $rules['tipoAseg'] = 'in:AsegEmergencia,AsegRegular,NoAsegEmergencia,NoAsegRegular';
+            if ($request->has('codPa'))
+                $rules['codPa'] = 'exists:Paciente,codPa';
+            if ($request->has('codMed'))
+                $rules['codMed'] = 'exists:Medico,codMed';
+            if ($request->has('codTest'))
+                $rules['codTest'] = 'exists:TipoEstudio,codTest';
+            if ($request->has('fechaCrono'))
+                $rules['fechaCrono'] = 'exists:CronogramaAtencion,fechaCrono';
+            if ($request->has('horaCrono'))
+                $rules['horaCrono'] = 'date_format:H:i:s';
 
             if ($request->has('diagnosticoTexto')) {
                 $rules['diagnosticoTexto'] = 'required|string|max:500';
@@ -431,16 +443,26 @@ class ServicioController extends Controller
             }
 
             // Actualizar campos básicos
-            if ($request->has('fechaSol')) $servicio->fechaSol = $request->fechaSol;
-            if ($request->has('horaSol')) $servicio->horaSol = $request->horaSol;
-            if ($request->has('nroServ')) $servicio->nroServ = $request->nroServ;
-            if ($request->has('tipoAseg')) $servicio->tipoAseg = $request->tipoAseg;
-            if ($request->has('nroFicha')) $servicio->nroFicha = $request->nroFicha;
-            if ($request->has('codPa')) $servicio->codPa = $request->codPa;
-            if ($request->has('codMed')) $servicio->codMed = $request->codMed;
-            if ($request->has('codTest')) $servicio->codTest = $request->codTest;
-            if ($request->has('fechaCrono')) $servicio->fechaCrono = $request->fechaCrono;
-            if ($request->has('horaCrono')) $servicio->horaCrono = $request->horaCrono;
+            if ($request->has('fechaSol'))
+                $servicio->fechaSol = $request->fechaSol;
+            if ($request->has('horaSol'))
+                $servicio->horaSol = $request->horaSol;
+            if ($request->has('nroServ'))
+                $servicio->nroServ = $request->nroServ;
+            if ($request->has('tipoAseg'))
+                $servicio->tipoAseg = $request->tipoAseg;
+            if ($request->has('nroFicha'))
+                $servicio->nroFicha = $request->nroFicha;
+            if ($request->has('codPa'))
+                $servicio->codPa = $request->codPa;
+            if ($request->has('codMed'))
+                $servicio->codMed = $request->codMed;
+            if ($request->has('codTest'))
+                $servicio->codTest = $request->codTest;
+            if ($request->has('fechaCrono'))
+                $servicio->fechaCrono = $request->fechaCrono;
+            if ($request->has('horaCrono'))
+                $servicio->horaCrono = $request->horaCrono;
 
             // Si se agrega diagnóstico, cambiar a "Atendido"
             if ($request->has('diagnosticoTexto') && $request->has('tipoDiagnostico')) {
@@ -723,10 +745,10 @@ class ServicioController extends Controller
 
             $hoy = Carbon::now()->toDateString();
 
-            $cronogramas = CronogramaAtencion::where(function($query) {
-                    $query->where('estado', 'activo')
-                          ->orWhere('estado', 'inactivoFut');
-                })
+            $cronogramas = CronogramaAtencion::where(function ($query) {
+                $query->where('estado', 'activo')
+                    ->orWhere('estado', 'inactivoFut');
+            })
                 ->where('cantDispo', '>', 0)
                 ->where('fechaCrono', '>=', $hoy)
                 ->select('fechaCrono', 'cantDispo', 'cantFijo', 'cantEmergencia', 'estado', 'codPer')
@@ -864,7 +886,7 @@ class ServicioController extends Controller
             ], 500);
         }
     }
-     public function cambiarHorario(Request $request, $id)
+    public function cambiarHorario(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
             'horaCrono' => 'required|date_format:H:i:s',
@@ -890,7 +912,6 @@ class ServicioController extends Controller
                 ], 404);
             }
 
-            // No permitir cambiar horario de servicios ya atendidos o entregados
             if (in_array($servicio->estado, ['Atendido', 'Entregado'])) {
                 return response()->json([
                     'success' => false,
@@ -901,34 +922,31 @@ class ServicioController extends Controller
             $nuevaHora = $request->horaCrono;
             $nuevaFecha = $request->fechaCrono ?? $servicio->fechaCrono;
 
-            // Verificar que el nuevo horario no esté ocupado (máximo 2 servicios por hora)
+            // CAMBIO: Verificar que el nuevo slot de 30 minutos no esté ocupado (máximo 1)
             $serviciosEnHorario = Servicio::where('fechaCrono', $nuevaFecha)
                 ->where('horaCrono', $nuevaHora)
                 ->where('codServ', '!=', $id)
                 ->where('estado', '!=', 'Cancelado')
                 ->count();
 
-            if ($serviciosEnHorario >= 2) {
+            if ($serviciosEnHorario >= 1) {
                 DB::rollBack();
                 return response()->json([
                     'success' => false,
-                    'message' => 'El horario seleccionado ya tiene 2 servicios programados'
+                    'message' => 'El horario seleccionado ya está ocupado (1 servicio por slot de 30 minutos)'
                 ], 422);
             }
 
-            // Guardar horario anterior para el log
             $horarioAnterior = $servicio->horaCrono;
             $fechaAnterior = $servicio->fechaCrono;
 
-            // Actualizar horario
             $servicio->horaCrono = $nuevaHora;
 
-            // Si también cambió la fecha del cronograma
             if ($request->has('fechaCrono')) {
                 $servicio->fechaCrono = $nuevaFecha;
             }
 
-            // Determinar nuevo estado basado en la fecha/hora del cronograma
+            // Determinar nuevo estado
             $fechaHoraCrono = Carbon::parse($servicio->fechaCrono . ' ' . $servicio->horaCrono);
             $ahora = Carbon::now();
 

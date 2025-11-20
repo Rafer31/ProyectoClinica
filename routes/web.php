@@ -24,6 +24,8 @@ Route::get('/', function () {
             return redirect()->route('supervisor.home');
         } elseif ($user->codRol == 2) {
             return redirect()->route('personal.home');
+        } elseif ($user->codRol == 3) {
+            return redirect()->route('enfermera.home');
         }
     }
 
@@ -38,15 +40,28 @@ Route::middleware('guest')->group(function () {
 
 // Rutas protegidas (autenticadas) con middleware para prevenir caché
 Route::middleware(['auth', 'prevent.back.history'])->group(function () {
+    
+    // ==========================================
+    // PANEL DE ENFERMERA - NUEVO
+    // ==========================================
+    Route::prefix('enfermera')->name('enfermera.')->group(function () {
+        Route::get('/home', function () {
+            return view('enfermera.home');
+        })->name('home');
+
+        // Calendario de Atención
+        Route::get('/calendario', function () {
+            return view('enfermera.calendario.calendario-atencion');
+        })->name('calendario');
+    });
+
     // Panel del supervisor
     Route::prefix('supervisor')->name('supervisor.')->group(function () {
         Route::get('/home', function () {
             return view('supervisor.home');
         })->name('home');
 
-        // ==========================================
-        // GESTIÓN DE PERSONAL - ACTUALIZADO
-        // ==========================================
+        // Gestión de Personal
         Route::get('/gestion-personal', function () {
             return view('supervisor.gestion-personal.gestion-personal');
         })->name('gestion-personal.gestion-personal');
@@ -61,9 +76,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('supervisor.gestion-personal.form-personal', compact('personal'));
         })->name('gestion-personal.editar');
 
-        // ==========================================
-        // CONSULTORIOS - NUEVO
-        // ==========================================
+        // Consultorios
         Route::get('/gestion-personal/consultorios', function () {
             return view('supervisor.gestion-personal.consultorios');
         })->name('gestion-personal.consultorios');
@@ -89,16 +102,12 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('servicios/{nroServ}/pdf/ver', [ServicioPdfController::class, 'visualizarFichaServicio'])
             ->name('servicios.pdf.ver');
 
-        // ==========================================
-        // REPORTES PDF - AGREGADOS AQUÍ
-        // ==========================================
+        // Reportes PDF
         Route::get('/reportes/dia', [HomeController::class, 'reporteDia'])->name('reportes.dia');
         Route::get('/reportes/semana', [HomeController::class, 'reporteSemana'])->name('reportes.semana');
         Route::get('/reportes/mes', [HomeController::class, 'reporteMes'])->name('reportes.mes');
 
-        // ==========================================
-        // RUTAS DE MÉDICOS
-        // ==========================================
+        // Médicos
         Route::prefix('medicos')->name('medicos.')->group(function () {
             Route::get('/', function () {
                 return view('personal.medicos.medicos');
@@ -113,9 +122,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             })->name('editar');
         });
 
-        // ==========================================
-        // RUTAS DE CRONOGRAMAS (VISTAS) - ACTUALIZADO
-        // ==========================================
+        // Cronogramas
         Route::get('/cronogramas', function () {
             return view('personal.cronogramas.cronogramas');
         })->name('cronogramas.cronogramas');
@@ -124,9 +131,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('personal.cronogramas.calendario-horarios');
         })->name('cronogramas.calendario');
 
-        // ==========================================
-        // RUTAS DE PACIENTES
-        // ==========================================
+        // Pacientes
         Route::prefix('pacientes')->name('pacientes.')->group(function () {
             Route::get('/', function () {
                 return view('personal.pacientes.pacientes');
@@ -141,9 +146,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             })->name('editar');
         });
 
-        // ==========================================
-        // RUTAS DE SERVICIOS (VISTAS)
-        // ==========================================
+        // Servicios
         Route::get('/atendidos', function () {
             return view('personal.servicios.atendidos');
         })->name('servicios.atendidos');
@@ -152,9 +155,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('personal.servicios.servicios');
         })->name('servicios.servicios');
 
-        // ==========================================
-        // RUTAS DE TIPOS DE ESTUDIO
-        // ==========================================
+        // Tipos de Estudio
         Route::get('/tipos-estudio', function () {
             return view('personal.tipos-estudio.tipos-estudio');
         })->name('tipos-estudio.index');
@@ -169,21 +170,25 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             return view('personal.tipos-estudio.form-tipo-estudio', compact('tipoEstudio'));
         })->name('tipos-estudio.editar');
 
-        // ==========================================
-        // RUTA DE REQUISITOS (VISTA) - NUEVA
-        // ==========================================
+        // Requisitos
         Route::get('/requisitos', [App\Http\Controllers\RequisitoController::class, 'indexView'])
             ->name('requisitos.index');
     });
 
     // ==========================================
-    // API ROUTES (IMPORTANTES: Estas son las que usa el JavaScript)
+    // API ROUTES
     // ==========================================
     Route::prefix('api')->name('api.')->group(function () {
 
-        // ==========================================
-        // API ESTADÍSTICAS DEL SUPERVISOR - NUEVO
-        // ==========================================
+        // API ENFERMERA - NUEVO
+        Route::prefix('enfermera')->name('enfermera.')->group(function () {
+            Route::get('/cronogramas/activo', [App\Http\Controllers\CronogramaAtencionController::class, 'obtenerCronogramaActivo'])
+                ->name('cronogramas.activo');
+            Route::get('/servicios/por-fecha/{fechaCrono}', [ServicioController::class, 'serviciosPorFechaMediaHora'])
+                ->name('servicios.porFecha');
+        });
+
+        // API ESTADÍSTICAS DEL SUPERVISOR
         Route::prefix('supervisor/estadisticas')->name('supervisor.estadisticas.')->group(function () {
             Route::get('/generales', [EstadisticasSupervisorController::class, 'estadisticasGenerales'])
                 ->name('generales');
@@ -195,9 +200,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 ->name('personal.lista');
         });
 
-        // ==========================================
         // API PERSONAL DE SALUD
-        // ==========================================
         Route::prefix('personal-salud')->name('personal-salud.')->group(function () {
             Route::get('/', [PersonalSaludController::class, 'index'])->name('index');
             Route::get('/activos', [PersonalSaludController::class, 'activos'])->name('activos');
@@ -207,14 +210,10 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             Route::patch('/{id}/cambiar-estado', [PersonalSaludController::class, 'cambiarEstado'])->name('cambiarEstado');
         });
 
-        // ==========================================
         // API ROLES
-        // ==========================================
         Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
 
-        // ==========================================
-        // API CONSULTORIOS - NUEVO
-        // ==========================================
+        // API CONSULTORIOS
         Route::prefix('consultorios')->name('consultorios.')->group(function () {
             Route::get('/', [ConsultorioController::class, 'index'])->name('index');
             Route::get('/disponibles', [ConsultorioController::class, 'disponibles'])->name('disponibles');
@@ -224,9 +223,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             Route::delete('/{id}', [ConsultorioController::class, 'destroy'])->name('destroy');
         });
 
-        // ==========================================
-        // API ASIGNACIONES DE CONSULTORIO - NUEVO
-        // ==========================================
+        // API ASIGNACIONES DE CONSULTORIO
         Route::prefix('asignaciones-consultorio')->name('asignaciones-consultorio.')->group(function () {
             Route::get('/', [AsignacionConsultorioController::class, 'index'])->name('index');
             Route::get('/activas', [AsignacionConsultorioController::class, 'activas'])->name('activas');
@@ -238,9 +235,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
             Route::delete('/{id}', [AsignacionConsultorioController::class, 'destroy'])->name('destroy');
         });
 
-        // ==========================================
         // API USUARIO ACTUAL
-        // ==========================================
         Route::get('/usuario-actual', function () {
             $user = Auth::user();
             if (!$user) {
@@ -257,14 +252,10 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         })->name('usuario-actual');
 
         Route::prefix('personal')->name('personal.')->group(function () {
-            // ==========================================
-            // ESTADÍSTICAS HOME - MOVIDO AQUÍ
-            // ==========================================
+            // Estadísticas Home
             Route::get('/home/estadisticas', [HomeController::class, 'estadisticas']);
 
-            // ==========================================
             // API DE PACIENTES
-            // ==========================================
             Route::prefix('pacientes')->name('pacientes.')->group(function () {
                 Route::get('/', [PacienteController::class, 'index'])->name('index');
                 Route::post('/', [PacienteController::class, 'store'])->name('store');
@@ -273,9 +264,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::delete('/{id}', [PacienteController::class, 'cambiarEstado'])->name('cambiarEstado');
             });
 
-            // ==========================================
-            // API DE REQUISITOS - ACTUALIZADO
-            // ==========================================
+            // API DE REQUISITOS
             Route::prefix('requisitos')->name('requisitos.')->group(function () {
                 Route::get('/', [App\Http\Controllers\RequisitoController::class, 'index'])->name('api.index');
                 Route::post('/', [App\Http\Controllers\RequisitoController::class, 'store'])->name('api.store');
@@ -284,9 +273,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::delete('/{id}', [App\Http\Controllers\RequisitoController::class, 'destroy'])->name('api.destroy');
             });
 
-            // ==========================================
             // API DE TIPOS DE ESTUDIO
-            // ==========================================
             Route::prefix('tipos-estudio')->name('tipos-estudio.')->group(function () {
                 Route::get('/', [App\Http\Controllers\TipoEstudioController::class, 'index'])->name('api.index');
                 Route::post('/con-requisitos', [App\Http\Controllers\TipoEstudioRequisitoController::class, 'crearConRequisitos'])->name('crearConRequisitos');
@@ -305,9 +292,7 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 });
             });
 
-            // ==========================================
             // API DE MÉDICOS
-            // ==========================================
             Route::prefix('medicos')->name('medicos.')->group(function () {
                 Route::get('/', [MedicoController::class, 'index'])->name('api.index');
                 Route::post('/', [MedicoController::class, 'store'])->name('api.store');
@@ -316,16 +301,12 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::delete('/{id}', [MedicoController::class, 'destroy'])->name('api.destroy');
             });
 
-            // ==========================================
             // API DE CRONOGRAMAS
-            // ==========================================
             Route::prefix('cronogramas')->name('cronogramas.')->group(function () {
-                // Rutas especiales PRIMERO
                 Route::get('/activos', [App\Http\Controllers\CronogramaAtencionController::class, 'activos'])->name('activos');
                 Route::get('/entre-fechas', [App\Http\Controllers\CronogramaAtencionController::class, 'entreFechas'])->name('entreFechas');
                 Route::get('/personal/{codPer}', [App\Http\Controllers\CronogramaAtencionController::class, 'porPersonal'])->name('porPersonal');
 
-                // Rutas CRUD estándar
                 Route::get('/', [App\Http\Controllers\CronogramaAtencionController::class, 'index'])->name('api.index');
                 Route::post('/', [App\Http\Controllers\CronogramaAtencionController::class, 'store'])->name('api.store');
                 Route::get('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'show'])->name('api.show');
@@ -334,11 +315,8 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::delete('/{fecha}', [App\Http\Controllers\CronogramaAtencionController::class, 'destroy'])->name('api.destroy');
             });
 
-            // ==========================================
-            // API DE SERVICIOS - ACTUALIZADO
-            // ==========================================
+            // API DE SERVICIOS
             Route::prefix('servicios')->name('servicios.')->group(function () {
-                // Rutas especiales PRIMERO (las más específicas)
                 Route::get('/calcular-ficha/{fechaCrono}', [ServicioController::class, 'calcularNumeroFicha']);
                 Route::get('/datos-formulario', [ServicioController::class, 'datosFormulario'])->name('datosFormulario');
                 Route::get('/estadisticas', [ServicioController::class, 'estadisticas'])->name('estadisticas');
@@ -346,13 +324,12 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
                 Route::get('/estado/{estado}', [ServicioController::class, 'porEstado'])->name('porEstado');
                 Route::get('/horarios-disponibles/{fechaCrono}', [ServicioController::class, 'horariosDisponibles']);
                 Route::get('/por-fecha-cronograma/{fechaCrono}', [ServicioController::class, 'serviciosPorFechaCronograma']);
-Route::patch('/{id}/cambiar-horario', [ServicioController::class, 'cambiarHorario'])->name('cambiarHorario');
-                // Cambios de estado
+                Route::patch('/{id}/cambiar-horario', [ServicioController::class, 'cambiarHorario'])->name('cambiarHorario');
+
                 Route::patch('/{id}/cancelar', [ServicioController::class, 'cancelar'])->name('cancelar');
                 Route::patch('/{id}/entregar', [ServicioController::class, 'entregar'])->name('entregar');
                 Route::patch('/{id}/estado', [ServicioController::class, 'cambiarEstado'])->name('cambiarEstado');
 
-                // CRUD básico
                 Route::get('/', [ServicioController::class, 'index'])->name('api.index');
                 Route::post('/', [ServicioController::class, 'store'])->name('api.store');
                 Route::get('/{id}', [ServicioController::class, 'show'])->name('api.show');
@@ -363,7 +340,7 @@ Route::patch('/{id}/cambiar-horario', [ServicioController::class, 'cambiarHorari
         });
     });
 
-    // Cerrar sesión - Solo POST, no GET
+    // Cerrar sesión
     Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 });
 
@@ -378,6 +355,8 @@ Route::fallback(function () {
         return redirect()->route('supervisor.home');
     } elseif ($user->codRol == 2) {
         return redirect()->route('personal.home');
+    } elseif ($user->codRol == 3) {
+        return redirect()->route('enfermera.home');
     }
 
     Auth::logout();

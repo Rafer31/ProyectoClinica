@@ -14,7 +14,7 @@ class PersonalSeeder extends Seeder
         // Crear roles
         $supervisor = Rol::create(['nombreRol' => 'Supervisor']);
         $personalImagen = Rol::create(['nombreRol' => 'PersonalImagen']);
-
+        $enfermera = Rol::create(['nombreRol' => 'Enfermera']);
         // Crear usuario Supervisor
         PersonalSalud::create([
             'usuarioPer' => 'supervisor',
@@ -35,6 +35,16 @@ class PersonalSeeder extends Seeder
             'maternoPer' => 'Mamani',
             'estado' => 'activo',
             'codRol' => $personalImagen->codRol,
+        ]);
+        // Crear usuario Supervisor
+        PersonalSalud::create([
+            'usuarioPer' => 'enfermera',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Vanesa',
+            'paternoPer' => 'Quispe',
+            'maternoPer' => 'López',
+            'estado' => 'activo',
+            'codRol' => $enfermera->codRol,
         ]);
     }
 }

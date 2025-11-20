@@ -440,7 +440,8 @@
                     <div class="bg-teal-50 border-l-4 border-teal-500 p-4 mb-6 rounded-lg">
                         <div class="flex items-center">
                             <span class="material-icons text-teal-600 mr-2">schedule</span>
-                            <p class="text-sm text-teal-800 font-semibold">Seleccione el horario de atención</p>
+                            <p class="text-sm text-teal-800 font-semibold">Seleccione el horario de atención (intervalos de
+                                30 minutos)</p>
                         </div>
                     </div>
 
@@ -449,7 +450,7 @@
                         <div>
                             <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <span class="material-icons text-amber-600">wb_sunny</span>
-                                Horarios de Mañana (08:00 - 12:00)
+                                Horarios de Mañana (08:00 - 13:30) - cada 30 minutos
                             </h4>
                             <div class="grid grid-cols-5 gap-3" id="horarios-manana">
                                 <!-- Se llenarán dinámicamente -->
@@ -460,7 +461,7 @@
                         <div>
                             <h4 class="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                                 <span class="material-icons text-blue-600">wb_twilight</span>
-                                Horarios de Tarde (14:00 - 19:00)
+                                Horarios de Tarde (14:00 - 20:00) - cada 30 minutos
                             </h4>
                             <div class="grid grid-cols-6 gap-3" id="horarios-tarde">
                                 <!-- Se llenarán dinámicamente -->
@@ -651,7 +652,7 @@
             const totalPasos = 4;  // Ahora son 4 pasos
             let datosFormulario = {};
             let horarioSeleccionado = null;
-          document.addEventListener('DOMContentLoaded', function () {
+            document.addEventListener('DOMContentLoaded', function () {
                 cargarServicios();
                 cargarEstadisticas();
 
@@ -736,17 +737,17 @@
 
                 if (servicios.length === 0) {
                     tbody.innerHTML = `
-                                                                                                                    <tr>
-                                                                                                                        <td colspan="8" class="px-6 py-12 text-center">
-                                                                                                                            <div class="flex flex-col items-center gap-3">
-                                                                                                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                                                                                                    <span class="material-icons text-gray-400 text-3xl">inbox</span>
-                                                                                                                                </div>
-                                                                                                                                <p class="text-gray-500 font-medium">No se encontraron servicios</p>
-                                                                                                                            </div>
-                                                                                                                        </td>
-                                                                                                                    </tr>
-                                                                                                                `;
+                                                                                                                                                                                    <tr>
+                                                                                                                                                                                        <td colspan="8" class="px-6 py-12 text-center">
+                                                                                                                                                                                            <div class="flex flex-col items-center gap-3">
+                                                                                                                                                                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                                                                                                                                                                                    <span class="material-icons text-gray-400 text-3xl">inbox</span>
+                                                                                                                                                                                                </div>
+                                                                                                                                                                                                <p class="text-gray-500 font-medium">No se encontraron servicios</p>
+                                                                                                                                                                                            </div>
+                                                                                                                                                                                        </td>
+                                                                                                                                                                                    </tr>
+                                                                                                                                                                                `;
                     return;
                 }
 
@@ -781,57 +782,57 @@
                     const horaCrono = servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : 'Sin hora';
 
                     const fila = `
-                                                                                                            <tr class="border-b hover:bg-emerald-50 transition-colors">
-                                                                                                                <td class="px-6 py-4">
-                                                                                                                    <span class="font-bold text-emerald-600">${servicio.nroServ || 'N/A'}</span>
-                                                                                                                </td>
-                                                                                                                <td class="px-6 py-4">
-                                                                                                                    <div class="font-semibold text-gray-900">${paciente}</div>
-                                                                                                                    <div class="text-xs text-gray-500">${servicio.paciente?.nroHCI || 'Sin HCI'}</div>
-                                                                                                                </td>
-                                                                                                                <td class="px-6 py-4 text-gray-700">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
-                                                                                                                <td class="px-6 py-4 text-gray-700">${medico}</td>
-                                                                                                                <td class="px-6 py-4">
-                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${tipoAsegClass}">
-                                                                                                                        ${tipoAsegTexto}
-                                                                                                                    </span>
-                                                                                                                </td>
-                                                                                                                <td class="px-6 py-4">
-                                                                                                                    <div class="font-semibold text-gray-900">${formatearFecha(servicio.fechaCrono)}</div>
-                                                                                                                    <div class="text-xs text-teal-600 font-bold flex items-center gap-1">
-                                                                                                                        <span class="material-icons text-xs">schedule</span>
-                                                                                                                        ${horaCrono}
-                                                                                                                    </div>
-                                                                                                                </td>
-                                                                                                                <td class="px-6 py-4">
-                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${estado.class} flex items-center gap-1 w-fit">
-                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
-                                                                                                                        ${servicio.estado}
-                                                                                                                    </span>
-                                                                                                                </td>
-                                                                                                                <td class="px-6 py-4">
-                                                                                                                    <div class="flex items-center gap-2 justify-center">
-                                                                                                                        <button onclick="verDetalle(${servicio.codServ})"
-                                                                                                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all border border-blue-200 hover:shadow-md"
-                                                                                                                            title="Ver detalles">
-                                                                                                                            <span class="material-icons text-base">visibility</span>
-                                                                                                                        </button>
-                                                                                                                        ${puedeEditar ? `
-                                                                                                                            <button onclick="abrirModalDiagnostico(${servicio.codServ})"
-                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
-                                                                                                                                title="Gestionar diagnóstico">
-                                                                                                                                <span class="material-icons text-base">medical_services</span>
-                                                                                                                            </button>
-                                                                                                                            <button onclick="confirmarCancelar(${servicio.codServ})"
-                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all border border-red-200 hover:shadow-md"
-                                                                                                                                title="Cancelar servicio">
-                                                                                                                                <span class="material-icons text-base">cancel</span>
-                                                                                                                            </button>
-                                                                                                                        ` : ''}
-                                                                                                                    </div>
-                                                                                                                </td>
-                                                                                                            </tr>
-                                                                                                        `;
+                                                                                                                                                                            <tr class="border-b hover:bg-emerald-50 transition-colors">
+                                                                                                                                                                                <td class="px-6 py-4">
+                                                                                                                                                                                    <span class="font-bold text-emerald-600">${servicio.nroServ || 'N/A'}</span>
+                                                                                                                                                                                </td>
+                                                                                                                                                                                <td class="px-6 py-4">
+                                                                                                                                                                                    <div class="font-semibold text-gray-900">${paciente}</div>
+                                                                                                                                                                                    <div class="text-xs text-gray-500">${servicio.paciente?.nroHCI || 'Sin HCI'}</div>
+                                                                                                                                                                                </td>
+                                                                                                                                                                                <td class="px-6 py-4 text-gray-700">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
+                                                                                                                                                                                <td class="px-6 py-4 text-gray-700">${medico}</td>
+                                                                                                                                                                                <td class="px-6 py-4">
+                                                                                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${tipoAsegClass}">
+                                                                                                                                                                                        ${tipoAsegTexto}
+                                                                                                                                                                                    </span>
+                                                                                                                                                                                </td>
+                                                                                                                                                                                <td class="px-6 py-4">
+                                                                                                                                                                                    <div class="font-semibold text-gray-900">${formatearFecha(servicio.fechaCrono)}</div>
+                                                                                                                                                                                    <div class="text-xs text-teal-600 font-bold flex items-center gap-1">
+                                                                                                                                                                                        <span class="material-icons text-xs">schedule</span>
+                                                                                                                                                                                        ${horaCrono}
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </td>
+                                                                                                                                                                                <td class="px-6 py-4">
+                                                                                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${estado.class} flex items-center gap-1 w-fit">
+                                                                                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
+                                                                                                                                                                                        ${servicio.estado}
+                                                                                                                                                                                    </span>
+                                                                                                                                                                                </td>
+                                                                                                                                                                                <td class="px-6 py-4">
+                                                                                                                                                                                    <div class="flex items-center gap-2 justify-center">
+                                                                                                                                                                                        <button onclick="verDetalle(${servicio.codServ})"
+                                                                                                                                                                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all border border-blue-200 hover:shadow-md"
+                                                                                                                                                                                            title="Ver detalles">
+                                                                                                                                                                                            <span class="material-icons text-base">visibility</span>
+                                                                                                                                                                                        </button>
+                                                                                                                                                                                        ${puedeEditar ? `
+                                                                                                                                                                                            <button onclick="abrirModalDiagnostico(${servicio.codServ})"
+                                                                                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
+                                                                                                                                                                                                title="Gestionar diagnóstico">
+                                                                                                                                                                                                <span class="material-icons text-base">medical_services</span>
+                                                                                                                                                                                            </button>
+                                                                                                                                                                                            <button onclick="confirmarCancelar(${servicio.codServ})"
+                                                                                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all border border-red-200 hover:shadow-md"
+                                                                                                                                                                                                title="Cancelar servicio">
+                                                                                                                                                                                                <span class="material-icons text-base">cancel</span>
+                                                                                                                                                                                            </button>
+                                                                                                                                                                                        ` : ''}
+                                                                                                                                                                                    </div>
+                                                                                                                                                                                </td>
+                                                                                                                                                                            </tr>
+                                                                                                                                                                        `;
                     tbody.innerHTML += fila;
                 });
             }
@@ -970,8 +971,11 @@
                         const horariosDisponibles = data.data.disponibles || [];
                         const espaciosPorHora = data.data.espacios_por_hora || {};
 
-                        renderizarHorariosActualizado('horarios-manana', horariosDisponibles, espaciosPorHora, 8, 12);
-                        renderizarHorariosActualizado('horarios-tarde', horariosDisponibles, espaciosPorHora, 14, 20);
+                        // CAMBIO: Renderizar horarios de mañana (8:00 - 13:30)
+                        renderizarHorariosActualizado('horarios-manana', horariosDisponibles, espaciosPorHora, 8, 13, true);
+
+                        // CAMBIO: Renderizar horarios de tarde (14:00 - 20:00)
+                        renderizarHorariosActualizado('horarios-tarde', horariosDisponibles, espaciosPorHora, 14, 20, true);
                     } else {
                         mostrarAlerta('Error al cargar horarios disponibles', 'error');
                     }
@@ -980,58 +984,73 @@
                     mostrarAlerta('Error al cargar horarios disponibles', 'error');
                 }
             }
-            function renderizarHorariosActualizado(containerId, horariosDisponibles, espaciosPorHora, horaInicio, horaFin) {
+            function renderizarHorariosActualizado(containerId, horariosDisponibles, espaciosPorHora, horaInicio, horaFin, incluirMedias) {
                 const container = document.getElementById(containerId);
                 container.innerHTML = '';
 
                 let hayHorarios = false;
 
                 for (let hora = horaInicio; hora <= horaFin; hora++) {
-                    const horario = sprintf('%02d:00:00', hora);
-                    const horarioFormateado = horario.substring(0, 5); // HH:MM
-
-                    const espacios = espaciosPorHora[horario];
-                    const espaciosDisponibles = espacios ? espacios.disponibles : 2;
-                    const totalOcupados = espacios ? espacios.total : 0;
-
-                    const estaDisponible = espaciosDisponibles > 0;
+                    // Renderizar hora en punto (XX:00)
+                    renderizarSlotHorario(container, hora, 0, horariosDisponibles, espaciosPorHora);
                     hayHorarios = true;
 
-                    const button = document.createElement('button');
-                    button.type = 'button';
-                    button.className = `horario-btn px-4 py-3 rounded-lg border-2 font-semibold text-sm relative ${!estaDisponible
-                        ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                        : 'bg-white text-gray-700 border-gray-300 hover:border-emerald-500'
-                        }`;
-
-                    button.innerHTML = `
-                            <div class="font-bold text-base">${horarioFormateado}</div>
-                            <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
-                                ${espaciosDisponibles}/2 libres
-                            </div>
-                        `;
-
-                    button.disabled = !estaDisponible;
-
-                    if (estaDisponible) {
-                        button.onclick = () => seleccionarHorario(horario, button);
+                    // Renderizar media hora (XX:30) solo si no es la última hora
+                    if (incluirMedias && !(hora === horaFin && horaFin === 20)) {
+                        renderizarSlotHorario(container, hora, 30, horariosDisponibles, espaciosPorHora);
                     }
-
-                    container.appendChild(button);
                 }
 
                 if (!hayHorarios) {
                     container.innerHTML = `
-                            <div class="col-span-full text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                                <span class="material-icons text-gray-400 text-3xl block mb-2">event_busy</span>
-                                <p class="text-sm text-gray-500 font-medium">No hay horarios en este rango</p>
-                            </div>
-                        `;
+                                                                    <div class="col-span-full text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                                                        <span class="material-icons text-gray-400 text-3xl block mb-2">event_busy</span>
+                                                                        <p class="text-sm text-gray-500 font-medium">No hay horarios en este rango</p>
+                                                                    </div>
+                                                                `;
                 }
             }
-            function sprintf(format, num) {
-                return format.replace('%02d', String(num).padStart(2, '0'));
+            function renderizarSlotHorario(container, hora, minutos, horariosDisponibles, espaciosPorHora) {
+                const horario = sprintf('%02d:%02d:00', hora, minutos);
+                const horarioFormateado = horario.substring(0, 5); // HH:MM
+
+                const espacios = espaciosPorHora[horario];
+                const espaciosDisponibles = espacios ? espacios.disponibles : 1;
+                const totalOcupados = espacios ? espacios.total : 0;
+
+                // CAMBIO: Ahora solo 1 espacio por slot
+                const estaDisponible = espaciosDisponibles > 0;
+
+                const button = document.createElement('button');
+                button.type = 'button';
+                button.className = `horario-btn px-4 py-3 rounded-lg border-2 font-semibold text-sm relative ${!estaDisponible
+                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                    : 'bg-white text-gray-700 border-gray-300 hover:border-emerald-500'
+                    }`;
+
+                button.innerHTML = `
+                                        <div class="font-bold text-base">${horarioFormateado}</div>
+                                        <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
+                                            ${estaDisponible ? '✓ Disponible' : '✗ Ocupado'}
+                                        </div>
+                                    `;
+
+                button.disabled = !estaDisponible;
+
+                if (estaDisponible) {
+                    button.onclick = () => seleccionarHorario(horario, button);
+                }
+
+                container.appendChild(button);
             }
+            function sprintf(format, ...args) {
+                let formatted = format;
+                args.forEach((arg, index) => {
+                    formatted = formatted.replace('%02d', String(arg).padStart(2, '0'));
+                });
+                return formatted;
+            }
+
             function seleccionarHorario(horario, botonElement) {
                 // Remover selección previa
                 document.querySelectorAll('.horario-btn.selected').forEach(btn => {
@@ -1065,9 +1084,9 @@
 
                         if (infoDiv && infoDiv.classList.contains('text-xs')) {
                             infoDiv.innerHTML = `
-                                                            <span class="material-icons text-xs">info</span>
-                                                            Fichas disponibles: ${cantDispo}
-                                                        `;
+                                                                                                                            <span class="material-icons text-xs">info</span>
+                                                                                                                            Fichas disponibles: ${cantDispo}
+                                                                                                                        `;
 
                             if (cantDispo <= 0) {
                                 infoDiv.classList.add('text-red-600');
@@ -1375,11 +1394,11 @@
                 try {
                     modal.classList.remove('hidden');
                     contenido.innerHTML = `
-                                                                                                                                                    <div class="text-center py-8">
-                                                                                                                                                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-                                                                                                                                                        <p class="mt-4 text-gray-600">Cargando información...</p>
-                                                                                                                                                    </div>
-                                                                                                                                                `;
+                                                                                                                                                                                                                    <div class="text-center py-8">
+                                                                                                                                                                                                                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
+                                                                                                                                                                                                                        <p class="mt-4 text-gray-600">Cargando información...</p>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                `;
 
                     const response = await fetch(`/api/personal/servicios/${codServ}`);
                     const data = await response.json();
@@ -1401,151 +1420,151 @@
 
                         const diagnosticos = s.diagnosticos && s.diagnosticos.length > 0
                             ? s.diagnosticos.map(d => `
-                                                                                                                                                            <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
-                                                                                                                                                                <p class="text-sm font-medium text-gray-800 leading-relaxed">${d.descripDiag}</p>
-                                                                                                                                                                <span class="text-xs text-emerald-700 font-bold mt-2 inline-block">Tipo: ${d.pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico'}</span>
-                                                                                                                                                            </div>
-                                                                                                                                                        `).join('')
+                                                                                                                                                                                                                            <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
+                                                                                                                                                                                                                                <p class="text-sm font-medium text-gray-800 leading-relaxed">${d.descripDiag}</p>
+                                                                                                                                                                                                                                <span class="text-xs text-emerald-700 font-bold mt-2 inline-block">Tipo: ${d.pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico'}</span>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        `).join('')
                             : '<p class="text-gray-500 italic text-center py-4">Sin diagnósticos registrados</p>';
 
                         contenido.innerHTML = `
-                                                                                                                                                        <div class="space-y-6">
-                                                                                                                                                            <!-- Info General -->
-                                                                                                                                                            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200">
-                                                                                                                                                                <div class="flex items-center justify-between mb-4">
-                                                                                                                                                                    <h4 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                                                                                                                                                                        <span class="material-icons text-emerald-600">info</span>
-                                                                                                                                                                        Información General
-                                                                                                                                                                    </h4>
-                                                                                                                                                                    <span class="px-4 py-2 text-sm font-bold rounded-full border ${estado.class} flex items-center gap-1">
-                                                                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
-                                                                                                                                                                        ${s.estado}
-                                                                                                                                                                    </span>
-                                                                                                                                                                </div>
-                                                                                                                                                                <div class="grid grid-cols-2 gap-4">
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Servicio</p>
-                                                                                                                                                                        <p class="font-bold text-emerald-600 text-xl">${s.nroServ}</p>
-                                                                                                                                                                    </div>
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Ficha</p>
-                                                                                                                                                                        <p class="font-bold text-gray-900 text-xl">${s.nroFicha || 'N/A'}</p>
-                                                                                                                                                                    </div>
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Tipo de Seguro</p>
-                                                                                                                                                                        <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
-                                                                                                                                                                    </div>
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Fecha Solicitud</p>
-                                                                                                                                                                        <p class="font-bold text-gray-900">${formatearFecha(s.fechaSol)}</p>
-                                                                                                                                                                        <p class="text-xs text-emerald-600 font-semibold mt-1">${s.horaSol || 'Sin hora'}</p>
-                                                                                                                                                                    </div>
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
+                                                                                                                                                                                                                        <div class="space-y-6">
+                                                                                                                                                                                                                            <!-- Info General -->
+                                                                                                                                                                                                                            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200">
+                                                                                                                                                                                                                                <div class="flex items-center justify-between mb-4">
+                                                                                                                                                                                                                                    <h4 class="font-bold text-gray-900 text-lg flex items-center gap-2">
+                                                                                                                                                                                                                                        <span class="material-icons text-emerald-600">info</span>
+                                                                                                                                                                                                                                        Información General
+                                                                                                                                                                                                                                    </h4>
+                                                                                                                                                                                                                                    <span class="px-4 py-2 text-sm font-bold rounded-full border ${estado.class} flex items-center gap-1">
+                                                                                                                                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
+                                                                                                                                                                                                                                        ${s.estado}
+                                                                                                                                                                                                                                    </span>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div class="grid grid-cols-2 gap-4">
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Servicio</p>
+                                                                                                                                                                                                                                        <p class="font-bold text-emerald-600 text-xl">${s.nroServ}</p>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Ficha</p>
+                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-xl">${s.nroFicha || 'N/A'}</p>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Tipo de Seguro</p>
+                                                                                                                                                                                                                                        <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
+                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Fecha Solicitud</p>
+                                                                                                                                                                                                                                        <p class="font-bold text-gray-900">${formatearFecha(s.fechaSol)}</p>
+                                                                                                                                                                                                                                        <p class="text-xs text-emerald-600 font-semibold mt-1">${s.horaSol || 'Sin hora'}</p>
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </div>
 
-                                                                                                                                                            <!-- Paciente y Médico -->
-                                                                                                                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                                                                                                <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
-                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                                                                                                                                        <span class="material-icons text-blue-600">person</span>
-                                                                                                                                                                        Paciente
-                                                                                                                                                                    </h4>
-                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${paciente}</p>
-                                                                                                                                                                    <p class="text-sm text-blue-700 font-semibold mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
-                                                                                                                                                                </div>
-                                                                                                                                                                <div class="bg-purple-50 p-5 rounded-xl border border-purple-200">
-                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                                                                                                                                        <span class="material-icons text-purple-600">medical_services</span>
-                                                                                                                                                                        Médico Solicitante
-                                                                                                                                                                    </h4>
-                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${medico}</p>
-                                                                                                                                                                    <p class="text-sm text-purple-700 font-semibold mt-1">${s.medico?.tipoMed || ''}</p>
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <!-- Paciente y Médico -->
+                                                                                                                                                                                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                                                                                                                                <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
+                                                                                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                                                                                                                                                                                                        <span class="material-icons text-blue-600">person</span>
+                                                                                                                                                                                                                                        Paciente
+                                                                                                                                                                                                                                    </h4>
+                                                                                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${paciente}</p>
+                                                                                                                                                                                                                                    <p class="text-sm text-blue-700 font-semibold mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                <div class="bg-purple-50 p-5 rounded-xl border border-purple-200">
+                                                                                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                                                                                                                                                                                                        <span class="material-icons text-purple-600">medical_services</span>
+                                                                                                                                                                                                                                        Médico Solicitante
+                                                                                                                                                                                                                                    </h4>
+                                                                                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${medico}</p>
+                                                                                                                                                                                                                                    <p class="text-sm text-purple-700 font-semibold mt-1">${s.medico?.tipoMed || ''}</p>
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </div>
 
-                                                                                                                                                            <!-- Tipo de Estudio -->
-                                                                                                                                                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
-                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                                                                                                                                    <span class="material-icons text-purple-600">science</span>
-                                                                                                                                                                    Tipo de Estudio
-                                                                                                                                                                </h4>
-                                                                                                                                                                <p class="text-gray-900 font-bold text-xl">${s.tipo_estudio?.descripcion || 'N/A'}</p>
-                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <!-- Tipo de Estudio -->
+                                                                                                                                                                                                                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
+                                                                                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
+                                                                                                                                                                                                                                    <span class="material-icons text-purple-600">science</span>
+                                                                                                                                                                                                                                    Tipo de Estudio
+                                                                                                                                                                                                                                </h4>
+                                                                                                                                                                                                                                <p class="text-gray-900 font-bold text-xl">${s.tipo_estudio?.descripcion || 'N/A'}</p>
+                                                                                                                                                                                                                            </div>
 
-                                                                                                                                                            <!-- Diagnósticos -->
-                                                                                                                                                            <div>
-                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                                                                                                                                                                    <span class="material-icons text-emerald-600">assignment</span>
-                                                                                                                                                                    Diagnósticos
-                                                                                                                                                                </h4>
-                                                                                                                                                                <div class="space-y-3">
-                                                                                                                                                                    ${diagnosticos}
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
+                                                                                                                                                                                                                            <!-- Diagnósticos -->
+                                                                                                                                                                                                                            <div>
+                                                                                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
+                                                                                                                                                                                                                                    <span class="material-icons text-emerald-600">assignment</span>
+                                                                                                                                                                                                                                    Diagnósticos
+                                                                                                                                                                                                                                </h4>
+                                                                                                                                                                                                                                <div class="space-y-3">
+                                                                                                                                                                                                                                    ${diagnosticos}
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </div>
 
-                                                                                                                                                            <!-- Historial de Fechas -->
-                                                                                                                                                            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                                                                                                                                                    <span class="material-icons text-gray-600">schedule</span>
-                                                                                                                                                                    Historial del Proceso
-                                                                                                                                                                </h4>
-                                                                                                                                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
-                                                                                                                                                                            <span class="material-icons text-blue-600 text-sm">event</span>
-                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Solicitud</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaSol)}</p>
-                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
-                                                                                                                                                                            <span class="material-icons text-blue-600 text-xs">schedule</span>
-                                                                                                                                                                            <p class="text-sm text-blue-700 font-semibold">${s.horaSol || 'Sin hora'}</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                    </div>
+                                                                                                                                                                                                                            <!-- Historial de Fechas -->
+                                                                                                                                                                                                                            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                                                                                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                                                                                                                                                                                                                    <span class="material-icons text-gray-600">schedule</span>
+                                                                                                                                                                                                                                    Historial del Proceso
+                                                                                                                                                                                                                                </h4>
+                                                                                                                                                                                                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                                                                                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                                                                                            <span class="material-icons text-blue-600 text-sm">event</span>
+                                                                                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Solicitud</p>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaSol)}</p>
+                                                                                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
+                                                                                                                                                                                                                                            <span class="material-icons text-blue-600 text-xs">schedule</span>
+                                                                                                                                                                                                                                            <p class="text-sm text-blue-700 font-semibold">${s.horaSol || 'Sin hora'}</p>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                    </div>
 
-                                                                                                                                                                    ${s.fechaAten ? `
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
-                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
-                                                                                                                                                                            <span class="material-icons text-emerald-600 text-sm">check_circle</span>
-                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Atención</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaAten)}</p>
-                                                                                                                                                                        ${s.horaAten ? `
-                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
-                                                                                                                                                                            <span class="material-icons text-emerald-600 text-xs">schedule</span>
-                                                                                                                                                                            <p class="text-sm text-emerald-700 font-semibold">${s.horaAten}</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                        ` : ''}
-                                                                                                                                                                    </div>
-                                                                                                                                                                    ` : ''}
+                                                                                                                                                                                                                                    ${s.fechaAten ? `
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
+                                                                                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                                                                                            <span class="material-icons text-emerald-600 text-sm">check_circle</span>
+                                                                                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Atención</p>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaAten)}</p>
+                                                                                                                                                                                                                                        ${s.horaAten ? `
+                                                                                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
+                                                                                                                                                                                                                                            <span class="material-icons text-emerald-600 text-xs">schedule</span>
+                                                                                                                                                                                                                                            <p class="text-sm text-emerald-700 font-semibold">${s.horaAten}</p>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        ` : ''}
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    ` : ''}
 
-                                                                                                                                                                    ${s.fechaEnt ? `
-                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
-                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
-                                                                                                                                                                            <span class="material-icons text-purple-600 text-sm">done_all</span>
-                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Entrega</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaEnt)}</p>
-                                                                                                                                                                        ${s.horaEnt ? `
-                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
-                                                                                                                                                                            <span class="material-icons text-purple-600 text-xs">schedule</span>
-                                                                                                                                                                            <p class="text-sm text-purple-700 font-semibold">${s.horaEnt}</p>
-                                                                                                                                                                        </div>
-                                                                                                                                                                        ` : ''}
-                                                                                                                                                                    </div>
-                                                                                                                                                                    ` : ''}
-                                                                                                                                                                </div>
-                                                                                                                                                            </div>
-                                                                                                                                                        </div>
-                                                                                                                                                    `;
+                                                                                                                                                                                                                                    ${s.fechaEnt ? `
+                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
+                                                                                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                                                                                            <span class="material-icons text-purple-600 text-sm">done_all</span>
+                                                                                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Entrega</p>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaEnt)}</p>
+                                                                                                                                                                                                                                        ${s.horaEnt ? `
+                                                                                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
+                                                                                                                                                                                                                                            <span class="material-icons text-purple-600 text-xs">schedule</span>
+                                                                                                                                                                                                                                            <p class="text-sm text-purple-700 font-semibold">${s.horaEnt}</p>
+                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                        ` : ''}
+                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                    ` : ''}
+                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                    `;
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     contenido.innerHTML = `
-                                                                                                                                                    <div class="text-center py-8">
-                                                                                                                                                        <span class="material-icons text-red-500 text-6xl">error</span>
-                                                                                                                                                        <p class="mt-4 text-red-600 font-semibold">Error al cargar la información</p>
-                                                                                                                                                    </div>
-                                                                                                                                                `;
+                                                                                                                                                                                                                    <div class="text-center py-8">
+                                                                                                                                                                                                                        <span class="material-icons text-red-500 text-6xl">error</span>
+                                                                                                                                                                                                                        <p class="mt-4 text-red-600 font-semibold">Error al cargar la información</p>
+                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                `;
                 }
             }
 
@@ -1579,9 +1598,9 @@
 
                 alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-md`;
                 alerta.innerHTML = `
-                                        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
-                                        <span class="font-semibold">${mensaje}</span>
-                                    `;
+                                                                                                        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
+                                                                                                        <span class="font-semibold">${mensaje}</span>
+                                                                                                    `;
                 alerta.classList.remove('hidden');
 
                 setTimeout(() => alerta.classList.add('hidden'), 5000);
