@@ -12,6 +12,38 @@
     @endphp
 
     <style>
+        .alerta-modal-entrada {
+            animation: slideInDown 0.3s ease-out;
+        }
+
+        .alerta-modal-salida {
+            animation: slideOutUp 0.3s ease-in;
+        }
+
+        @keyframes slideInDown {
+            from {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            to {
+                transform: translateY(-20px);
+                opacity: 0;
+            }
+        }
+
         .step-circle {
             transition: all 0.3s ease;
             position: relative;
@@ -254,7 +286,7 @@
                     <span class="material-icons">close</span>
                 </button>
             </div>
-
+            <div id="alerta-modal" class="hidden mb-4"></div>
             <!-- Stepper -->
             <div class="mb-8">
                 <div class="flex items-center justify-between">
@@ -737,20 +769,19 @@
 
                 if (servicios.length === 0) {
                     tbody.innerHTML = `
-                                                                                                                                                                                    <tr>
-                                                                                                                                                                                        <td colspan="8" class="px-6 py-12 text-center">
-                                                                                                                                                                                            <div class="flex flex-col items-center gap-3">
-                                                                                                                                                                                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
-                                                                                                                                                                                                    <span class="material-icons text-gray-400 text-3xl">inbox</span>
-                                                                                                                                                                                                </div>
-                                                                                                                                                                                                <p class="text-gray-500 font-medium">No se encontraron servicios</p>
-                                                                                                                                                                                            </div>
-                                                                                                                                                                                        </td>
-                                                                                                                                                                                    </tr>
-                                                                                                                                                                                `;
+                    <tr>
+                        <td colspan="8" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center gap-3">
+                                <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                                    <span class="material-icons text-gray-400 text-3xl">inbox</span>
+                                </div>
+                                <p class="text-gray-500 font-medium">No se encontraron servicios</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
                     return;
                 }
-
 
                 servicios.forEach(servicio => {
                     const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''}`.trim();
@@ -778,61 +809,62 @@
 
                     const puedeEditar = servicio.estado !== 'Cancelado' && servicio.estado !== 'Entregado' && servicio.estado !== 'Atendido';
 
-                    // Formatear horaCrono
-                    const horaCrono = servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : 'Sin hora';
+                    // CORREGIDO: Usar las funciones corregidas de formateo
+                    const fechaCronoFormateada = formatearFecha(servicio.fechaCrono);
+                    const horaCronoFormateada = formatearHora(servicio.horaCrono);
 
                     const fila = `
-                                                                                                                                                                            <tr class="border-b hover:bg-emerald-50 transition-colors">
-                                                                                                                                                                                <td class="px-6 py-4">
-                                                                                                                                                                                    <span class="font-bold text-emerald-600">${servicio.nroServ || 'N/A'}</span>
-                                                                                                                                                                                </td>
-                                                                                                                                                                                <td class="px-6 py-4">
-                                                                                                                                                                                    <div class="font-semibold text-gray-900">${paciente}</div>
-                                                                                                                                                                                    <div class="text-xs text-gray-500">${servicio.paciente?.nroHCI || 'Sin HCI'}</div>
-                                                                                                                                                                                </td>
-                                                                                                                                                                                <td class="px-6 py-4 text-gray-700">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
-                                                                                                                                                                                <td class="px-6 py-4 text-gray-700">${medico}</td>
-                                                                                                                                                                                <td class="px-6 py-4">
-                                                                                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${tipoAsegClass}">
-                                                                                                                                                                                        ${tipoAsegTexto}
-                                                                                                                                                                                    </span>
-                                                                                                                                                                                </td>
-                                                                                                                                                                                <td class="px-6 py-4">
-                                                                                                                                                                                    <div class="font-semibold text-gray-900">${formatearFecha(servicio.fechaCrono)}</div>
-                                                                                                                                                                                    <div class="text-xs text-teal-600 font-bold flex items-center gap-1">
-                                                                                                                                                                                        <span class="material-icons text-xs">schedule</span>
-                                                                                                                                                                                        ${horaCrono}
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                </td>
-                                                                                                                                                                                <td class="px-6 py-4">
-                                                                                                                                                                                    <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${estado.class} flex items-center gap-1 w-fit">
-                                                                                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
-                                                                                                                                                                                        ${servicio.estado}
-                                                                                                                                                                                    </span>
-                                                                                                                                                                                </td>
-                                                                                                                                                                                <td class="px-6 py-4">
-                                                                                                                                                                                    <div class="flex items-center gap-2 justify-center">
-                                                                                                                                                                                        <button onclick="verDetalle(${servicio.codServ})"
-                                                                                                                                                                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all border border-blue-200 hover:shadow-md"
-                                                                                                                                                                                            title="Ver detalles">
-                                                                                                                                                                                            <span class="material-icons text-base">visibility</span>
-                                                                                                                                                                                        </button>
-                                                                                                                                                                                        ${puedeEditar ? `
-                                                                                                                                                                                            <button onclick="abrirModalDiagnostico(${servicio.codServ})"
-                                                                                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
-                                                                                                                                                                                                title="Gestionar diagnóstico">
-                                                                                                                                                                                                <span class="material-icons text-base">medical_services</span>
-                                                                                                                                                                                            </button>
-                                                                                                                                                                                            <button onclick="confirmarCancelar(${servicio.codServ})"
-                                                                                                                                                                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all border border-red-200 hover:shadow-md"
-                                                                                                                                                                                                title="Cancelar servicio">
-                                                                                                                                                                                                <span class="material-icons text-base">cancel</span>
-                                                                                                                                                                                            </button>
-                                                                                                                                                                                        ` : ''}
-                                                                                                                                                                                    </div>
-                                                                                                                                                                                </td>
-                                                                                                                                                                            </tr>
-                                                                                                                                                                        `;
+                    <tr class="border-b hover:bg-emerald-50 transition-colors">
+                        <td class="px-6 py-4">
+                            <span class="font-bold text-emerald-600">${servicio.nroServ || 'N/A'}</span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-gray-900">${paciente}</div>
+                            <div class="text-xs text-gray-500">${servicio.paciente?.nroHCI || 'Sin HCI'}</div>
+                        </td>
+                        <td class="px-6 py-4 text-gray-700">${servicio.tipo_estudio?.descripcion || 'N/A'}</td>
+                        <td class="px-6 py-4 text-gray-700">${medico}</td>
+                        <td class="px-6 py-4">
+                            <span class="inline-block px-3 py-1.5 text-xs font-semibold rounded-full border ${tipoAsegClass} whitespace-nowrap">
+                                ${tipoAsegTexto}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="font-semibold text-gray-900">${fechaCronoFormateada}</div>
+                            <div class="text-xs text-teal-600 font-bold flex items-center gap-1">
+                                <span class="material-icons text-xs">schedule</span>
+                                ${horaCronoFormateada}
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1.5 text-xs font-bold rounded-full border ${estado.class} flex items-center gap-1 w-fit">
+                                <span class="material-icons text-xs">${estado.icon}</span>
+                                ${servicio.estado}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2 justify-center">
+                                <button onclick="verDetalle(${servicio.codServ})"
+                                    class="inline-flex items-center px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 transition-all border border-blue-200 hover:shadow-md"
+                                    title="Ver detalles">
+                                    <span class="material-icons text-base">visibility</span>
+                                </button>
+                                ${puedeEditar ? `
+                                    <button onclick="abrirModalDiagnostico(${servicio.codServ})"
+                                        class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
+                                        title="Gestionar diagnóstico">
+                                        <span class="material-icons text-base">medical_services</span>
+                                    </button>
+                                    <button onclick="confirmarCancelar(${servicio.codServ})"
+                                        class="inline-flex items-center px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-all border border-red-200 hover:shadow-md"
+                                        title="Cancelar servicio">
+                                        <span class="material-icons text-base">cancel</span>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </td>
+                    </tr>
+                `;
                     tbody.innerHTML += fila;
                 });
             }
@@ -863,7 +895,8 @@
 
             async function abrirModalNuevoServicio() {
                 try {
-                    mostrarLoader(true);
+                    // Cerrar cualquier alerta previa
+                    cerrarAlertaModal();
 
                     const response = await fetch('/api/personal/servicios/datos-formulario');
                     const data = await response.json();
@@ -877,29 +910,29 @@
                         llenarSelect('fechaCrono', datosFormulario.cronogramas, 'fechaCrono');
 
                         if (!datosFormulario.cronogramas || datosFormulario.cronogramas.length === 0) {
-                            mostrarAlerta('⚠️ No hay cronogramas disponibles. Por favor, cree un cronograma primero.', 'error');
-                            mostrarLoader(false);
+                            mostrarAlertaModal('⚠️ No hay cronogramas disponibles. Por favor, cree un cronograma primero.', 'warning');
                             return;
                         }
 
+                        // Reiniciar formulario y estado
                         document.getElementById('form-servicio').reset();
                         pasoActual = 1;
                         horarioSeleccionado = null;
                         mostrarPaso(1);
 
+                        // Establecer fecha y hora actual
                         const ahora = new Date();
                         document.getElementById('fechaSol').valueAsDate = ahora;
                         document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
 
+                        // Abrir modal
                         document.getElementById('modal-servicio').classList.remove('hidden');
                     } else {
-                        mostrarAlerta(data.message || 'Error al cargar datos del formulario', 'error');
+                        mostrarAlertaModal(data.message || '❌ Error al cargar datos del formulario', 'error');
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    mostrarAlerta('Error al cargar datos del formulario', 'error');
-                } finally {
-                    mostrarLoader(false);
+                    mostrarAlertaModal('❌ Error de conexión al cargar datos', 'error');
                 }
             }
 
@@ -1003,11 +1036,11 @@
 
                 if (!hayHorarios) {
                     container.innerHTML = `
-                                                                    <div class="col-span-full text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
-                                                                        <span class="material-icons text-gray-400 text-3xl block mb-2">event_busy</span>
-                                                                        <p class="text-sm text-gray-500 font-medium">No hay horarios en este rango</p>
-                                                                    </div>
-                                                                `;
+                                                                                                                                                                                                    <div class="col-span-full text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-300">
+                                                                                                                                                                                                        <span class="material-icons text-gray-400 text-3xl block mb-2">event_busy</span>
+                                                                                                                                                                                                        <p class="text-sm text-gray-500 font-medium">No hay horarios en este rango</p>
+                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                `;
                 }
             }
             function renderizarSlotHorario(container, hora, minutos, horariosDisponibles, espaciosPorHora) {
@@ -1029,11 +1062,11 @@
                     }`;
 
                 button.innerHTML = `
-                                        <div class="font-bold text-base">${horarioFormateado}</div>
-                                        <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
-                                            ${estaDisponible ? '✓ Disponible' : '✗ Ocupado'}
-                                        </div>
-                                    `;
+                                                                                                                                                                        <div class="font-bold text-base">${horarioFormateado}</div>
+                                                                                                                                                                        <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
+                                                                                                                                                                            ${estaDisponible ? '✓ Disponible' : '✗ Ocupado'}
+                                                                                                                                                                        </div>
+                                                                                                                                                                    `;
 
                 button.disabled = !estaDisponible;
 
@@ -1084,9 +1117,9 @@
 
                         if (infoDiv && infoDiv.classList.contains('text-xs')) {
                             infoDiv.innerHTML = `
-                                                                                                                            <span class="material-icons text-xs">info</span>
-                                                                                                                            Fichas disponibles: ${cantDispo}
-                                                                                                                        `;
+                                                                                                                                                                                                                                                            <span class="material-icons text-xs">info</span>
+                                                                                                                                                                                                                                                            Fichas disponibles: ${cantDispo}
+                                                                                                                                                                                                                                                        `;
 
                             if (cantDispo <= 0) {
                                 infoDiv.classList.add('text-red-600');
@@ -1114,8 +1147,13 @@
             async function guardarServicio(e) {
                 e.preventDefault();
 
+                // Validar paso final
+                if (!validarPasoActual()) {
+                    return;
+                }
+
                 if (!horarioSeleccionado) {
-                    mostrarAlerta('Por favor seleccione un horario', 'error');
+                    mostrarAlertaModal('❌ Por favor seleccione un horario', 'error');
                     return;
                 }
 
@@ -1130,6 +1168,17 @@
                     horaCrono: horarioSeleccionado
                 };
 
+                // Mostrar loader en el botón de guardar
+                const btnGuardar = document.getElementById('btn-guardar');
+                const textoOriginal = btnGuardar.innerHTML;
+                btnGuardar.innerHTML = `
+                                                                                        <div class="flex items-center gap-2">
+                                                                                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                                                            <span>Guardando...</span>
+                                                                                        </div>
+                                                                                    `;
+                btnGuardar.disabled = true;
+
                 try {
                     const response = await fetch('/api/personal/servicios', {
                         method: 'POST',
@@ -1143,17 +1192,25 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        mostrarAlerta('✅ Servicio creado exitosamente', 'success');
-                        cerrarModal('modal-servicio');
-                        cargarServicios();
-                        cargarEstadisticas();
-                        horarioSeleccionado = null;
+                        mostrarAlertaModal('✅ Servicio creado exitosamente', 'success');
+
+                        // Cerrar modal después de un breve delay
+                        setTimeout(() => {
+                            cerrarModal('modal-servicio');
+                            cargarServicios();
+                            cargarEstadisticas();
+                            horarioSeleccionado = null;
+                        }, 1500);
                     } else {
-                        mostrarAlerta(data.message || 'Error al crear el servicio', 'error');
+                        mostrarAlertaModal(data.message || '❌ Error al crear el servicio', 'error');
                     }
                 } catch (error) {
                     console.error('Error:', error);
-                    mostrarAlerta('Error al crear el servicio', 'error');
+                    mostrarAlertaModal('❌ Error de conexión al crear el servicio', 'error');
+                } finally {
+                    // Restaurar botón
+                    btnGuardar.innerHTML = textoOriginal;
+                    btnGuardar.disabled = false;
                 }
             }
 
@@ -1162,53 +1219,116 @@
             // ==========================================
 
             function siguientePaso() {
-                if (validarPasoActual()) {
+                if (!validarPasoActual()) {
+                    return;
+                }
+
+                // Si estamos en el paso 3, cargar horarios antes de pasar al paso 4
+                if (pasoActual === 3) {
+                    const fechaCrono = document.getElementById('fechaCrono').value;
+                    if (!fechaCrono) {
+                        mostrarAlertaModal('Primero debe seleccionar una fecha de cronograma', 'error');
+                        return;
+                    }
+
+                    // Mostrar loader mientras se cargan los horarios
+                    const btnSiguiente = document.getElementById('btn-siguiente');
+                    const textoOriginal = btnSiguiente.innerHTML;
+                    btnSiguiente.innerHTML = `
+                                                                                                    <div class="flex items-center gap-2">
+                                                                                                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                                                                                                        <span>Cargando horarios...</span>
+                                                                                                    </div>
+                                                                                                `;
+                    btnSiguiente.disabled = true;
+
+                    cargarHorariosDisponibles().then(() => {
+                        pasoActual++;
+                        mostrarPaso(pasoActual);
+                        btnSiguiente.innerHTML = textoOriginal;
+                        btnSiguiente.disabled = false;
+                    }).catch(error => {
+                        console.error('Error al cargar horarios:', error);
+                        mostrarAlertaModal('Error al cargar los horarios disponibles', 'error');
+                        btnSiguiente.innerHTML = textoOriginal;
+                        btnSiguiente.disabled = false;
+                    });
+                } else {
                     pasoActual++;
                     mostrarPaso(pasoActual);
                 }
             }
 
+
             function anteriorPaso() {
+                cerrarAlertaModal(); // Cerrar cualquier alerta al cambiar de paso
                 pasoActual--;
                 mostrarPaso(pasoActual);
             }
 
             function validarPasoActual() {
+                cerrarAlertaModal(); // Cerrar alerta previa
                 if (pasoActual === 1) {
                     const fechaSol = document.getElementById('fechaSol').value;
                     const horaSol = document.getElementById('horaSol').value;
                     const tipoAseg = document.getElementById('tipoAseg').value;
 
-                    if (!fechaSol || !horaSol || !tipoAseg) {
-                        mostrarAlerta('Complete todos los campos obligatorios', 'error');
+                    // Ya no necesitamos validar fecha/hora porque son automáticas
+                    if (!tipoAseg) {
+                        mostrarAlertaModal('❌ El tipo de seguro es obligatorio', 'error');
+                        document.getElementById('tipoAseg').focus();
                         return false;
                     }
+
                 } else if (pasoActual === 2) {
                     const codPa = document.getElementById('codPa').value;
                     const codMed = document.getElementById('codMed').value;
 
-                    if (!codPa || !codMed) {
-                        mostrarAlerta('Seleccione el paciente y médico', 'error');
+                    if (!codPa) {
+                        mostrarAlertaModal('❌ Debe seleccionar un paciente', 'error');
+                        document.getElementById('codPa').focus();
                         return false;
                     }
+
+                    if (!codMed) {
+                        mostrarAlertaModal('❌ Debe seleccionar un médico solicitante', 'error');
+                        document.getElementById('codMed').focus();
+                        return false;
+                    }
+
                 } else if (pasoActual === 3) {
                     const codTest = document.getElementById('codTest').value;
                     const fechaCrono = document.getElementById('fechaCrono').value;
 
-                    if (!codTest || !fechaCrono) {
-                        mostrarAlerta('Seleccione el tipo de estudio y cronograma', 'error');
+                    if (!codTest) {
+                        mostrarAlertaModal('❌ Debe seleccionar un tipo de estudio', 'error');
+                        document.getElementById('codTest').focus();
                         return false;
                     }
+
+                    if (!fechaCrono) {
+                        mostrarAlertaModal('❌ Debe seleccionar una fecha de cronograma', 'error');
+                        document.getElementById('fechaCrono').focus();
+                        return false;
+                    }
+
+                    // Validar que haya fichas disponibles
+                    const selectFecha = document.getElementById('fechaCrono');
+                    const opcionSeleccionada = selectFecha.options[selectFecha.selectedIndex];
+                    if (opcionSeleccionada.disabled) {
+                        mostrarAlertaModal('❌ La fecha seleccionada no tiene cupos disponibles', 'error');
+                        return false;
+                    }
+
                 } else if (pasoActual === 4) {
                     if (!horarioSeleccionado) {
-                        mostrarAlerta('Seleccione un horario', 'error');
+                        mostrarAlertaModal('❌ Debe seleccionar un horario para continuar', 'error');
                         return false;
                     }
                 }
 
                 return true;
             }
-
             function mostrarPaso(paso) {
                 document.querySelectorAll('.form-step').forEach(step => {
                     step.classList.add('hidden');
@@ -1394,11 +1514,11 @@
                 try {
                     modal.classList.remove('hidden');
                     contenido.innerHTML = `
-                                                                                                                                                                                                                    <div class="text-center py-8">
-                                                                                                                                                                                                                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-                                                                                                                                                                                                                        <p class="mt-4 text-gray-600">Cargando información...</p>
-                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                                                                                                                    <div class="text-center py-8">
+                                                                                                                                                                                                                                                                                                                                                        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
+                                                                                                                                                                                                                                                                                                                                                        <p class="mt-4 text-gray-600">Cargando información...</p>
+                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                `;
 
                     const response = await fetch(`/api/personal/servicios/${codServ}`);
                     const data = await response.json();
@@ -1420,151 +1540,114 @@
 
                         const diagnosticos = s.diagnosticos && s.diagnosticos.length > 0
                             ? s.diagnosticos.map(d => `
-                                                                                                                                                                                                                            <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
-                                                                                                                                                                                                                                <p class="text-sm font-medium text-gray-800 leading-relaxed">${d.descripDiag}</p>
-                                                                                                                                                                                                                                <span class="text-xs text-emerald-700 font-bold mt-2 inline-block">Tipo: ${d.pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico'}</span>
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        `).join('')
+                                                                                                                                                                                                                                                                                                                                                            <div class="bg-emerald-50 p-4 rounded-lg border-l-4 border-emerald-500">
+                                                                                                                                                                                                                                                                                                                                                                <p class="text-sm font-medium text-gray-800 leading-relaxed">${d.descripDiag}</p>
+                                                                                                                                                                                                                                                                                                                                                                <span class="text-xs text-emerald-700 font-bold mt-2 inline-block">Tipo: ${d.pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico'}</span>
+                                                                                                                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                                                                                                                        `).join('')
                             : '<p class="text-gray-500 italic text-center py-4">Sin diagnósticos registrados</p>';
-
+                        // DENTRO DE LA FUNCIÓN verDetalle(), en el contenido HTML:
                         contenido.innerHTML = `
-                                                                                                                                                                                                                        <div class="space-y-6">
-                                                                                                                                                                                                                            <!-- Info General -->
-                                                                                                                                                                                                                            <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200">
-                                                                                                                                                                                                                                <div class="flex items-center justify-between mb-4">
-                                                                                                                                                                                                                                    <h4 class="font-bold text-gray-900 text-lg flex items-center gap-2">
-                                                                                                                                                                                                                                        <span class="material-icons text-emerald-600">info</span>
-                                                                                                                                                                                                                                        Información General
-                                                                                                                                                                                                                                    </h4>
-                                                                                                                                                                                                                                    <span class="px-4 py-2 text-sm font-bold rounded-full border ${estado.class} flex items-center gap-1">
-                                                                                                                                                                                                                                        <span class="material-icons text-xs">${estado.icon}</span>
-                                                                                                                                                                                                                                        ${s.estado}
-                                                                                                                                                                                                                                    </span>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="grid grid-cols-2 gap-4">
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Servicio</p>
-                                                                                                                                                                                                                                        <p class="font-bold text-emerald-600 text-xl">${s.nroServ}</p>
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Ficha</p>
-                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-xl">${s.nroFicha || 'N/A'}</p>
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Tipo de Seguro</p>
-                                                                                                                                                                                                                                        <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm">
-                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Fecha Solicitud</p>
-                                                                                                                                                                                                                                        <p class="font-bold text-gray-900">${formatearFecha(s.fechaSol)}</p>
-                                                                                                                                                                                                                                        <p class="text-xs text-emerald-600 font-semibold mt-1">${s.horaSol || 'Sin hora'}</p>
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
+            <div class="space-y-6">
+                <!-- Info General -->
+                <div class="bg-gradient-to-r from-emerald-50 to-teal-50 p-6 rounded-xl border border-emerald-200">
+                    <div class="flex items-center justify-between mb-4">
+                        <h4 class="font-bold text-gray-900 text-lg flex items-center gap-2">
+                            <span class="material-icons text-emerald-600">info</span>
+                            Información General
+                        </h4>
+                        <span class="px-4 py-2 text-sm font-bold rounded-full border ${estado.class} flex items-center gap-1">
+                            <span class="material-icons text-xs">${estado.icon}</span>
+                            ${s.estado}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Servicio</p>
+                            <p class="font-bold text-emerald-600 text-xl">${s.nroServ}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Nro. Ficha</p>
+                            <p class="font-bold text-gray-900 text-xl">${s.nroFicha || 'N/A'}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Tipo de Seguro</p>
+                            <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <p class="text-xs text-gray-600 mb-1 font-semibold uppercase">Fecha Solicitud</p>
+                            <p class="font-bold text-gray-900">${formatearFecha(s.fechaSol)}</p>
+                            <p class="text-xs text-emerald-600 font-semibold mt-1">${formatearHora(s.horaSol) || 'Sin hora'}</p>
+                        </div>
+                    </div>
+                </div>
 
-                                                                                                                                                                                                                            <!-- Paciente y Médico -->
-                                                                                                                                                                                                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                                                                                                                                                                <div class="bg-blue-50 p-5 rounded-xl border border-blue-200">
-                                                                                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                                                                                                                                                                                                        <span class="material-icons text-blue-600">person</span>
-                                                                                                                                                                                                                                        Paciente
-                                                                                                                                                                                                                                    </h4>
-                                                                                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${paciente}</p>
-                                                                                                                                                                                                                                    <p class="text-sm text-blue-700 font-semibold mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                <div class="bg-purple-50 p-5 rounded-xl border border-purple-200">
-                                                                                                                                                                                                                                    <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                                                                                                                                                                                                        <span class="material-icons text-purple-600">medical_services</span>
-                                                                                                                                                                                                                                        Médico Solicitante
-                                                                                                                                                                                                                                    </h4>
-                                                                                                                                                                                                                                    <p class="text-gray-900 font-bold text-lg">${medico}</p>
-                                                                                                                                                                                                                                    <p class="text-sm text-purple-700 font-semibold mt-1">${s.medico?.tipoMed || ''}</p>
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
+                <!-- ... resto del contenido ... -->
 
-                                                                                                                                                                                                                            <!-- Tipo de Estudio -->
-                                                                                                                                                                                                                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
-                                                                                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-3 flex items-center gap-2">
-                                                                                                                                                                                                                                    <span class="material-icons text-purple-600">science</span>
-                                                                                                                                                                                                                                    Tipo de Estudio
-                                                                                                                                                                                                                                </h4>
-                                                                                                                                                                                                                                <p class="text-gray-900 font-bold text-xl">${s.tipo_estudio?.descripcion || 'N/A'}</p>
-                                                                                                                                                                                                                            </div>
+                <!-- Historial de Fechas -->
+                <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
+                    <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                        <span class="material-icons text-gray-600">schedule</span>
+                        Historial del Proceso
+                    </h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-icons text-blue-600 text-sm">event</span>
+                                <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Solicitud</p>
+                            </div>
+                            <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaSol)}</p>
+                            <div class="flex items-center gap-1 mt-2">
+                                <span class="material-icons text-blue-600 text-xs">schedule</span>
+                                <p class="text-sm text-blue-700 font-semibold">${formatearHora(s.horaSol) || 'Sin hora'}</p>
+                            </div>
+                        </div>
 
-                                                                                                                                                                                                                            <!-- Diagnósticos -->
-                                                                                                                                                                                                                            <div>
-                                                                                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2 text-lg">
-                                                                                                                                                                                                                                    <span class="material-icons text-emerald-600">assignment</span>
-                                                                                                                                                                                                                                    Diagnósticos
-                                                                                                                                                                                                                                </h4>
-                                                                                                                                                                                                                                <div class="space-y-3">
-                                                                                                                                                                                                                                    ${diagnosticos}
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
+                        ${s.fechaAten ? `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-icons text-emerald-600 text-sm">check_circle</span>
+                                <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Atención</p>
+                            </div>
+                            <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaAten)}</p>
+                            ${s.horaAten ? `
+                            <div class="flex items-center gap-1 mt-2">
+                                <span class="material-icons text-emerald-600 text-xs">schedule</span>
+                                <p class="text-sm text-emerald-700 font-semibold">${formatearHora(s.horaAten)}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
 
-                                                                                                                                                                                                                            <!-- Historial de Fechas -->
-                                                                                                                                                                                                                            <div class="bg-gray-50 p-5 rounded-xl border border-gray-200">
-                                                                                                                                                                                                                                <h4 class="font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                                                                                                                                                                                                                    <span class="material-icons text-gray-600">schedule</span>
-                                                                                                                                                                                                                                    Historial del Proceso
-                                                                                                                                                                                                                                </h4>
-                                                                                                                                                                                                                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-blue-500">
-                                                                                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
-                                                                                                                                                                                                                                            <span class="material-icons text-blue-600 text-sm">event</span>
-                                                                                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Solicitud</p>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaSol)}</p>
-                                                                                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
-                                                                                                                                                                                                                                            <span class="material-icons text-blue-600 text-xs">schedule</span>
-                                                                                                                                                                                                                                            <p class="text-sm text-blue-700 font-semibold">${s.horaSol || 'Sin hora'}</p>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                    </div>
+                        ${s.fechaEnt ? `
+                        <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
+                            <div class="flex items-center gap-2 mb-2">
+                                <span class="material-icons text-purple-600 text-sm">done_all</span>
+                                <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Entrega</p>
+                            </div>
+                            <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaEnt)}</p>
+                            ${s.horaEnt ? `
+                            <div class="flex items-center gap-1 mt-2">
+                                <span class="material-icons text-purple-600 text-xs">schedule</span>
+                                <p class="text-sm text-purple-700 font-semibold">${formatearHora(s.horaEnt)}</p>
+                            </div>
+                            ` : ''}
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
 
-                                                                                                                                                                                                                                    ${s.fechaAten ? `
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-emerald-500">
-                                                                                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
-                                                                                                                                                                                                                                            <span class="material-icons text-emerald-600 text-sm">check_circle</span>
-                                                                                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Atención</p>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaAten)}</p>
-                                                                                                                                                                                                                                        ${s.horaAten ? `
-                                                                                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
-                                                                                                                                                                                                                                            <span class="material-icons text-emerald-600 text-xs">schedule</span>
-                                                                                                                                                                                                                                            <p class="text-sm text-emerald-700 font-semibold">${s.horaAten}</p>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                        ` : ''}
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                    ` : ''}
-
-                                                                                                                                                                                                                                    ${s.fechaEnt ? `
-                                                                                                                                                                                                                                    <div class="bg-white p-4 rounded-lg shadow-sm border-l-4 border-purple-500">
-                                                                                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
-                                                                                                                                                                                                                                            <span class="material-icons text-purple-600 text-sm">done_all</span>
-                                                                                                                                                                                                                                            <p class="text-xs text-gray-600 font-semibold uppercase">Fecha Entrega</p>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                        <p class="font-bold text-gray-900 text-lg">${formatearFecha(s.fechaEnt)}</p>
-                                                                                                                                                                                                                                        ${s.horaEnt ? `
-                                                                                                                                                                                                                                        <div class="flex items-center gap-1 mt-2">
-                                                                                                                                                                                                                                            <span class="material-icons text-purple-600 text-xs">schedule</span>
-                                                                                                                                                                                                                                            <p class="text-sm text-purple-700 font-semibold">${s.horaEnt}</p>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                        ` : ''}
-                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                    ` : ''}
-                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                    `;
                     }
                 } catch (error) {
                     console.error('Error:', error);
                     contenido.innerHTML = `
-                                                                                                                                                                                                                    <div class="text-center py-8">
-                                                                                                                                                                                                                        <span class="material-icons text-red-500 text-6xl">error</span>
-                                                                                                                                                                                                                        <p class="mt-4 text-red-600 font-semibold">Error al cargar la información</p>
-                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                                                                                                                    <div class="text-center py-8">
+                                                                                                                                                                                                                                                                                                                                                        <span class="material-icons text-red-500 text-6xl">error</span>
+                                                                                                                                                                                                                                                                                                                                                        <p class="mt-4 text-red-600 font-semibold">Error al cargar la información</p>
+                                                                                                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                                                                                                `;
                 }
             }
 
@@ -1576,6 +1659,8 @@
                 document.getElementById(modalId).classList.add('hidden');
                 if (modalId === 'modal-servicio') {
                     horarioSeleccionado = null;
+                    pasoActual = 1;
+                    cerrarAlertaModal(); // Cerrar alertas del modal
                 }
             }
 
@@ -1598,43 +1683,52 @@
 
                 alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-md`;
                 alerta.innerHTML = `
-                                                                                                        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
-                                                                                                        <span class="font-semibold">${mensaje}</span>
-                                                                                                    `;
+                                                                                                                                                                                                                                        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
+                                                                                                                                                                                                                                        <span class="font-semibold">${mensaje}</span>
+                                                                                                                                                                                                                                    `;
                 alerta.classList.remove('hidden');
 
                 setTimeout(() => alerta.classList.add('hidden'), 5000);
             }
 
-            function formatearFecha(fecha) {
-                if (!fecha) return 'N/A';
-                const d = new Date(fecha);
-                return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
-            }
-
-            function formatearFechaCorta(fecha) {
-                if (!fecha) return 'N/A';
+            function formatearFecha(fechaString) {
+                if (!fechaString) return 'N/A';
 
                 try {
-                    if (typeof fecha === 'string' && fecha.includes('-')) {
-                        const fechaParts = fecha.split('-');
-                        const año = parseInt(fechaParts[0]);
-                        const mes = parseInt(fechaParts[1]) - 1;
-                        const dia = parseInt(fechaParts[2]);
+                    // Crear fecha en UTC y ajustar a zona horaria local
+                    const fecha = new Date(fechaString);
 
-                        const d = new Date(año, mes, dia);
-
-                        const opciones = {
-                            weekday: 'short',
-                            day: '2-digit',
-                            month: 'short',
-                            year: 'numeric'
-                        };
-                        return d.toLocaleDateString('es-ES', opciones);
+                    // Si la fecha es inválida
+                    if (isNaN(fecha.getTime())) {
+                        return 'N/A';
                     }
 
-                    const d = new Date(fecha);
-                    if (isNaN(d.getTime())) return 'N/A';
+                    // Ajustar por la diferencia de zona horaria
+                    const fechaAjustada = new Date(fecha.getTime() + (fecha.getTimezoneOffset() * 60000));
+
+                    return fechaAjustada.toLocaleDateString('es-ES', {
+                        day: '2-digit',
+                        month: 'long',
+                        year: 'numeric'
+                    });
+                } catch (error) {
+                    console.error('Error al formatear fecha:', fechaString, error);
+                    return 'N/A';
+                }
+            }
+
+            function formatearFechaCorta(fechaString) {
+                if (!fechaString) return 'N/A';
+
+                try {
+                    const fecha = new Date(fechaString);
+
+                    if (isNaN(fecha.getTime())) {
+                        return 'N/A';
+                    }
+
+                    // Ajustar por la diferencia de zona horaria
+                    const fechaAjustada = new Date(fecha.getTime() + (fecha.getTimezoneOffset() * 60000));
 
                     const opciones = {
                         weekday: 'short',
@@ -1642,12 +1736,80 @@
                         month: 'short',
                         year: 'numeric'
                     };
-                    return d.toLocaleDateString('es-ES', opciones);
+                    return fechaAjustada.toLocaleDateString('es-ES', opciones);
                 } catch (error) {
-                    console.error('Error al formatear fecha:', fecha, error);
+                    console.error('Error al formatear fecha corta:', fechaString, error);
                     return 'N/A';
                 }
             }
+            function formatearFechaInput(fechaString) {
+                if (!fechaString) return '';
+
+                try {
+                    const fecha = new Date(fechaString);
+
+                    if (isNaN(fecha.getTime())) {
+                        return '';
+                    }
+
+                    // Para inputs type="date" necesitamos formato YYYY-MM-DD sin ajuste de zona horaria
+                    // porque el input date ya maneja la zona horaria automáticamente
+                    return fecha.toISOString().split('T')[0];
+                } catch (error) {
+                    console.error('Error al formatear fecha para input:', fechaString, error);
+                    return '';
+                }
+            }
+            function formatearHora(horaString) {
+                if (!horaString) return 'N/A';
+
+                try {
+                    // Para horas, simplemente tomar los primeros 5 caracteres (HH:MM)
+                    if (horaString.includes(':')) {
+                        return horaString.substring(0, 5);
+                    }
+                    return horaString;
+                } catch (error) {
+                    console.error('Error al formatear hora:', horaString, error);
+                    return 'N/A';
+                }
+            }
+            function mostrarAlertaModal(mensaje, tipo = 'error') {
+                const alertaModal = document.getElementById('alerta-modal');
+                const iconos = {
+                    success: 'check_circle',
+                    error: 'error',
+                    warning: 'warning'
+                };
+                const colores = {
+                    success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
+                    error: 'bg-red-50 border-red-300 text-red-800',
+                    warning: 'bg-amber-50 border-amber-300 text-amber-800'
+                };
+
+                alertaModal.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} shadow-md transition-all duration-300`;
+                alertaModal.innerHTML = `
+                                                                                                                        <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
+                                                                                                                        <span class="font-semibold flex-1">${mensaje}</span>
+                                                                                                                        <button onclick="cerrarAlertaModal()" class="ml-2 text-gray-500 hover:text-gray-700">
+                                                                                                                            <span class="material-icons text-sm">close</span>
+                                                                                                                        </button>
+                                                                                                                    `;
+                alertaModal.classList.remove('hidden');
+
+                // Auto-cerrar después de 5 segundos solo para success
+                if (tipo === 'success') {
+                    setTimeout(() => {
+                        cerrarAlertaModal();
+                    }, 5000);
+                }
+            }
+
+            function cerrarAlertaModal() {
+                const alertaModal = document.getElementById('alerta-modal');
+                alertaModal.classList.add('hidden');
+            }
+
         </script>
     @endpush
 @endsection

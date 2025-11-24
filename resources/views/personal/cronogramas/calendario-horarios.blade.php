@@ -9,90 +9,175 @@
         ];
     @endphp
     <style>
+        /* ===== SLOTS DE HORARIO ===== */
+        /* ===== ESTILOS PROFESIONALES PARA CALENDARIO ===== */
+
+        /* Slots de horario */
         .hora-slot {
             min-height: 180px;
-            transition: all 0.3s ease;
-            padding: 1rem;
+            transition: all 0.2s ease;
+            padding: 0.75rem;
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
         }
 
         .hora-slot:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            border-color: #d1d5db;
         }
 
+        .hora-slot.drag-over {
+            background: #f0fdf4 !important;
+            border: 2px dashed #22c55e !important;
+        }
+
+        /* Tarjetas de servicio - Diseño profesional */
         .servicio-card {
             cursor: move;
             transition: all 0.2s ease;
             user-select: none;
-            padding: 1rem;
-            min-height: 70px;
+            padding: 0.625rem;
+            border-radius: 8px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            position: relative;
         }
 
         .servicio-card:hover {
-            transform: scale(1.02);
-            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
         }
 
         .servicio-card.dragging {
-            opacity: 0.5;
-            transform: rotate(5deg);
+            opacity: 0.6;
         }
 
-        .hora-slot.drag-over {
-            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%) !important;
-            border: 3px dashed #10b981 !important;
-            transform: scale(1.05);
-        }
-
-        /* Colores por estado */
+        /* Estados con colores profesionales y sutiles */
         .estado-programado {
-            background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+            background: #fff7ed;
+            border: 1px solid #fdba74;
+            border-left: 4px solid #f97316;
+        }
+
+        .estado-programado .estado-texto {
+            color: #c2410c;
+        }
+
+        .estado-programado .titulo-paciente {
+            color: #9a3412;
+        }
+
+        .estado-programado .subtexto {
+            color: #ea580c;
         }
 
         .estado-en-proceso {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: #eff6ff;
+            border: 1px solid #93c5fd;
+            border-left: 4px solid #3b82f6;
+        }
+
+        .estado-en-proceso .estado-texto {
+            color: #1d4ed8;
+        }
+
+        .estado-en-proceso .titulo-paciente {
+            color: #1e40af;
+        }
+
+        .estado-en-proceso .subtexto {
+            color: #2563eb;
         }
 
         .estado-atendido {
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            background: #f0fdf4;
+            border: 1px solid #86efac;
+            border-left: 4px solid #22c55e;
+        }
+
+        .estado-atendido .estado-texto {
+            color: #15803d;
+        }
+
+        .estado-atendido .titulo-paciente {
+            color: #166534;
+        }
+
+        .estado-atendido .subtexto {
+            color: #16a34a;
         }
 
         .estado-entregado {
-            background: linear-gradient(135deg, #a855f7 0%, #9333ea 100%);
+            background: #faf5ff;
+            border: 1px solid #d8b4fe;
+            border-left: 4px solid #a855f7;
+        }
+
+        .estado-entregado .estado-texto {
+            color: #7e22ce;
+        }
+
+        .estado-entregado .titulo-paciente {
+            color: #6b21a8;
+        }
+
+        .estado-entregado .subtexto {
+            color: #9333ea;
         }
 
         .estado-emergencia {
-            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            border-left: 4px solid #ef4444;
         }
 
+        .estado-emergencia .estado-texto {
+            color: #b91c1c;
+        }
+
+        .estado-emergencia .titulo-paciente {
+            color: #991b1b;
+        }
+
+        .estado-emergencia .subtexto {
+            color: #dc2626;
+        }
+
+        /* Contenedor de slots */
         .slots-container {
             display: flex;
             flex-direction: column;
-            gap: 12px;
-            height: 100%;
-            min-height: 140px;
+            flex: 1;
+            min-height: 0;
         }
 
-        /* Indicador visual de que es draggable */
-        .servicio-card::before {
-            content: '⋮⋮';
-            position: absolute;
-            left: 6px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: rgba(255, 255, 255, 0.5);
-            font-size: 16px;
-            font-weight: bold;
+        /* Slot disponible */
+        .slot-disponible {
+            background: #f9fafb;
+            border: 1px dashed #d1d5db;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
         }
 
-        /* Animación de drop */
+        .slot-disponible:hover {
+            border-color: #9ca3af;
+            background: #f3f4f6;
+        }
+
+        /* Animación drop */
         @keyframes dropAnimation {
             0% {
-                transform: scale(1.1);
-            }
-
-            50% {
-                transform: scale(0.95);
+                transform: scale(1.02);
             }
 
             100% {
@@ -101,7 +186,7 @@
         }
 
         .drop-success {
-            animation: dropAnimation 0.3s ease-out;
+            animation: dropAnimation 0.2s ease-out;
         }
     </style>
     <div class="space-y-6">
@@ -216,7 +301,8 @@
 
                 </div>
                 <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-4 lg:grid-cols-6 gap-4" id="horarios-dia">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-5"
+                        id="horarios-dia">
                         <!-- Se llenará dinámicamente -->
                     </div>
                 </div>
@@ -366,26 +452,26 @@
                 const atendidos = total - disponibles;
 
                 infoDiv.innerHTML = `
-                                                                                <div class="flex items-center justify-between">
-                                                                                    <div class="flex items-center gap-3">
-                                                                                        <div class="text-center">
-                                                                                            <p class="text-2xl font-bold text-teal-600">${disponibles}</p>
-                                                                                            <p class="text-xs text-gray-600 font-medium">Disponibles</p>
-                                                                                        </div>
-                                                                                        <div class="text-center">
-                                                                                            <p class="text-2xl font-bold text-blue-600">${atendidos}</p>
-                                                                                            <p class="text-xs text-gray-600 font-medium">Atendidos</p>
-                                                                                        </div>
-                                                                                        <div class="text-center">
-                                                                                            <p class="text-2xl font-bold text-red-600">${emergencia}</p>
-                                                                                            <p class="text-xs text-gray-600 font-medium">Emergencias</p>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-lg font-bold text-sm shadow-md">
-                                                                                        ${cronograma.estado === 'activo' ? 'Activo' : 'Programado'}
-                                                                                    </div>
-                                                                                </div>
-                                                                            `;
+                                                                                                                <div class="flex items-center justify-between">
+                                                                                                                    <div class="flex items-center gap-3">
+                                                                                                                        <div class="text-center">
+                                                                                                                            <p class="text-2xl font-bold text-teal-600">${disponibles}</p>
+                                                                                                                            <p class="text-xs text-gray-600 font-medium">Disponibles</p>
+                                                                                                                        </div>
+                                                                                                                        <div class="text-center">
+                                                                                                                            <p class="text-2xl font-bold text-blue-600">${atendidos}</p>
+                                                                                                                            <p class="text-xs text-gray-600 font-medium">Atendidos</p>
+                                                                                                                        </div>
+                                                                                                                        <div class="text-center">
+                                                                                                                            <p class="text-2xl font-bold text-red-600">${emergencia}</p>
+                                                                                                                            <p class="text-xs text-gray-600 font-medium">Emergencias</p>
+                                                                                                                        </div>
+                                                                                                                    </div>
+                                                                                                                    <div class="px-4 py-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-lg font-bold text-sm shadow-md">
+                                                                                                                        ${cronograma.estado === 'activo' ? 'Activo' : 'Programado'}
+                                                                                                                    </div>
+                                                                                                                </div>
+                                                                                                            `;
             }
 
             function renderizarCalendario() {
@@ -414,12 +500,10 @@
             function crearSlotHorario(hora, minutos, horarioKey) {
                 const div = document.createElement('div');
                 const servicios = serviciosPorHorario[horarioKey] || [];
-
-                // CAMBIO: Ahora solo se muestra 1 servicio por slot de 30 minutos
                 const servicioMostrar = servicios.length > 0 ? servicios[0] : null;
                 const estaDisponible = servicioMostrar === null;
 
-                div.className = 'hora-slot bg-white border-2 border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-lg transition-all';
+                div.className = 'hora-slot';
                 div.dataset.horario = horarioKey;
 
                 div.addEventListener('dragover', handleDragOver);
@@ -427,29 +511,29 @@
                 div.addEventListener('dragleave', handleDragLeave);
 
                 let contenidoHTML = `
-                                                        <div class="mb-4 pb-3 border-b-2 border-gray-200">
-                                                            <p class="text-2xl font-bold text-gray-800 text-center mb-1">${horarioKey}</p>
-                                                            <p class="text-xs text-gray-500 text-center font-medium">
-                                                                <span class="inline-flex items-center gap-1">
-                                                                    <span class="material-icons text-xs">event_available</span>
-                                                                    ${estaDisponible ? 'Disponible' : 'Ocupado'}
-                                                                </span>
-                                                            </p>
-                                                        </div>
-                                                        <div class="slots-container">
-                                                    `;
+                        <div class="mb-2 pb-2 border-b border-gray-100 text-center">
+                            <p class="text-lg font-bold text-gray-800">${horarioKey}</p>
+                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1
+                                ${estaDisponible
+                        ? 'bg-emerald-50 text-emerald-600'
+                        : 'bg-amber-50 text-amber-600'}">
+                                <span class="material-icons" style="font-size: 11px;">
+                                    ${estaDisponible ? 'check_circle' : 'event_busy'}
+                                </span>
+                                ${estaDisponible ? 'Disponible' : 'Ocupado'}
+                            </span>
+                        </div>
+                        <div class="slots-container">
+                    `;
 
                 if (servicioMostrar === null) {
-                    // Slot disponible
                     contenidoHTML += `
-                                                            <div class="bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-dashed border-emerald-300 rounded-lg p-4 text-center flex-1 min-h-[100px] flex flex-col items-center justify-center">
-                                                                <span class="material-icons text-emerald-600 text-3xl mb-2">event_available</span>
-                                                                <p class="text-sm text-emerald-700 font-semibold">Horario Disponible</p>
-                                                                <p class="text-xs text-emerald-600 mt-1">Arrastra un servicio aquí</p>
-                                                            </div>
-                                                        `;
+                            <div class="slot-disponible">
+                                <span class="material-icons text-gray-400 text-xl">add</span>
+                                <p class="text-xs text-gray-500 mt-1">Arrastra aquí</p>
+                            </div>
+                        `;
                 } else {
-                    // Slot ocupado con servicio
                     contenidoHTML += crearTarjetaServicio(servicioMostrar);
                 }
 
@@ -458,6 +542,7 @@
 
                 return div;
             }
+
 
             function crearTarjetaServicio(servicio) {
                 const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''}`.trim();
@@ -470,7 +555,7 @@
 
                 if (servicio.estado === 'EnProceso') {
                     colorClass = 'estado-en-proceso';
-                    iconoEstado = 'pending_actions';
+                    iconoEstado = 'autorenew';
                     textoEstado = 'En Proceso';
                 } else if (servicio.estado === 'Atendido') {
                     colorClass = 'estado-atendido';
@@ -479,14 +564,14 @@
                     draggable = false;
                 } else if (servicio.estado === 'Entregado') {
                     colorClass = 'estado-entregado';
-                    iconoEstado = 'local_shipping';
+                    iconoEstado = 'inventory';
                     textoEstado = 'Entregado';
                     draggable = false;
                 }
 
                 if (servicio.tipoAseg && servicio.tipoAseg.includes('Emergencia')) {
                     colorClass = 'estado-emergencia';
-                    iconoEstado = 'local_hospital';
+                    iconoEstado = 'warning';
                     textoEstado = 'Emergencia';
                 }
 
@@ -494,37 +579,40 @@
                 const cursorClass = draggable ? 'cursor-move' : 'cursor-pointer';
 
                 return `
-                                                <div class="servicio-card ${colorClass} ${cursorClass} rounded-lg p-4 text-white shadow-lg flex-1 relative min-h-[100px] flex flex-col justify-between"
-                                                     ${draggableAttr}
-                                                     data-servicio-id="${servicio.codServ}"
-                                                     data-horario-actual="${servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : ''}"
-                                                     onclick="verDetalleServicio(${servicio.codServ})"
-                                                     ondragstart="handleDragStart(event, ${servicio.codServ})"
-                                                     ondragend="handleDragEnd(event)">
-                                                    <div class="flex items-start justify-between mb-3">
-                                                        <span class="text-xs font-bold bg-white bg-opacity-25 px-2 py-1 rounded ml-6 backdrop-blur-sm">Ficha ${servicio.nroFicha || 'N/A'}</span>
-                                                        <span class="material-icons text-xl">${iconoEstado}</span>
-                                                    </div>
-                                                    <div class="space-y-2 mb-3">
-                                                        <p class="font-bold text-base truncate" title="${paciente}">
-                                                            <span class="material-icons text-sm align-middle">person</span>
-                                                            ${paciente}
-                                                        </p>
-                                                        <p class="text-xs opacity-90 truncate" title="${tipoEstudio}">
-                                                            <span class="material-icons text-xs align-middle">science</span>
-                                                            ${tipoEstudio}
-                                                        </p>
-                                                    </div>
-                                                    <div class="flex items-center justify-between pt-2 border-t border-white border-opacity-20">
-                                                        <span class="text-xs font-semibold bg-white bg-opacity-25 px-2 py-1 rounded backdrop-blur-sm">
-                                                            ${servicio.nroServ || 'N/A'}
-                                                        </span>
-                                                        <span class="text-xs font-bold">${textoEstado}</span>
-                                                    </div>
-                                                </div>
-                                            `;
-            }
+                <div class="servicio-card ${colorClass} ${cursorClass}"
+                     ${draggableAttr}
+                     data-servicio-id="${servicio.codServ}"
+                     data-horario-actual="${servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : ''}"
+                     onclick="verDetalleServicio(${servicio.codServ})"
+                     ondragstart="handleDragStart(event, ${servicio.codServ})"
+                     ondragend="handleDragEnd(event)">
 
+                    <!-- Header: Ficha e Icono -->
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="text-xs font-semibold text-gray-500">#${servicio.nroFicha || 'N/A'}</span>
+                        <span class="material-icons estado-texto" style="font-size: 16px;">${iconoEstado}</span>
+                    </div>
+
+                    <!-- Paciente -->
+                    <p class="titulo-paciente font-semibold text-sm truncate leading-snug" title="${paciente}">
+                        ${paciente}
+                    </p>
+
+                    <!-- Estudio -->
+                    <p class="subtexto text-xs truncate opacity-75 mt-0.5" title="${tipoEstudio}">
+                        ${tipoEstudio}
+                    </p>
+
+                    <!-- Footer: Código y Estado -->
+                    <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-200/50">
+                        <span class="text-xs text-gray-500 truncate max-w-[60%]" title="${servicio.nroServ || ''}">
+                            ${servicio.nroServ || 'N/A'}
+                        </span>
+                        <span class="estado-texto text-xs font-medium">${textoEstado}</span>
+                    </div>
+                </div>
+            `;
+            }
             // ==========================================
             // FUNCIONES DE DRAG & DROP
             // ==========================================
@@ -687,83 +775,83 @@
 
                         const contenido = document.getElementById('contenido-detalle-servicio');
                         contenido.innerHTML = `
-                                                                                        <div class="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-5 border border-teal-200">
-                                                                                            <div class="grid grid-cols-2 gap-4">
-                                                                                                <div>
-                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Número de Servicio</p>
-                                                                                                    <p class="text-lg font-bold text-teal-600">${s.nroServ}</p>
-                                                                                                </div>
-                                                                                                <div>
-                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Número de Ficha</p>
-                                                                                                    <p class="text-lg font-bold text-gray-900">${s.nroFicha || 'N/A'}</p>
-                                                                                                </div>
-                                                                                                <div>
-                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Estado</p>
-                                                                                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${estadoBadge}">
-                                                                                                        ${s.estado}
-                                                                                                    </span>
-                                                                                                </div>
-                                                                                                <div>
-                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Horario de Atención</p>
-                                                                                                    <p class="text-lg font-bold text-teal-600">${s.horaCrono ? s.horaCrono.substring(0, 5) : 'N/A'}</p>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
+                                                                                                                        <div class="bg-gradient-to-r from-teal-50 to-cyan-50 rounded-xl p-5 border border-teal-200">
+                                                                                                                            <div class="grid grid-cols-2 gap-4">
+                                                                                                                                <div>
+                                                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Número de Servicio</p>
+                                                                                                                                    <p class="text-lg font-bold text-teal-600">${s.nroServ}</p>
+                                                                                                                                </div>
+                                                                                                                                <div>
+                                                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Número de Ficha</p>
+                                                                                                                                    <p class="text-lg font-bold text-gray-900">${s.nroFicha || 'N/A'}</p>
+                                                                                                                                </div>
+                                                                                                                                <div>
+                                                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Estado</p>
+                                                                                                                                    <span class="px-3 py-1 rounded-full text-xs font-bold ${estadoBadge}">
+                                                                                                                                        ${s.estado}
+                                                                                                                                    </span>
+                                                                                                                                </div>
+                                                                                                                                <div>
+                                                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-1">Horario de Atención</p>
+                                                                                                                                    <p class="text-lg font-bold text-teal-600">${s.horaCrono ? s.horaCrono.substring(0, 5) : 'N/A'}</p>
+                                                                                                                                </div>
+                                                                                                                            </div>
+                                                                                                                        </div>
 
-                                                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                                                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                                                                                                <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
-                                                                                                    <span class="material-icons text-xs text-blue-600">person</span>
-                                                                                                    Paciente
-                                                                                                </p>
-                                                                                                <p class="font-bold text-gray-900">${paciente}</p>
-                                                                                                <p class="text-sm text-blue-700 mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
-                                                                                            </div>
+                                                                                                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                                                                            <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                                                                                                                                <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                                                                                                                                    <span class="material-icons text-xs text-blue-600">person</span>
+                                                                                                                                    Paciente
+                                                                                                                                </p>
+                                                                                                                                <p class="font-bold text-gray-900">${paciente}</p>
+                                                                                                                                <p class="text-sm text-blue-700 mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
+                                                                                                                            </div>
 
-                                                                                            <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                                                                                                <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
-                                                                                                    <span class="material-icons text-xs text-purple-600">medical_services</span>
-                                                                                                    Médico Solicitante
-                                                                                                </p>
-                                                                                                <p class="font-bold text-gray-900">${medico}</p>
-                                                                                                <p class="text-sm text-purple-700 mt-1">${s.medico?.tipoMed || ''}</p>
-                                                                                            </div>
-                                                                                        </div>
+                                                                                                                            <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                                                                                                                                <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                                                                                                                                    <span class="material-icons text-xs text-purple-600">medical_services</span>
+                                                                                                                                    Médico Solicitante
+                                                                                                                                </p>
+                                                                                                                                <p class="font-bold text-gray-900">${medico}</p>
+                                                                                                                                <p class="text-sm text-purple-700 mt-1">${s.medico?.tipoMed || ''}</p>
+                                                                                                                            </div>
+                                                                                                                        </div>
 
-                                                                                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
-                                                                                            <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
-                                                                                                <span class="material-icons text-xs text-purple-600">science</span>
-                                                                                                Tipo de Estudio
-                                                                                            </p>
-                                                                                            <p class="font-bold text-gray-900 text-lg">${s.tipo_estudio?.descripcion || 'N/A'}</p>
-                                                                                        </div>
+                                                                                                                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
+                                                                                                                            <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                                                                                                                                <span class="material-icons text-xs text-purple-600">science</span>
+                                                                                                                                Tipo de Estudio
+                                                                                                                            </p>
+                                                                                                                            <p class="font-bold text-gray-900 text-lg">${s.tipo_estudio?.descripcion || 'N/A'}</p>
+                                                                                                                        </div>
 
-                                                                                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
-                                                                                            <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
-                                                                                                <span class="material-icons text-xs">security</span>
-                                                                                                Tipo de Seguro
-                                                                                            </p>
-                                                                                            <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
-                                                                                        </div>
+                                                                                                                        <div class="bg-gradient-to-r from-gray-50 to-gray-100 p-4 rounded-xl border border-gray-200">
+                                                                                                                            <p class="text-xs text-gray-600 font-semibold mb-2 flex items-center gap-1">
+                                                                                                                                <span class="material-icons text-xs">security</span>
+                                                                                                                                Tipo de Seguro
+                                                                                                                            </p>
+                                                                                                                            <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
+                                                                                                                        </div>
 
-                                                                                        ${s.estado === 'Programado' || s.estado === 'EnProceso' ? `
-                                                                                        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-                                                                                            <div class="flex items-start gap-2">
-                                                                                                <span class="material-icons text-amber-600">info</span>
-                                                                                                <div>
-                                                                                                    <p class="text-sm font-bold text-amber-900 mb-1">Cambio de Horario</p>
-                                                                                                    <p class="text-xs text-amber-800">Puedes arrastrar y soltar esta tarjeta para cambiar su horario a otro slot disponible</p>
-                                                                                                </div>
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        ` : ''}
+                                                                                                                        ${s.estado === 'Programado' || s.estado === 'EnProceso' ? `
+                                                                                                                        <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
+                                                                                                                            <div class="flex items-start gap-2">
+                                                                                                                                <span class="material-icons text-amber-600">info</span>
+                                                                                                                                <div>
+                                                                                                                                    <p class="text-sm font-bold text-amber-900 mb-1">Cambio de Horario</p>
+                                                                                                                                    <p class="text-xs text-amber-800">Puedes arrastrar y soltar esta tarjeta para cambiar su horario a otro slot disponible</p>
+                                                                                                                                </div>
+                                                                                                                            </div>
+                                                                                                                        </div>
+                                                                                                                        ` : ''}
 
-                                                                                        <div class="flex gap-3 mt-4">
-                                                                                            <button onclick="cerrarModalDetalle()" class="flex-1 px-5 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all font-semibold shadow-lg">
-                                                                                                Cerrar
-                                                                                            </button>
-                                                                                        </div>
-                                                                                    `;
+                                                                                                                        <div class="flex gap-3 mt-4">
+                                                                                                                            <button onclick="cerrarModalDetalle()" class="flex-1 px-5 py-3 bg-gradient-to-r from-teal-500 to-cyan-600 text-white rounded-xl hover:from-teal-600 hover:to-cyan-700 transition-all font-semibold shadow-lg">
+                                                                                                                                Cerrar
+                                                                                                                            </button>
+                                                                                                                        </div>
+                                                                                                                    `;
 
                         document.getElementById('modal-detalle-servicio').classList.remove('hidden');
                     }
@@ -797,9 +885,9 @@
 
                 alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} shadow-md`;
                 alerta.innerHTML = `
-                                                                                <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
-                                                                                <span class="font-semibold">${mensaje}</span>
-                                                                            `;
+                                                                                                                <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
+                                                                                                                <span class="font-semibold">${mensaje}</span>
+                                                                                                            `;
                 alerta.classList.remove('hidden');
 
                 setTimeout(() => alerta.classList.add('hidden'), 5000);

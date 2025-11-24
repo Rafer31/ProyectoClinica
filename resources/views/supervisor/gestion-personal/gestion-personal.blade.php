@@ -13,38 +13,75 @@
             let personalData = [];
             let personalFiltrado = [];
             let asignacionesActivas = {};
+            let rolesData = [];
+
+            let consultoriosDisponibles = [];
             document.addEventListener("DOMContentLoaded", function () {
                 cargarPersonal();
+                cargarRoles(); // NUEVO: cargar roles al iniciar
 
-                // Event listeners para búsqueda y filtros
                 document.getElementById('busqueda').addEventListener('input', filtrarPersonal);
                 document.getElementById('filtroRol').addEventListener('change', filtrarPersonal);
                 document.getElementById('filtroEstado').addEventListener('change', filtrarPersonal);
             });
+            async function cargarRoles() {
+                try {
+                    const response = await fetch('/api/roles');
+                    const data = await response.json();
 
+                    if (data.success) {
+                        rolesData = data.data;
+                        const select = document.getElementById('filtroRol');
+                        select.innerHTML = '<option value="">Todos los roles</option>';
+
+                        rolesData.forEach(rol => {
+                            const option = document.createElement('option');
+                            option.value = rol.codRol;
+                            option.textContent = rol.nombreRol;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar roles:', error);
+                }
+            }
             async function cargarPersonal() {
                 mostrarLoader(true);
 
                 try {
-                    // Cargar personal y asignaciones en paralelo
+                    // Cargar personal y TODAS las asignaciones (no solo activas)
                     const [responsePersonal, responseAsignaciones] = await Promise.all([
                         fetch('/api/personal-salud'),
-                        fetch('/api/asignaciones-consultorio/activas')
+                        fetch('/api/asignaciones-consultorio') // Cambiar esta ruta para obtener TODAS
                     ]);
 
                     const dataPersonal = await responsePersonal.json();
                     const dataAsignaciones = await responseAsignaciones.json();
 
+                    console.log('Personal cargado:', dataPersonal);
+                    console.log('Todas las asignaciones cargadas:', dataAsignaciones);
+
                     if (dataPersonal.success) {
                         personalData = dataPersonal.data;
                         personalFiltrado = [...personalData];
 
-                        // Crear un mapa de asignaciones por codPer
+                        // Crear un mapa con la asignación más reciente por personal
                         if (dataAsignaciones.success) {
                             asignacionesActivas = {};
-                            dataAsignaciones.data.forEach(asignacion => {
-                                asignacionesActivas[asignacion.codPer] = asignacion;
+
+                            // Ordenar asignaciones por fecha de inicio (más reciente primero)
+                            const asignacionesOrdenadas = dataAsignaciones.data.sort((a, b) =>
+                                new Date(b.fechaInicio) - new Date(a.fechaInicio)
+                            );
+
+                            // Tomar la asignación más reciente para cada personal
+                            asignacionesOrdenadas.forEach(asignacion => {
+                                if (!asignacionesActivas[asignacion.codPer]) {
+                                    asignacionesActivas[asignacion.codPer] = asignacion;
+                                }
                             });
+
+                            console.log('Mapa de asignaciones (más recientes):', asignacionesActivas);
                         }
 
                         renderPersonal(personalFiltrado);
@@ -78,109 +115,149 @@
                 renderPersonal(personalFiltrado);
             }
 
-            function renderPersonal(personal) {
-                const tbody = document.getElementById('tabla-personal');
-                const tablaContainer = document.getElementById('tabla-container');
-                const noData = document.getElementById('no-data');
-                const resultadosCount = document.getElementById('resultados-count');
+          function renderPersonal(personal) {
+    const tbody = document.getElementById('tabla-personal');
+    const tablaContainer = document.getElementById('tabla-container');
+    const noData = document.getElementById('no-data');
+    const resultadosCount = document.getElementById('resultados-count');
 
-                tbody.innerHTML = "";
+    tbody.innerHTML = "";
 
-                if (personal.length > 0) {
-                    tablaContainer.classList.remove('hidden');
-                    noData.classList.add('hidden');
-                    resultadosCount.textContent = `Mostrando ${personal.length} registro(s)`;
+    if (personal.length > 0) {
+        tablaContainer.classList.remove('hidden');
+        noData.classList.add('hidden');
+        resultadosCount.textContent = `Mostrando ${personal.length} registro(s)`;
 
-                    personal.forEach((p, index) => {
-                        const nombreCompleto = `${p.nomPer || ''} ${p.paternoPer || ''} ${p.maternoPer || ''}`.trim();
-                        const rolNombre = p.rol ? p.rol.nombreRol : 'Sin rol';
-                        const estadoClass = p.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
-                        const esSupervisor = p.rol && p.rol.nombreRol.toLowerCase().includes('supervisor');
+        personal.forEach((p, index) => {
+            const nombreCompleto = `${p.nomPer || ''} ${p.paternoPer || ''} ${p.maternoPer || ''}`.trim();
+            const rolNombre = p.rol ? p.rol.nombreRol : 'Sin rol';
+            const estadoClass = p.estado === 'activo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
+            const esSupervisor = p.rol && p.rol.nombreRol.toLowerCase().includes('supervisor');
 
-                        // Obtener consultorio asignado
-                        const asignacion = asignacionesActivas[p.codPer];
-                        let consultorioHTML = '';
-                        if (asignacion && asignacion.consultorio) {
-                            consultorioHTML = `
-                                                                            <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-blue-100 to-cyan-100 text-blue-800 border border-blue-200">
-                                                                                <span class="material-icons text-xs mr-1">meeting_room</span>
-                                                                                Consultorio ${asignacion.consultorio.numCons}
-                                                                            </span>
-                                                                        `;
-                        } else {
-                            consultorioHTML = `
-                                                                            <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gray-100 text-gray-600 border border-gray-200">
-                                                                                <span class="material-icons text-xs mr-1">block</span>
-                                                                                Sin asignar
-                                                                            </span>
-                                                                        `;
-                        }
+            // Obtener la asignación más reciente (sin importar si está activa)
+            const asignacion = asignacionesActivas[p.codPer];
+            console.log(`Personal ${p.codPer} - Asignación:`, asignacion);
 
+            let consultorioHTML = '';
+            let estadoAsignacion = '';
+
+            if (asignacion && asignacion.consultorio) {
+                const ahora = new Date();
+                const fechaInicio = new Date(asignacion.fechaInicio);
+                const fechaFin = asignacion.fechaFin ? new Date(asignacion.fechaFin) : null;
+
+                // Determinar el estado de la asignación
+                if (fechaFin && ahora > fechaFin) {
+                    estadoAsignacion = 'expirada';
+                } else if (ahora < fechaInicio) {
+                    estadoAsignacion = 'pendiente';
+                } else {
+                    estadoAsignacion = 'activa';
+                }
+
+                // Estilos según el estado de la asignación
+                let estiloConsultorio = '';
+                let icono = '';
+                let textoEstado = '';
+
+                switch(estadoAsignacion) {
+                    case 'activa':
+                        estiloConsultorio = 'bg-green-100 text-green-800 border-green-200';
+                        icono = 'check_circle';
+                        textoEstado = 'Activo';
+                        break;
+                    case 'pendiente':
+                        estiloConsultorio = 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                        icono = 'schedule';
+                        textoEstado = 'Pendiente';
+                        break;
+                    case 'expirada':
+                        estiloConsultorio = 'bg-gray-100 text-gray-600 border-gray-200';
+                        icono = 'event_busy';
+                        textoEstado = 'Expirado';
+                        break;
+                }
+
+                consultorioHTML = `
+                    <span class="inline-block px-3 py-1.5 text-xs leading-5 font-semibold rounded-lg ${estiloConsultorio} border whitespace-nowrap">
+                        <span class="material-icons text-xs mr-1">${icono}</span>
+                        Consultorio ${asignacion.consultorio.numCons}
+                        <span class="ml-1 text-xs opacity-75">(${textoEstado})</span>
+                    </span>
+                `;
+            } else {
+                consultorioHTML = `
+                    <span class="inline-block px-3 py-1.5 text-xs leading-5 font-semibold rounded-lg bg-gray-100 text-gray-600 border border-gray-200 whitespace-nowrap">
+                        <span class="material-icons text-xs mr-1">block</span>
+                        Sin asignar
+                    </span>
+                `;
+            }
                         const fila = `
-                                                                        <tr class="bg-white border-b hover:bg-blue-50 transition-all duration-200">
-                                                                            <td class="px-6 py-4">
-                                                                                <div class="flex items-center">
-                                                                                    <div class="flex-shrink-0 h-12 w-12">
-                                                                                        <div class="h-12 w-12 rounded-xl ${p.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
-                                                                                            <span class="material-icons text-white text-xl">person</span>
-                                                                                        </div>
-                                                                                    </div>
-                                                                                    <div class="ml-4">
-                                                                                        <div class="text-sm font-semibold text-gray-900">${nombreCompleto}</div>
-                                                                                        <div class="text-xs text-gray-500 flex items-center gap-1">
-                                                                                            <span class="material-icons text-xs">badge</span>
-                                                                                            ${p.usuarioPer || 'N/A'}
-                                                                                        </div>
-                                                                                    </div>
-                                                                                </div>
-                                                                            </td>
-                                                                            <td class="px-6 py-4">
-                                                                                <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200">
-                                                                                    <span class="material-icons text-xs mr-1">work</span>
-                                                                                    ${rolNombre}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td class="px-6 py-4">
-                                                                                ${consultorioHTML}
-                                                                            </td>
-                                                                            <td class="px-6 py-4">
-                                                                                <span class="px-3 py-1.5 inline-flex text-xs leading-5 font-semibold rounded-lg ${estadoClass} border ${p.estado === 'activo' ? 'border-green-300' : 'border-red-300'}">
-                                                                                    <span class="material-icons text-xs mr-1">${p.estado === 'activo' ? 'check_circle' : 'block'}</span>
-                                                                                    ${p.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                                                                                </span>
-                                                                            </td>
-                                                                            <td class="px-6 py-4 text-sm text-gray-500">
-                                                                                <div class="flex items-center gap-2">
-                                                                                    <button onclick="verDetalle(${p.codPer})"
-                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 border border-blue-200"
-                                                                                        title="Ver detalles">
-                                                                                        <span class="material-icons text-sm mr-1">visibility</span>
-                                                                                        Ver
-                                                                                    </button>
-                                                                                    <a href="{{ route('supervisor.gestion-personal.gestion-personal') }}/editar/${p.codPer}"
-                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 border border-green-200"
-                                                                                        title="Editar">
-                                                                                        <span class="material-icons text-sm mr-1">edit</span>
-                                                                                        Editar
-                                                                                    </a>
-                                                                                    <button onclick="abrirModalAsignacion(${p.codPer})"
-                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:shadow-md transition-all duration-200 border border-indigo-200"
-                                                                                        title="Asignar Consultorio">
-                                                                                        <span class="material-icons text-sm mr-1">meeting_room</span>
-                                                                                        Asignar
-                                                                                    </button>
-                                                                                    ${!esSupervisor ? `
-                                                                                    <button onclick="cambiarEstado(${p.codPer}, '${p.estado}')"
-                                                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg hover:shadow-md transition-all duration-200 border"
-                                                                                        title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
-                                                                                        <span class="material-icons text-sm mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
-                                                                                        ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
-                                                                                    </button>
-                                                                                    ` : ''}
-                                                                                </div>
-                                                                            </td>
-                                                                        </tr>
-                                                                    `;
+                                        <tr class="bg-white border-b hover:bg-blue-50 transition-all duration-200">
+                                            <td class="px-6 py-4">
+                                                <div class="flex items-center">
+                                                    <div class="flex-shrink-0 h-12 w-12">
+                                                        <div class="h-12 w-12 rounded-xl ${p.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
+                                                            <span class="material-icons text-white text-xl">person</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="ml-4">
+                                                        <div class="text-sm font-semibold text-gray-900">${nombreCompleto}</div>
+                                                        <div class="text-xs text-gray-500 flex items-center gap-1">
+                                                            <span class="material-icons text-xs">badge</span>
+                                                            ${p.usuarioPer || 'N/A'}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="inline-block px-3 py-1.5 text-xs leading-5 font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 whitespace-nowrap">
+                                                    <span class="material-icons text-xs mr-1">work</span>
+                                                    ${rolNombre}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                ${consultorioHTML}
+                                            </td>
+                                            <td class="px-6 py-4">
+                                                <span class="inline-block px-3 py-1.5 text-xs leading-5 font-semibold rounded-lg ${estadoClass} border ${p.estado === 'activo' ? 'border-green-300' : 'border-red-300'} whitespace-nowrap">
+                                                    <span class="material-icons text-xs mr-1">${p.estado === 'activo' ? 'check_circle' : 'block'}</span>
+                                                    ${p.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                                </span>
+                                            </td>
+                                            <td class="px-6 py-4 text-sm text-gray-500">
+                                                <div class="flex items-center gap-2">
+                                                    <button onclick="verDetalle(${p.codPer})"
+                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-blue-700 bg-blue-50 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 border border-blue-200"
+                                                        title="Ver detalles">
+                                                        <span class="material-icons text-sm mr-1">visibility</span>
+                                                        Ver
+                                                    </button>
+                                                    <a href="/supervisor/gestion-personal/editar/${p.codPer}"
+                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-green-700 bg-green-50 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 border border-green-200"
+                                                        title="Editar">
+                                                        <span class="material-icons text-sm mr-1">edit</span>
+                                                        Editar
+                                                    </a>
+                                                    <button onclick="abrirModalAsignacion(${p.codPer})"
+                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:shadow-md transition-all duration-200 border border-indigo-200"
+                                                        title="Asignar Consultorio">
+                                                        <span class="material-icons text-sm mr-1">meeting_room</span>
+                                                        Asignar
+                                                    </button>
+                                                    ${!esSupervisor ? `
+                                                    <button onclick="cambiarEstado(${p.codPer}, '${p.estado}')"
+                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg hover:shadow-md transition-all duration-200 border"
+                                                        title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
+                                                        <span class="material-icons text-sm mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
+                                                        ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
+                                                    </button>
+                                                    ` : ''}
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    `;
                         tbody.innerHTML += fila;
                     });
                 } else {
@@ -317,7 +394,6 @@
             }
 
             // Funciones para asignación de consultorio
-            let consultoriosDisponibles = [];
 
             async function abrirModalAsignacion(codPer) {
                 const personal = personalData.find(p => p.codPer === codPer);
@@ -328,11 +404,97 @@
                 document.getElementById('nombrePersonalAsignacion').textContent = nombreCompleto;
                 document.getElementById('codPerAsignacion').value = codPer;
 
-                // Solo cargar consultorios
-                await cargarConsultorios();
+                // Cargar TODOS los consultorios inicialmente
+                await cargarTodosConsultorios();
 
                 const modal = document.getElementById('modalAsignacion');
                 modal.classList.remove('hidden');
+            }
+            async function cargarTodosConsultorios() {
+                try {
+                    const response = await fetch('/api/consultorios');
+                    const data = await response.json();
+
+                    if (data.success) {
+                        consultoriosDisponibles = data.data;
+                        const select = document.getElementById('codConsAsignacion');
+                        select.innerHTML = '<option value="">Seleccione un consultorio...</option>';
+
+                        consultoriosDisponibles.forEach(cons => {
+                            const option = document.createElement('option');
+                            option.value = cons.codCons;
+                            option.textContent = `Consultorio ${cons.numCons}`;
+                            select.appendChild(option);
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error al cargar consultorios:', error);
+                    mostrarAlerta('error', 'Error al cargar los consultorios');
+                }
+            }
+            document.addEventListener('DOMContentLoaded', function () {
+                const fechaInicio = document.getElementById('fechaInicio');
+                const fechaFin = document.getElementById('fechaFin');
+                const consultorio = document.getElementById('codConsAsignacion');
+
+                if (fechaInicio && fechaFin && consultorio) {
+                    fechaInicio.addEventListener('change', validarDisponibilidadConsultorio);
+                    fechaFin.addEventListener('change', validarDisponibilidadConsultorio);
+                    consultorio.addEventListener('change', validarDisponibilidadConsultorio);
+                }
+            });
+            async function validarDisponibilidadConsultorio() {
+                const codCons = document.getElementById('codConsAsignacion').value;
+                const fechaInicio = document.getElementById('fechaInicio').value;
+                const fechaFin = document.getElementById('fechaFin').value;
+
+                if (!codCons || !fechaInicio) {
+                    return; // No validar si falta información
+                }
+
+                try {
+                    const params = new URLSearchParams({
+                        fechaInicio: fechaInicio,
+                        ...(fechaFin && { fechaFin: fechaFin })
+                    });
+
+                    const response = await fetch(`/api/consultorios/${codCons}/verificar-disponibilidad?${params}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    const alertaDiv = document.getElementById('alertaDisponibilidad');
+
+                    if (!data.disponible) {
+                        if (!alertaDiv) {
+                            const alert = document.createElement('div');
+                            alert.id = 'alertaDisponibilidad';
+                            alert.className = 'bg-red-50 border-2 border-red-200 rounded-xl p-4 flex items-start gap-3 mt-4';
+                            alert.innerHTML = `
+                                                                            <span class="material-icons text-red-600 mt-0.5">error</span>
+                                                                            <div class="text-sm text-red-800">
+                                                                                <p class="font-semibold mb-1">Consultorio no disponible</p>
+                                                                                <p>${data.message}</p>
+                                                                            </div>
+                                                                        `;
+                            document.getElementById('formAsignacion').insertBefore(
+                                alert,
+                                document.getElementById('formAsignacion').lastElementChild
+                            );
+                        }
+                    } else {
+                        if (alertaDiv) {
+                            alertaDiv.remove();
+                        }
+                    }
+                } catch (error) {
+                    console.error('Error al validar disponibilidad:', error);
+                }
             }
 
             async function cargarConsultorios() {
@@ -361,6 +523,11 @@
                 const modal = document.getElementById('modalAsignacion');
                 modal.classList.add('hidden');
                 document.getElementById('formAsignacion').reset();
+
+                const alertaDiv = document.getElementById('alertaDisponibilidad');
+                if (alertaDiv) {
+                    alertaDiv.remove();
+                }
             }
 
 
@@ -375,7 +542,13 @@
                     return;
                 }
 
+                if (fechaFin && fechaInicio && fechaFin < fechaInicio) {
+                    mostrarAlerta('error', 'La fecha fin debe ser posterior o igual a la fecha de inicio');
+                    return;
+                }
+
                 mostrarLoader(true);
+                cerrarModalAsignacion();
 
                 try {
                     const response = await fetch('/api/asignaciones-consultorio', {
@@ -394,11 +567,11 @@
                     });
 
                     const data = await response.json();
+                    console.log('Respuesta de guardar asignación:', data); // Debug
 
                     if (data.success) {
                         mostrarAlerta('success', 'Consultorio asignado exitosamente');
-                        cerrarModalAsignacion();
-                        // Recargar para actualizar la tabla con el nuevo consultorio
+                        // Recargar la lista completa
                         await cargarPersonal();
                     } else {
                         mostrarAlerta('error', data.message || 'Error al asignar el consultorio');
@@ -605,91 +778,91 @@
                     const fechaFin = asignacion.fechaFin ? new Date(asignacion.fechaFin).toLocaleDateString('es-ES') : 'Indefinido';
 
                     consultorioInfo = `
-                                                    <div class="col-span-2 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
-                                                        <p class="text-xs font-medium text-gray-500 uppercase mb-2">Consultorio Asignado</p>
-                                                        <div class="flex items-center gap-2 mb-2">
-                                                            <span class="material-icons text-blue-600">meeting_room</span>
-                                                            <p class="text-gray-900 font-semibold text-lg">Consultorio ${asignacion.consultorio.numCons}</p>
-                                                        </div>
-                                                        <div class="text-xs text-gray-600 space-y-1">
-                                                            <p><span class="font-medium">Desde:</span> ${fechaInicio}</p>
-                                                            <p><span class="font-medium">Hasta:</span> ${fechaFin}</p>
-                                                        </div>
-                                                    </div>
-                                                `;
+                                                                                                                                                                    <div class="col-span-2 p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-lg border border-blue-200">
+                                                                                                                                                                        <p class="text-xs font-medium text-gray-500 uppercase mb-2">Consultorio Asignado</p>
+                                                                                                                                                                        <div class="flex items-center gap-2 mb-2">
+                                                                                                                                                                            <span class="material-icons text-blue-600">meeting_room</span>
+                                                                                                                                                                            <p class="text-gray-900 font-semibold text-lg">Consultorio ${asignacion.consultorio.numCons}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="text-xs text-gray-600 space-y-1">
+                                                                                                                                                                            <p><span class="font-medium">Desde:</span> ${fechaInicio}</p>
+                                                                                                                                                                            <p><span class="font-medium">Hasta:</span> ${fechaFin}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                `;
                 } else {
                     consultorioInfo = `
-                                                    <div class="col-span-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                                                        <p class="text-xs font-medium text-gray-500 uppercase mb-2">Consultorio Asignado</p>
-                                                        <div class="flex items-center gap-2">
-                                                            <span class="material-icons text-gray-400">block</span>
-                                                            <p class="text-gray-600 font-semibold">Sin consultorio asignado</p>
-                                                        </div>
-                                                    </div>
-                                                `;
+                                                                                                                                                                    <div class="col-span-2 p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                                                                                                                                        <p class="text-xs font-medium text-gray-500 uppercase mb-2">Consultorio Asignado</p>
+                                                                                                                                                                        <div class="flex items-center gap-2">
+                                                                                                                                                                            <span class="material-icons text-gray-400">block</span>
+                                                                                                                                                                            <p class="text-gray-600 font-semibold">Sin consultorio asignado</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </div>
+                                                                                                                                                                `;
                 }
 
                 const modal = document.getElementById('modalDetalle');
                 const contenido = `
-                                                <div class="space-y-6">
-                                                    <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
-                                                        <div class="h-20 w-20 rounded-xl ${personal.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
-                                                            <span class="material-icons ${personal.estado === 'activo' ? 'text-white' : 'text-white'} text-4xl">person</span>
-                                                        </div>
-                                                        <div>
-                                                            <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
-                                                            <p class="text-gray-600 flex items-center gap-1 mt-1">
-                                                                <span class="material-icons text-sm">badge</span>
-                                                                ID: ${personal.codPer}
-                                                            </p>
-                                                        </div>
-                                                    </div>
+                                                                                                                                                                <div class="space-y-6">
+                                                                                                                                                                    <div class="flex items-center space-x-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl">
+                                                                                                                                                                        <div class="h-20 w-20 rounded-xl ${personal.estado === 'activo' ? 'bg-gradient-to-br from-blue-500 to-indigo-600' : 'bg-gradient-to-br from-gray-400 to-gray-500'} flex items-center justify-center shadow-lg">
+                                                                                                                                                                            <span class="material-icons ${personal.estado === 'activo' ? 'text-white' : 'text-white'} text-4xl">person</span>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div>
+                                                                                                                                                                            <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
+                                                                                                                                                                            <p class="text-gray-600 flex items-center gap-1 mt-1">
+                                                                                                                                                                                <span class="material-icons text-sm">badge</span>
+                                                                                                                                                                                ID: ${personal.codPer}
+                                                                                                                                                                            </p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                    </div>
 
-                                                    <div class="grid grid-cols-2 gap-4">
-                                                        <div class="p-4 bg-gray-50 rounded-lg">
-                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Usuario</p>
-                                                            <p class="text-gray-900 font-semibold">${personal.usuarioPer || 'N/A'}</p>
-                                                        </div>
-                                                        <div class="p-4 bg-gray-50 rounded-lg">
-                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Rol</p>
-                                                            <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 inline-block">
-                                                                ${rolNombre}
-                                                            </span>
-                                                        </div>
-                                                        <div class="p-4 bg-gray-50 rounded-lg">
-                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Nombre</p>
-                                                            <p class="text-gray-900 font-semibold">${personal.nomPer || 'N/A'}</p>
-                                                        </div>
-                                                        <div class="p-4 bg-gray-50 rounded-lg">
-                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Paterno</p>
-                                                            <p class="text-gray-900 font-semibold">${personal.paternoPer || 'N/A'}</p>
-                                                        </div>
-                                                        <div class="p-4 bg-gray-50 rounded-lg">
-                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Materno</p>
-                                                            <p class="text-gray-900 font-semibold">${personal.maternoPer || 'N/A'}</p>
-                                                        </div>
-                                                        <div class="p-4 bg-gray-50 rounded-lg">
-                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Estado</p>
-                                                            <span class="px-3 py-1 text-xs font-semibold rounded-lg ${personal.estado === 'activo' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'} inline-block">
-                                                                ${personal.estado === 'activo' ? 'Activo' : 'Inactivo'}
-                                                            </span>
-                                                        </div>
+                                                                                                                                                                    <div class="grid grid-cols-2 gap-4">
+                                                                                                                                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                                                                                                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Usuario</p>
+                                                                                                                                                                            <p class="text-gray-900 font-semibold">${personal.usuarioPer || 'N/A'}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                                                                                                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Rol</p>
+                                                                                                                                                                            <span class="px-3 py-1 text-xs font-semibold rounded-lg bg-gradient-to-r from-purple-100 to-pink-100 text-purple-800 border border-purple-200 inline-block">
+                                                                                                                                                                                ${rolNombre}
+                                                                                                                                                                            </span>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                                                                                                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Nombre</p>
+                                                                                                                                                                            <p class="text-gray-900 font-semibold">${personal.nomPer || 'N/A'}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                                                                                                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Paterno</p>
+                                                                                                                                                                            <p class="text-gray-900 font-semibold">${personal.paternoPer || 'N/A'}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                                                                                                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Apellido Materno</p>
+                                                                                                                                                                            <p class="text-gray-900 font-semibold">${personal.maternoPer || 'N/A'}</p>
+                                                                                                                                                                        </div>
+                                                                                                                                                                        <div class="p-4 bg-gray-50 rounded-lg">
+                                                                                                                                                                            <p class="text-xs font-medium text-gray-500 uppercase mb-1">Estado</p>
+                                                                                                                                                                            <span class="px-3 py-1 text-xs font-semibold rounded-lg ${personal.estado === 'activo' ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-red-100 text-red-800 border border-red-300'} inline-block">
+                                                                                                                                                                                ${personal.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                                                                                                                                                                            </span>
+                                                                                                                                                                        </div>
 
-                                                        ${consultorioInfo}
-                                                    </div>
+                                                                                                                                                                        ${consultorioInfo}
+                                                                                                                                                                    </div>
 
-                                                    <div class="flex justify-end space-x-3 pt-4 border-t">
-                                                        <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200">
-                                                            <span class="material-icons text-sm mr-1">close</span>
-                                                            Cerrar
-                                                        </button>
-                                                        <a href="/supervisor/gestion-personal/editar/${personal.codPer}" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
-                                                            <span class="material-icons text-sm mr-1">edit</span>
-                                                            Editar
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            `;
+                                                                                                                                                                    <div class="flex justify-end space-x-3 pt-4 border-t">
+                                                                                                                                                                        <button onclick="cerrarModal()" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                                                                                                                                                                            <span class="material-icons text-sm mr-1">close</span>
+                                                                                                                                                                            Cerrar
+                                                                                                                                                                        </button>
+                                                                                                                                                                        <a href="/supervisor/gestion-personal/editar/${personal.codPer}" class="inline-flex items-center px-4 py-2.5 text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200 shadow-md hover:shadow-lg">
+                                                                                                                                                                            <span class="material-icons text-sm mr-1">edit</span>
+                                                                                                                                                                            Editar
+                                                                                                                                                                        </a>
+                                                                                                                                                                    </div>
+                                                                                                                                                                </div>
+                                                                                                                                                            `;
 
                 document.getElementById('modalContenido').innerHTML = contenido;
                 modal.classList.remove('hidden');
@@ -716,9 +889,9 @@
 
                 alerta.className = `p-4 rounded-xl border-2 flex items-center shadow-lg ${colores[tipo]} mb-4`;
                 alerta.innerHTML = `
-                <span class="material-icons mr-2">${iconos[tipo]}</span>
-                <span class="font-medium">${mensaje}</span>
-            `;
+                                                                                                                                <span class="material-icons mr-2">${iconos[tipo]}</span>
+                                                                                                                                <span class="font-medium">${mensaje}</span>
+                                                                                                                            `;
                 alerta.classList.remove('hidden');
 
                 setTimeout(() => {
@@ -898,6 +1071,7 @@
                         <tr>
                             <th scope="col" class="px-6 py-4 font-bold">Personal</th>
                             <th scope="col" class="px-6 py-4 font-bold">Rol</th>
+                            <th scope="col" class="px-6 py-4 font-bold">Consultorio</th> {{-- NUEVO --}}
                             <th scope="col" class="px-6 py-4 font-bold">Estado</th>
                             <th scope="col" class="px-6 py-4 font-bold">Acciones</th>
                         </tr>
@@ -925,39 +1099,37 @@
             <div id="modalContenido"></div>
         </div>
     </div>
-
-    <!-- Modal Cambiar Estado -->
-    <div id="modalCambiarEstado"
+    <div id="modalConfirmacionEstado"
         class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
         <div class="relative mx-auto p-6 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
             <div class="flex justify-center mb-4">
                 <div class="rounded-full bg-gradient-to-br from-yellow-100 to-orange-100 p-4 shadow-lg">
-                    <span class="material-icons text-yellow-600 text-5xl">warning</span>
+                    <span id="iconoAccionEstado" class="material-icons text-yellow-600 text-5xl">warning</span>
                 </div>
             </div>
 
             <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">¿Cambiar estado?</h3>
 
             <div class="text-center mb-6">
-                <p class="text-gray-600 mb-3">Estás a punto de <span id="estadoNuevoText" class="font-semibold"></span> a:
-                </p>
+                <p class="text-gray-600 mb-3">Estás a punto de <span id="estadoNuevoConfirm"
+                        class="font-semibold text-blue-600"></span> a:</p>
                 <div class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mb-3 border border-gray-200">
-                    <p class="font-bold text-gray-900 text-lg" id="nombrePersonalEstado"></p>
-                    <p class="text-sm text-gray-600 mt-1">Usuario: <span id="usuarioPersonalEstado"
+                    <p class="font-bold text-gray-900 text-lg" id="nombrePersonalConfirm"></p>
+                    <p class="text-sm text-gray-600 mt-1">Usuario: <span id="usuarioPersonalConfirm"
                             class="font-semibold"></span></p>
-                    <p class="text-sm text-gray-600">Estado actual: <span id="estadoActualText"
+                    <p class="text-sm text-gray-600">Estado actual: <span id="estadoActualConfirm"
                             class="font-semibold"></span></p>
                 </div>
-                <p id="accionEstadoTexto" class="text-sm font-medium"></p>
+                <p id="accionEstadoTextoConfirm" class="text-sm font-medium"></p>
             </div>
 
             <div class="flex gap-3">
-                <button onclick="cerrarModalEstado()"
+                <button onclick="cerrarModalConfirmacionEstado()"
                     class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:shadow-md transition-all duration-200">
                     <span class="material-icons text-base mr-1">close</span>
                     Cancelar
                 </button>
-                <button onclick="confirmarCambioEstado()"
+                <button id="btnConfirmarEstado" onclick="confirmarCambioEstadoIndividual()"
                     class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-yellow-500 to-orange-500 rounded-xl hover:from-yellow-600 hover:to-orange-600 transition-all duration-200 shadow-lg hover:shadow-xl">
                     <span class="material-icons text-base mr-1">swap_horiz</span>
                     Confirmar
@@ -965,6 +1137,7 @@
             </div>
         </div>
     </div>
+
 
     <!-- Modal Asignación de Consultorio -->
     <div id="modalAsignacion"

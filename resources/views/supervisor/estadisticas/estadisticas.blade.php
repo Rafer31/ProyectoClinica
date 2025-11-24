@@ -327,12 +327,28 @@
                         const select = document.getElementById('selectPersonal');
                         select.innerHTML = '<option value="">Seleccione un personal...</option>';
 
-                        data.data.forEach(p => {
+                        // Debug: Ver qué datos llegan
+                        console.log('Datos del personal:', data.data);
+                        console.log('Primer personal:', data.data[0]);
+
+                        // Filtrar solo personal de imagen (codRol = 2)
+                        const personalImagen = data.data.filter(p => {
+                            console.log(`Personal ${p.nombre} - codRol: ${p.codRol}, tipo: ${typeof p.codRol}`);
+                            return p.codRol === 2 || p.codRol === '2';
+                        });
+
+                        console.log('Personal de imagen filtrado:', personalImagen);
+
+                        personalImagen.forEach(p => {
                             const option = document.createElement('option');
                             option.value = p.codPer;
                             option.textContent = `${p.nombre} (${p.usuario})`;
                             select.appendChild(option);
                         });
+
+                        if (personalImagen.length === 0) {
+                            console.warn('No se encontró personal de imagen con codRol = 2');
+                        }
                     }
                 } catch (error) {
                     console.error('Error al cargar personal:', error);
@@ -342,7 +358,6 @@
             async function buscarEstadisticasPersonal() {
                 const codPer = document.getElementById('selectPersonal').value;
                 const fecha = document.getElementById('fechaReporte').value;
-                const periodo = document.getElementById('periodoReporte').value;
 
                 if (!codPer) {
                     mostrarAlerta('error', 'Por favor seleccione un personal');
@@ -357,7 +372,7 @@
                 mostrarLoader(true);
 
                 try {
-                    const url = `/api/supervisor/estadisticas/personal?codPer=${codPer}&fecha=${fecha}&periodo=${periodo}`;
+                    const url = `/api/supervisor/estadisticas/personal?codPer=${codPer}&fecha=${fecha}&periodo=mes`;
                     const response = await fetch(url);
                     const data = await response.json();
 
@@ -391,7 +406,7 @@
                             </button>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
                                 <p class="text-sm text-blue-600 font-medium mb-1">Total Servicios</p>
                                 <p class="text-3xl font-bold text-blue-700">${data.resumen.totalServicios}</p>
@@ -409,31 +424,6 @@
                                 <p class="text-xs text-orange-700">${Object.entries(data.resumen.porTipoAseg).map(([k,v]) => `${k}: ${v}`).join(', ')}</p>
                             </div>
                         </div>
-
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-sm">
-                                <thead class="bg-gray-50 border-b">
-                                    <tr>
-                                        <th class="px-4 py-3 text-left font-semibold">Ficha</th>
-                                        <th class="px-4 py-3 text-left font-semibold">Paciente</th>
-                                        <th class="px-4 py-3 text-left font-semibold">Tipo Estudio</th>
-                                        <th class="px-4 py-3 text-left font-semibold">Estado</th>
-                                        <th class="px-4 py-3 text-left font-semibold">Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    ${data.servicios.map(s => `
-                                        <tr class="border-b hover:bg-gray-50">
-                                            <td class="px-4 py-3">${s.nroFicha || 'N/A'}</td>
-                                            <td class="px-4 py-3">${s.paciente ? `${s.paciente.nomPa} ${s.paciente.paternoPa}` : 'N/A'}</td>
-                                            <td class="px-4 py-3">${s.tipoEstudio ? s.tipoEstudio.descripcion : 'N/A'}</td>
-                                            <td class="px-4 py-3"><span class="px-2 py-1 text-xs rounded-full ${getEstadoClass(s.estado)}">${s.estado}</span></td>
-                                            <td class="px-4 py-3">${new Date(s.fechaSol).toLocaleDateString('es-ES')}</td>
-                                        </tr>
-                                    `).join('')}
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
                 `;
 
@@ -444,7 +434,7 @@
                 window.datosReporteActual = {
                     codPer: data.personal.codPer,
                     fecha: document.getElementById('fechaReporte').value,
-                    periodo: document.getElementById('periodoReporte').value
+                    periodo: 'mes'
                 };
             }
 
@@ -465,15 +455,14 @@
                     return;
                 }
 
-                const { codPer, fecha, periodo } = window.datosReporteActual;
-                const url = `/api/supervisor/estadisticas/personal/reporte-pdf?codPer=${codPer}&fecha=${fecha}&periodo=${periodo}`;
+                const { codPer, fecha } = window.datosReporteActual;
+                const url = `/api/supervisor/estadisticas/personal/reporte-pdf?codPer=${codPer}&fecha=${fecha}&periodo=mes`;
                 window.open(url, '_blank');
             }
 
             function verDetallesPersonal(codPer) {
                 document.getElementById('selectPersonal').value = codPer;
                 document.getElementById('fechaReporte').value = new Date().toISOString().split('T')[0];
-                document.getElementById('periodoReporte').value = 'mes';
                 buscarEstadisticasPersonal();
 
                 // Scroll a la sección
@@ -774,10 +763,10 @@
                 <h2 class="text-2xl font-bold text-gray-900">Reportes por Personal</h2>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Personal <span class="text-red-600">*</span>
+                        Personal de Imagen <span class="text-red-600">*</span>
                     </label>
                     <select id="selectPersonal"
                         class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
@@ -791,18 +780,6 @@
                     </label>
                     <input type="date" id="fechaReporte"
                         class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Periodo <span class="text-red-600">*</span>
-                    </label>
-                    <select id="periodoReporte"
-                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
-                        <option value="dia">Día</option>
-                        <option value="semana">Semana</option>
-                        <option value="mes">Mes</option>
-                    </select>
                 </div>
 
                 <div class="flex items-end">

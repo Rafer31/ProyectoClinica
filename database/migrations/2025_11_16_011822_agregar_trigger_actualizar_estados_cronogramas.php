@@ -5,9 +5,6 @@ use Illuminate\Support\Facades\DB;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         // Primero actualizar los cronogramas existentes
@@ -25,78 +22,66 @@ return new class extends Migration
             AND estado = 'inactivoFut'
         ");
 
-        // Crear trigger para INSERT
-        DB::unprepared('
+        // Crear trigger para INSERT (comillas simples)
+        DB::unprepared("
             CREATE TRIGGER actualizar_estado_cronograma_insert
             BEFORE INSERT ON CronogramaAtencion
             FOR EACH ROW
             BEGIN
-                -- Si la fecha es menor que hoy, marcar como inactivoPasado
                 IF NEW.fechaCrono < CURDATE() THEN
-                    SET NEW.estado = "inactivoPasado";
-                -- Si la fecha es hoy, marcar como activo
+                    SET NEW.estado = 'inactivoPasado';
                 ELSEIF NEW.fechaCrono = CURDATE() THEN
-                    SET NEW.estado = "activo";
-                -- Si la fecha es futura, marcar como inactivoFut
+                    SET NEW.estado = 'activo';
                 ELSEIF NEW.fechaCrono > CURDATE() THEN
-                    SET NEW.estado = "inactivoFut";
+                    SET NEW.estado = 'inactivoFut';
                 END IF;
             END
-        ');
+        ");
 
-        // Crear trigger para UPDATE
-        DB::unprepared('
+        // Crear trigger para UPDATE (comillas simples)
+        DB::unprepared("
             CREATE TRIGGER actualizar_estado_cronograma_update
             BEFORE UPDATE ON CronogramaAtencion
             FOR EACH ROW
             BEGIN
-                -- Si la fecha es menor que hoy, marcar como inactivoPasado
                 IF NEW.fechaCrono < CURDATE() THEN
-                    SET NEW.estado = "inactivoPasado";
-                -- Si la fecha es hoy, marcar como activo
+                    SET NEW.estado = 'inactivoPasado';
                 ELSEIF NEW.fechaCrono = CURDATE() THEN
-                    SET NEW.estado = "activo";
-                -- Si la fecha es futura, marcar como inactivoFut
+                    SET NEW.estado = 'activo';
                 ELSEIF NEW.fechaCrono > CURDATE() THEN
-                    SET NEW.estado = "inactivoFut";
+                    SET NEW.estado = 'inactivoFut';
                 END IF;
             END
-        ');
+        ");
 
-        // Crear evento que se ejecuta cada día a las 00:01
-        DB::unprepared('
+        // Crear evento diario (comillas simples)
+        DB::unprepared("
             CREATE EVENT IF NOT EXISTS actualizar_estados_cronograma_event
             ON SCHEDULE EVERY 1 DAY
-            STARTS CONCAT(CURDATE() + INTERVAL 1 DAY, " 00:01:00")
+            STARTS CONCAT(CURDATE() + INTERVAL 1 DAY, ' 00:01:00')
+            ON COMPLETION PRESERVE
+            ENABLE
             DO
             BEGIN
-                -- Marcar cronogramas pasados como inactivoPasado
                 UPDATE CronogramaAtencion
-                SET estado = "inactivoPasado"
+                SET estado = 'inactivoPasado'
                 WHERE fechaCrono < CURDATE()
-                AND estado != "inactivoPasado";
+                AND estado != 'inactivoPasado';
 
-                -- Marcar cronograma de hoy como activo
                 UPDATE CronogramaAtencion
-                SET estado = "activo"
+                SET estado = 'activo'
                 WHERE fechaCrono = CURDATE()
-                AND estado = "inactivoFut";
+                AND estado = 'inactivoFut';
             END
-        ');
+        ");
 
-        // Asegurarse de que el event scheduler esté habilitado
-        DB::unprepared('SET GLOBAL event_scheduler = ON;');
+        // Habilitar event scheduler
+        DB::unprepared('SET GLOBAL event_scheduler = ON');
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
-        // Eliminar el evento
         DB::unprepared('DROP EVENT IF EXISTS actualizar_estados_cronograma_event');
-
-        // Eliminar los triggers
         DB::unprepared('DROP TRIGGER IF EXISTS actualizar_estado_cronograma_insert');
         DB::unprepared('DROP TRIGGER IF EXISTS actualizar_estado_cronograma_update');
     }

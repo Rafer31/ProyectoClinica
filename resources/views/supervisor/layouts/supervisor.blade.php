@@ -68,8 +68,7 @@
 
                     <!-- Logo -->
                     <a href="{{ route('supervisor.home') }}" class="flex ms-2 md:me-24 items-center group">
-                        <div
-                            class="w-12 h-12 rounded-xl flex items-center justify-center logo-shadow">
+                        <div class="w-12 h-12 rounded-xl flex items-center justify-center logo-shadow">
                             <img src="{{ asset('logo_azul.jpg') }}" alt="Logo" class="w-10 h-10 object-contain">
 
                         </div>
@@ -100,10 +99,10 @@
                         </div>
                         <form method="POST" action="{{ route('logout') }}" class="inline">
                             @csrf
-                            <button type="submit"
+                            <button type="button" onclick="abrirModalLogout()"
                                 class="flex items-center gap-2 px-4 py-2 text-sm text-white bg-gradient-to-r from-rose-500 to-red-600 rounded-lg hover:from-rose-600 hover:to-red-700 transition-all transform hover:scale-105 shadow-md hover:shadow-lg">
                                 <span class="material-icons text-lg">logout</span>
-                                <span class="font-medium">Salir</span>
+                                <span class="font-medium">Cerrar sesión</span>
                             </button>
                         </form>
                     </div>
@@ -199,7 +198,79 @@
                     </ol>
                 </nav>
             @endif
+            <div id="modalLogout" class="hidden fixed inset-0 z-50 overflow-y-auto">
+                <!-- Overlay -->
+                <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+                    onclick="cerrarModalLogout()"></div>
 
+
+                <!-- Modal -->
+                <div class="fixed inset-0 flex items-center justify-center p-4">
+                    <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-md transform transition-all">
+                        <!-- Header con icono -->
+                        <div class="p-6 pb-0">
+                            <div class="flex justify-center mb-4">
+                                <div
+                                    class="w-20 h-20 rounded-full bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center">
+                                    <div
+                                        class="w-14 h-14 rounded-full bg-gradient-to-br from-red-500 to-rose-600 flex items-center justify-center shadow-lg">
+                                        <span class="material-icons text-white text-3xl">logout</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Título -->
+                            <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">¿Cerrar sesión?</h3>
+
+
+                            <!-- Mensaje -->
+                            <p class="text-gray-600 text-center mb-2">
+                                Estás a punto de salir del sistema
+                            </p>
+
+
+                            <!-- Info usuario -->
+                            <div
+                                class="bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl p-4 mt-4 border border-gray-200">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-white font-bold shadow-md">
+                                        {{ strtoupper(substr(Auth::user()->nomPer, 0, 1)) }}{{ strtoupper(substr(Auth::user()->paternoPer, 0, 1)) }}
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-gray-900">{{ Auth::user()->nomPer }}
+                                            {{ Auth::user()->paternoPer }}
+                                        </p>
+                                        <p class="text-sm text-gray-500 flex items-center gap-1">
+                                            <span class="material-icons text-xs">verified_user</span>
+                                            Supervisor
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Botones -->
+                        <div class="p-6 flex gap-3">
+                            <button type="button" onclick="cerrarModalLogout()"
+                                class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-semibold text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:border-gray-400 transition-all duration-200">
+                                <span class="material-icons text-lg mr-2">close</span>
+                                Cancelar
+                            </button>
+
+                            <form method="POST" action="{{ route('logout') }}" class="flex-1">
+                                @csrf
+                                <button type="submit"
+                                    class="w-full inline-flex justify-center items-center px-4 py-3 text-sm font-semibold text-white bg-gradient-to-r from-red-500 to-rose-600 rounded-xl hover:from-red-600 hover:to-rose-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                                    <span class="material-icons text-lg mr-2">logout</span>
+                                    Sí, cerrar sesión
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <!-- Contenido dinámico -->
             @yield('content')
         </div>
@@ -207,7 +278,24 @@
 
     <!-- Flowbite JS -->
     <script src="https://cdn.jsdelivr.net/npm/flowbite@2.5.1/dist/flowbite.min.js"></script>
+    <script>
+        function abrirModalLogout() {
+            document.getElementById('modalLogout').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
 
+        function cerrarModalLogout() {
+            document.getElementById('modalLogout').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Cerrar con tecla Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                cerrarModalLogout();
+            }
+        });
+    </script>
     @stack('scripts')
 </body>
 

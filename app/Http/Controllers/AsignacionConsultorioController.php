@@ -6,6 +6,7 @@ use App\Models\AsignacionConsultorio;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class AsignacionConsultorioController extends Controller
 {
@@ -73,6 +74,8 @@ class AsignacionConsultorioController extends Controller
             'codCons' => 'required|exists:Consultorio,codCons',
         ], [
             'fechaInicio.required' => 'La fecha de inicio es obligatoria',
+            'fechaInicio.date' => 'La fecha de inicio debe ser una fecha válida',
+            'fechaFin.date' => 'La fecha fin debe ser una fecha válida',
             'fechaFin.after_or_equal' => 'La fecha fin debe ser posterior o igual a la fecha de inicio',
             'codPer.required' => 'El personal es obligatorio',
             'codPer.exists' => 'El personal seleccionado no existe',
@@ -89,13 +92,53 @@ class AsignacionConsultorioController extends Controller
         }
 
         try {
+            // Verificar si el consultorio está disponible en el rango de fechas
+            $fechaInicio = $request->fechaInicio;
+            $fechaFin = $request->fechaFin;
+            $codCons = $request->codCons;
+
+            $conflicto = AsignacionConsultorio::where('codCons', $codCons)
+                ->where(function($query) use ($fechaInicio, $fechaFin) {
+                    $query->where('fechaInicio', '<=', $fechaFin ?: '9999-12-31')
+                          ->where(function($sq) use ($fechaInicio) {
+                              $sq->where('fechaFin', '>=', $fechaInicio)
+                                ->orWhereNull('fechaFin');
+                          });
+                })
+                ->exists();
+
+            if ($conflicto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El consultorio ya está asignado en ese rango de fechas'
+                ], 409);
+            }
+
+            // Verificar si el personal ya tiene una asignación activa en ese rango
+            $personalConflicto = AsignacionConsultorio::where('codPer', $request->codPer)
+                ->where(function($query) use ($fechaInicio, $fechaFin) {
+                    $query->where('fechaInicio', '<=', $fechaFin ?: '9999-12-31')
+                          ->where(function($sq) use ($fechaInicio) {
+                              $sq->where('fechaFin', '>=', $fechaInicio)
+                                ->orWhereNull('fechaFin');
+                          });
+                })
+                ->exists();
+
+            if ($personalConflicto) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'El personal ya tiene un consultorio asignado en ese rango de fechas'
+                ], 409);
+            }
+
             $asignacion = AsignacionConsultorio::create($request->all());
             $asignacion->load(['personal', 'consultorio']);
 
             return response()->json([
                 'success' => true,
                 'data' => $asignacion,
-                'message' => 'Asignación registrada exitosamente'
+                'message' => 'Consultorio asignado exitosamente'
             ], 201);
         } catch (\Exception $e) {
             return response()->json([
@@ -136,6 +179,31 @@ class AsignacionConsultorioController extends Controller
                 ], 422);
             }
 
+            // Verificar conflictos si se están cambiando fechas o consultorio
+            if ($request->has('fechaInicio') || $request->has('fechaFin') || $request->has('codCons')) {
+                $fechaInicio = $request->fechaInicio ?? $asignacion->fechaInicio;
+                $fechaFin = $request->fechaFin ?? $asignacion->fechaFin;
+                $codCons = $request->codCons ?? $asignacion->codCons;
+
+                $conflicto = AsignacionConsultorio::where('codCons', $codCons)
+                    ->where('idAsignacion', '!=', $id)
+                    ->where(function($query) use ($fechaInicio, $fechaFin) {
+                        $query->where('fechaInicio', '<=', $fechaFin ?: '9999-12-31')
+                              ->where(function($sq) use ($fechaInicio) {
+                                  $sq->where('fechaFin', '>=', $fechaInicio)
+                                    ->orWhereNull('fechaFin');
+                              });
+                    })
+                    ->exists();
+
+                if ($conflicto) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'El consultorio ya está asignado en ese rango de fechas'
+                    ], 409);
+                }
+            }
+
             $asignacion->fill($request->only(['fechaInicio', 'fechaFin', 'codPer', 'codCons']));
             $asignacion->save();
             $asignacion->load(['personal', 'consultorio']);
@@ -154,28 +222,45 @@ class AsignacionConsultorioController extends Controller
     }
 
     /**
-     * Listar asignaciones activas
+     * Listar asignaciones activas (aquellas que están vigentes hoy o sin fecha fin)
      */
     public function activas()
-    {
-        try {
-            $asignaciones = AsignacionConsultorio::with(['personal', 'consultorio'])
-                ->activas()
-                ->get();
+{
+    try {
+        $hoy = now()->toDateString();
 
-            return response()->json([
-                'success' => true,
-                'data' => $asignaciones,
-                'message' => 'Asignaciones activas obtenidas correctamente'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener las asignaciones: ' . $e->getMessage()
-            ], 500);
+        $asignaciones = AsignacionConsultorio::with(['personal', 'consultorio']) // IMPORTANTE: Incluir consultorio
+            ->where('fechaInicio', '<=', $hoy)
+            ->where(function($query) use ($hoy) {
+                $query->where('fechaFin', '>=', $hoy)
+                      ->orWhereNull('fechaFin');
+            })
+            ->get();
+
+        // Debug: verificar que las relaciones están cargadas
+        foreach ($asignaciones as $asignacion) {
+            \Log::info('Asignación activa', [
+                'codPer' => $asignacion->codPer,
+                'codCons' => $asignacion->codCons,
+                'consultorio' => $asignacion->consultorio ? $asignacion->consultorio->numCons : 'NO CARGADO',
+                'fechaInicio' => $asignacion->fechaInicio,
+                'fechaFin' => $asignacion->fechaFin
+            ]);
         }
-    }
 
+        return response()->json([
+            'success' => true,
+            'data' => $asignaciones,
+            'message' => 'Asignaciones activas obtenidas correctamente'
+        ], 200);
+    } catch (\Exception $e) {
+        \Log::error('Error al obtener asignaciones activas: ' . $e->getMessage());
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al obtener las asignaciones: ' . $e->getMessage()
+        ], 500);
+    }
+}
     /**
      * Listar asignaciones por personal
      */
@@ -183,7 +268,7 @@ class AsignacionConsultorioController extends Controller
     {
         try {
             $asignaciones = AsignacionConsultorio::with(['consultorio'])
-                ->porPersonal($codPer)
+                ->where('codPer', $codPer)
                 ->orderBy('fechaInicio', 'desc')
                 ->get();
 
@@ -207,7 +292,7 @@ class AsignacionConsultorioController extends Controller
     {
         try {
             $asignaciones = AsignacionConsultorio::with(['personal'])
-                ->porConsultorio($codCons)
+                ->where('codCons', $codCons)
                 ->orderBy('fechaInicio', 'desc')
                 ->get();
 

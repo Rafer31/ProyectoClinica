@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->integer('cantDispo')->nullable();
             $table->integer('cantFijo')->nullable();
             $table->integer('cantEmergencia')->nullable();
-            $table->enum('estado', ['activo','inactivoPas','inactivoFut'])->nullable();
+            $table->string('estado', 20)->nullable();
             $table->unsignedInteger('codPer')->nullable();
 
             $table->foreign('codPer')->references('codPer')->on('PersonalSalud')->onDelete('set null');

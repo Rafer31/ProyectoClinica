@@ -315,31 +315,32 @@ class EstadisticasSupervisorController extends Controller
     /**
      * Listar personal para el selector
      */
-    public function listarPersonal()
-    {
-        try {
-            $personal = PersonalSalud::select('codPer', 'nomPer', 'paternoPer', 'maternoPer', 'usuarioPer')
-                ->where('estado', 'activo')
-                ->orderBy('nomPer')
-                ->get()
-                ->map(function($p) {
-                    return [
-                        'codPer' => $p->codPer,
-                        'nombre' => $p->nomPer . ' ' . $p->paternoPer . ' ' . ($p->maternoPer ?? ''),
-                        'usuario' => $p->usuarioPer
-                    ];
-                });
+  public function listarPersonal()
+{
+    try {
+        $personal = PersonalSalud::select('codPer', 'nomPer', 'paternoPer', 'maternoPer', 'usuarioPer', 'codRol')
+            ->where('estado', 'activo')
+            ->orderBy('nomPer')
+            ->get()
+            ->map(function($p) {
+                return [
+                    'codPer' => $p->codPer,
+                    'nombre' => $p->nomPer . ' ' . $p->paternoPer . ' ' . ($p->maternoPer ?? ''),
+                    'usuario' => $p->usuarioPer,
+                    'codRol' => $p->codRol  // ← AGREGAR ESTE CAMPO
+                ];
+            });
 
-            return response()->json([
-                'success' => true,
-                'data' => $personal,
-                'message' => 'Personal listado correctamente'
-            ], 200);
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al listar personal: ' . $e->getMessage()
-            ], 500);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => $personal,
+            'message' => 'Personal listado correctamente'
+        ], 200);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al listar personal: ' . $e->getMessage()
+        ], 500);
     }
+}
 }

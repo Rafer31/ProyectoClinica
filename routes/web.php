@@ -40,20 +40,32 @@ Route::middleware('guest')->group(function () {
 
 // Rutas protegidas (autenticadas) con middleware para prevenir caché
 Route::middleware(['auth', 'prevent.back.history'])->group(function () {
-    
+
     // ==========================================
     // PANEL DE ENFERMERA - NUEVO
     // ==========================================
     Route::prefix('enfermera')->name('enfermera.')->group(function () {
-        Route::get('/home', function () {
-            return view('enfermera.home');
-        })->name('home');
-
-        // Calendario de Atención
-        Route::get('/calendario', function () {
+    Route::get('/home', function () {
+        return view('enfermera.home');
+    })->name('home');
+Route::get('/servicios/{id}/pdf-requisitos', [ServicioController::class, 'generarPDFRequisitos'])
+    ->name('servicios.pdf-requisitos');
+    // Calendario de Atención
+    Route::prefix('calendario')->name('calendario.')->group(function () {
+        Route::get('/', function () {
             return view('enfermera.calendario.calendario-atencion');
-        })->name('calendario');
+        })->name('atencion');
+
+        Route::get('/agregar-paciente', function () {
+            return view('enfermera.calendario.form-agregar-paciente');
+        })->name('agregar-paciente');
+
+        Route::get('/agregar-medico', function () {
+            return view('enfermera.calendario.form-agregar-medico');
+        })->name('agregar-medico');
     });
+});
+
 
     // Panel del supervisor
     Route::prefix('supervisor')->name('supervisor.')->group(function () {
@@ -80,10 +92,6 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/gestion-personal/consultorios', function () {
             return view('supervisor.gestion-personal.consultorios');
         })->name('gestion-personal.consultorios');
-
-        Route::get('/clinicas', function () {
-            return view('supervisor.clinicas.clinicas');
-        })->name('clinicas.clinicas');
 
         Route::get('/estadisticas', function () {
             return view('supervisor.estadisticas.estadisticas');
@@ -181,13 +189,58 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
     Route::prefix('api')->name('api.')->group(function () {
 
         // API ENFERMERA - NUEVO
-        Route::prefix('enfermera')->name('enfermera.')->group(function () {
-            Route::get('/cronogramas/activo', [App\Http\Controllers\CronogramaAtencionController::class, 'obtenerCronogramaActivo'])
-                ->name('cronogramas.activo');
-            Route::get('/servicios/por-fecha/{fechaCrono}', [ServicioController::class, 'serviciosPorFechaMediaHora'])
-                ->name('servicios.porFecha');
-        });
+       Route::prefix('enfermera')->name('enfermera.')->group(function () {
+    // Cronogramas
+    Route::get('/cronogramas', [App\Http\Controllers\CronogramaAtencionController::class, 'index'])
+        ->name('cronogramas.index');
+    Route::get('/cronogramas/activo', [App\Http\Controllers\CronogramaAtencionController::class, 'obtenerCronogramaActivo'])
+        ->name('cronogramas.activo');
+    Route::get('/cronogramas/entre-fechas', [App\Http\Controllers\CronogramaAtencionController::class, 'entreFechas'])
+        ->name('cronogramas.entreFechas');
+    Route::post('/cronogramas', [App\Http\Controllers\CronogramaAtencionController::class, 'store'])
+        ->name('cronogramas.store');
 
+    // Servicios
+    Route::get('/servicios/por-fecha-cronograma/{fechaCrono}', [ServicioController::class, 'serviciosPorFechaCronograma'])
+        ->name('servicios.porFechaCronograma');
+    Route::get('/servicios/horarios-disponibles/{fechaCrono}', [ServicioController::class, 'horariosDisponibles'])
+        ->name('servicios.horariosDisponibles');
+    Route::get('/servicios/calcular-ficha/{fechaCrono}', [ServicioController::class, 'calcularNumeroFicha'])
+        ->name('servicios.calcularFicha');
+    Route::get('/servicios/datos-formulario', [ServicioController::class, 'datosFormulario'])
+        ->name('servicios.datosFormulario');
+    Route::post('/servicios', [ServicioController::class, 'store'])
+        ->name('servicios.store');
+    Route::get('/servicios/{id}', [ServicioController::class, 'show'])
+        ->name('servicios.show');
+
+    // Pacientes
+    Route::get('/pacientes', [PacienteController::class, 'index'])
+        ->name('pacientes.index');
+    Route::post('/pacientes', [PacienteController::class, 'store'])
+        ->name('pacientes.store');
+    Route::get('/pacientes/{id}', [PacienteController::class, 'show'])
+        ->name('pacientes.show');
+
+    // Médicos
+    Route::get('/medicos', [MedicoController::class, 'index'])
+        ->name('medicos.index');
+    Route::post('/medicos', [MedicoController::class, 'store'])
+        ->name('medicos.store');
+    Route::get('/medicos/{id}', [MedicoController::class, 'show'])
+        ->name('medicos.show');
+
+    // Tipos de Estudio
+    Route::get('/tipos-estudio', function() {
+        $tipos = App\Models\TipoEstudio::select('codTest', 'descripcion')
+            ->orderBy('descripcion')
+            ->get();
+        return response()->json([
+            'success' => true,
+            'data' => $tipos
+        ]);
+    })->name('tiposEstudio.index');
+});
         // API ESTADÍSTICAS DEL SUPERVISOR
         Route::prefix('supervisor/estadisticas')->name('supervisor.estadisticas.')->group(function () {
             Route::get('/generales', [EstadisticasSupervisorController::class, 'estadisticasGenerales'])
@@ -214,14 +267,15 @@ Route::middleware(['auth', 'prevent.back.history'])->group(function () {
         Route::get('/roles', [RolController::class, 'index'])->name('roles.index');
 
         // API CONSULTORIOS
-        Route::prefix('consultorios')->name('consultorios.')->group(function () {
-            Route::get('/', [ConsultorioController::class, 'index'])->name('index');
-            Route::get('/disponibles', [ConsultorioController::class, 'disponibles'])->name('disponibles');
-            Route::get('/{id}', [ConsultorioController::class, 'show'])->name('show');
-            Route::post('/', [ConsultorioController::class, 'store'])->name('store');
-            Route::put('/{id}', [ConsultorioController::class, 'update'])->name('update');
-            Route::delete('/{id}', [ConsultorioController::class, 'destroy'])->name('destroy');
-        });
+       Route::prefix('consultorios')->name('consultorios.')->group(function () {
+    Route::get('/', [ConsultorioController::class, 'index'])->name('index');
+    Route::get('/disponibles', [ConsultorioController::class, 'disponibles'])->name('disponibles');
+    Route::get('/{id}/verificar-disponibilidad', [ConsultorioController::class, 'verificarDisponibilidad'])->name('verificarDisponibilidad');
+    Route::get('/{id}', [ConsultorioController::class, 'show'])->name('show');
+    Route::post('/', [ConsultorioController::class, 'store'])->name('store');
+    Route::put('/{id}', [ConsultorioController::class, 'update'])->name('update');
+    Route::delete('/{id}', [ConsultorioController::class, 'destroy'])->name('destroy');
+});
 
         // API ASIGNACIONES DE CONSULTORIO
         Route::prefix('asignaciones-consultorio')->name('asignaciones-consultorio.')->group(function () {

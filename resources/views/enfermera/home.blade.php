@@ -39,10 +39,10 @@
                 <span class="material-icons text-purple-600 text-3xl">rocket_launch</span>
                 <h2 class="text-2xl font-bold text-gray-800">Acceso Rápido</h2>
             </div>
-            
+
             <div class="grid grid-cols-1 gap-6">
                 <!-- Calendario de Atención -->
-                <a href="{{ route('enfermera.calendario') }}" 
+                <a href="{{ route('enfermera.calendario.atencion') }}"
                    class="group bg-gradient-to-br from-purple-50 to-pink-50 border-2 border-purple-200 rounded-xl p-6 hover:shadow-xl transition-all transform hover:-translate-y-1 hover:border-purple-400">
                     <div class="flex items-start justify-between mb-4">
                         <div class="w-14 h-14 bg-gradient-to-br from-purple-600 to-pink-600 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
@@ -188,7 +188,7 @@
                 <div>
                     <h3 class="text-lg font-bold text-gray-800 mb-2">💡 Consejo Importante</h3>
                     <p class="text-gray-700 mb-3">
-                        Los horarios están divididos en intervalos de media hora (30 minutos), con solo una ficha disponible por cada intervalo. 
+                        Los horarios están divididos en intervalos de media hora (30 minutos), con solo una ficha disponible por cada intervalo.
                         Esto permite una mejor organización y seguimiento de cada paciente durante el día.
                     </p>
                     <div class="flex flex-wrap gap-2">
@@ -212,7 +212,7 @@
             0%, 100% { transform: translateY(0px); }
             50% { transform: translateY(-10px); }
         }
-        
+
         .group:hover .material-icons {
             animation: float 2s ease-in-out infinite;
         }
