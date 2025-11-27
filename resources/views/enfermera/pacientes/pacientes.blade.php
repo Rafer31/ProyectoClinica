@@ -1,9 +1,9 @@
-@extends('personal.layouts.personal')
+@extends('enfermera.layouts.enfermera')
 @section('title', 'Lista de Pacientes')
 @section('content')
     @php
         $breadcrumbs = [
-            ['label' => 'Inicio', 'url' => route('personal.home')],
+            ['label' => 'Inicio', 'url' => route('enfermera.home')],
             ['label' => 'Pacientes']
         ];
     @endphp
@@ -141,7 +141,7 @@
                                             <span class="material-icons text-base mr-1">visibility</span>
                                             Ver
                                         </button>
-                                        <a href="/personal/pacientes/editar/${p.codPa}"
+                                        <a href="/enfermera/pacientes/editar/${p.codPa}"
                                             class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
                                             title="Editar">
                                             <span class="material-icons text-base mr-1">edit</span>
@@ -382,7 +382,7 @@
                                 <span class="material-icons text-base mr-1">close</span>
                                 Cerrar
                             </button>
-                            <a href="/personal/pacientes/editar/${paciente.codPa}" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md">
+                            <a href="/enfermera/pacientes/editar/${paciente.codPa}" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md">
                                 <span class="material-icons text-base mr-1">edit</span>
                                 Editar
                             </a>
@@ -604,7 +604,7 @@
                     </h1>
                     <p class="text-emerald-600 font-medium ml-15" id="resultados-count">Cargando...</p>
                 </div>
-                <a href="{{ route('personal.pacientes.agregar') }}"
+                <a href="{{ route('enfermera.pacientes.agregar') }}"
                     class="mt-4 md:mt-0 inline-flex items-center px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105">
                     <span class="material-icons mr-2">add</span>
                     Agregar Paciente
@@ -798,39 +798,33 @@
             <!-- Body -->
             <div class="p-6">
                 <!-- Loader -->
-                <div id="loader-historial" class="flex justify-center items-center py-12">
-                    <div class="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600"></div>
+                <div id="loader-historial" class="flex justify-center items-center py-12 hidden">
+                    <div class="flex flex-col items-center gap-3">
+                        <div class="animate-spin rounded-full h-10 w-10 border-4 border-purple-200 border-t-purple-600"></div>
+                        <span class="text-sm font-medium text-gray-600">Cargando historial...</span>
+                    </div>
                 </div>
 
                 <!-- Contenido -->
-                <div id="contenido-historial" class="hidden">
+                <div id="contenido-historial">
                     <div class="overflow-x-auto rounded-lg border border-gray-200">
                         <table class="w-full text-sm text-left">
                             <thead class="bg-gray-50 text-gray-700 uppercase text-xs font-bold">
                                 <tr>
-                                    <th class="px-6 py-3 border-b">Fecha</th>
-                                    <th class="px-6 py-3 border-b">Estudio</th>
-                                    <th class="px-6 py-3 border-b">Médico</th>
-                                    <th class="px-6 py-3 border-b">Estado</th>
-                                    <th class="px-6 py-3 border-b">Diagnóstico</th>
+                                    <th class="px-6 py-3">Fecha</th>
+                                    <th class="px-6 py-3">Estudio</th>
+                                    <th class="px-6 py-3">Médico</th>
+                                    <th class="px-6 py-3">Estado</th>
+                                    <th class="px-6 py-3">Diagnóstico</th>
                                 </tr>
                             </thead>
                             <tbody id="tabla-historial" class="divide-y divide-gray-200">
-                                <!-- Datos dinámicos -->
+                                <!-- Se llena dinámicamente -->
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
-
-            <!-- Footer -->
-            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex justify-end">
-                <button onclick="cerrarModalHistorial()" class="px-5 py-2 bg-white border border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition-colors">
-                    Cerrar
-                </button>
-            </div>
         </div>
     </div>
-    </div>
-
 @endsection

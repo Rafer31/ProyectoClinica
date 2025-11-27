@@ -175,8 +175,7 @@
         <h1>{{ $titulo }}</h1>
         <div class="header-info"><strong>Hospital:</strong> Centro de Salud - Servicio de Imagenología</div>
         <div class="header-info"><strong>Personal:</strong> {{ $personal }}</div>
-        <div class="header-info"><strong>Período:</strong> {{ $periodo }}</div>
-        <div class="header-info"><strong>Fecha de Generación:</strong> {{ $fecha }}</div>
+        <div class="header-info"><strong>Fecha de Generación:</strong> {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</div>
     </div>
 
     <!-- Resumen -->
@@ -189,7 +188,7 @@
     <div class="info-grid">
         <div class="info-row"><strong>Tipo de Reporte:</strong> {{ $titulo }}</div>
         <div class="info-row"><strong>Generado por:</strong> {{ $personal }}</div>
-        <div class="info-row"><strong>Fecha y Hora:</strong> {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</div>
+        <div class="info-row"><strong>Fecha del Reporte:</strong> {{ $fecha }}</div>
     </div>
 
     <!-- Título de Tabla -->
@@ -258,7 +257,7 @@
     <!-- Footer -->
     <div class="footer">
         <div class="footer-line"><strong>Sistema de Gestión de Imagenología</strong></div>
-        <div class="footer-line">Documento generado el {{ \Carbon\Carbon::now()->format('d/m/Y H:i:s') }}</div>
+        <div class="footer-line">Documento correspondiente a la fecha: {{ $fecha }}</div>
         <div class="footer-line">Este documento es de uso interno y confidencial</div>
     </div>
 

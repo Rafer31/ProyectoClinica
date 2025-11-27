@@ -265,6 +265,9 @@ class EstadisticasSupervisorController extends Controller
 
             $fechaBase = $fecha ? Carbon::parse($fecha) : Carbon::now();
 
+            // Configurar locale a español
+            Carbon::setLocale('es');
+
             // Determinar rango de fechas
             switch ($periodo) {
                 case 'semana':

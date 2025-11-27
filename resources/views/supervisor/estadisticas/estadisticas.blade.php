@@ -35,7 +35,6 @@
 
             document.addEventListener("DOMContentLoaded", function () {
                 cargarEstadisticasGenerales();
-                cargarListaPersonal();
             });
 
             async function cargarEstadisticasGenerales() {
@@ -316,158 +315,7 @@
                 });
             }
 
-            // ===== REPORTES POR PERSONAL =====
 
-            async function cargarListaPersonal() {
-                try {
-                    const response = await fetch('/api/supervisor/estadisticas/personal/lista');
-                    const data = await response.json();
-
-                    if (data.success) {
-                        const select = document.getElementById('selectPersonal');
-                        select.innerHTML = '<option value="">Seleccione un personal...</option>';
-
-                        // Debug: Ver qué datos llegan
-                        console.log('Datos del personal:', data.data);
-                        console.log('Primer personal:', data.data[0]);
-
-                        // Filtrar solo personal de imagen (codRol = 2)
-                        const personalImagen = data.data.filter(p => {
-                            console.log(`Personal ${p.nombre} - codRol: ${p.codRol}, tipo: ${typeof p.codRol}`);
-                            return p.codRol === 2 || p.codRol === '2';
-                        });
-
-                        console.log('Personal de imagen filtrado:', personalImagen);
-
-                        personalImagen.forEach(p => {
-                            const option = document.createElement('option');
-                            option.value = p.codPer;
-                            option.textContent = `${p.nombre} (${p.usuario})`;
-                            select.appendChild(option);
-                        });
-
-                        if (personalImagen.length === 0) {
-                            console.warn('No se encontró personal de imagen con codRol = 2');
-                        }
-                    }
-                } catch (error) {
-                    console.error('Error al cargar personal:', error);
-                }
-            }
-
-            async function buscarEstadisticasPersonal() {
-                const codPer = document.getElementById('selectPersonal').value;
-                const fecha = document.getElementById('fechaReporte').value;
-
-                if (!codPer) {
-                    mostrarAlerta('error', 'Por favor seleccione un personal');
-                    return;
-                }
-
-                if (!fecha) {
-                    mostrarAlerta('error', 'Por favor seleccione una fecha');
-                    return;
-                }
-
-                mostrarLoader(true);
-
-                try {
-                    const url = `/api/supervisor/estadisticas/personal?codPer=${codPer}&fecha=${fecha}&periodo=mes`;
-                    const response = await fetch(url);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        mostrarResultadosPersonal(data.data);
-                    } else {
-                        mostrarAlerta('error', data.message);
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    mostrarAlerta('error', 'Error al obtener estadísticas del personal');
-                } finally {
-                    mostrarLoader(false);
-                }
-            }
-
-            function mostrarResultadosPersonal(data) {
-                const container = document.getElementById('resultadosPersonal');
-
-                const html = `
-                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                        <div class="flex justify-between items-center mb-4">
-                            <div>
-                                <h3 class="text-xl font-bold text-gray-900">${data.personal.nombre}</h3>
-                                <p class="text-sm text-gray-600">Usuario: ${data.personal.usuario}</p>
-                                <p class="text-sm text-gray-600">Periodo: ${new Date(data.periodo.fechaInicio).toLocaleDateString('es-ES')} - ${new Date(data.periodo.fechaFin).toLocaleDateString('es-ES')}</p>
-                            </div>
-                            <button onclick="generarPDFPersonal()" class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
-                                <span class="material-icons mr-2">picture_as_pdf</span>
-                                Generar PDF
-                            </button>
-                        </div>
-
-                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                            <div class="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                                <p class="text-sm text-blue-600 font-medium mb-1">Total Servicios</p>
-                                <p class="text-3xl font-bold text-blue-700">${data.resumen.totalServicios}</p>
-                            </div>
-                            <div class="bg-green-50 rounded-lg p-4 border border-green-200">
-                                <p class="text-sm text-green-600 font-medium mb-1">Atendidos</p>
-                                <p class="text-3xl font-bold text-green-700">${data.resumen.atendidos}</p>
-                            </div>
-                            <div class="bg-purple-50 rounded-lg p-4 border border-purple-200">
-                                <p class="text-sm text-purple-600 font-medium mb-1">Por Estado</p>
-                                <p class="text-xs text-purple-700">${Object.entries(data.resumen.porEstado).map(([k,v]) => `${k}: ${v}`).join(', ')}</p>
-                            </div>
-                            <div class="bg-orange-50 rounded-lg p-4 border border-orange-200">
-                                <p class="text-sm text-orange-600 font-medium mb-1">Por Tipo</p>
-                                <p class="text-xs text-orange-700">${Object.entries(data.resumen.porTipoAseg).map(([k,v]) => `${k}: ${v}`).join(', ')}</p>
-                            </div>
-                        </div>
-                    </div>
-                `;
-
-                container.innerHTML = html;
-                container.classList.remove('hidden');
-
-                // Guardar datos para PDF
-                window.datosReporteActual = {
-                    codPer: data.personal.codPer,
-                    fecha: document.getElementById('fechaReporte').value,
-                    periodo: 'mes'
-                };
-            }
-
-            function getEstadoClass(estado) {
-                const classes = {
-                    'Programado': 'bg-blue-100 text-blue-800',
-                    'EnProceso': 'bg-yellow-100 text-yellow-800',
-                    'Atendido': 'bg-green-100 text-green-800',
-                    'Entregado': 'bg-purple-100 text-purple-800',
-                    'Cancelado': 'bg-red-100 text-red-800'
-                };
-                return classes[estado] || 'bg-gray-100 text-gray-800';
-            }
-
-            function generarPDFPersonal() {
-                if (!window.datosReporteActual) {
-                    mostrarAlerta('error', 'No hay datos para generar el reporte');
-                    return;
-                }
-
-                const { codPer, fecha } = window.datosReporteActual;
-                const url = `/api/supervisor/estadisticas/personal/reporte-pdf?codPer=${codPer}&fecha=${fecha}&periodo=mes`;
-                window.open(url, '_blank');
-            }
-
-            function verDetallesPersonal(codPer) {
-                document.getElementById('selectPersonal').value = codPer;
-                document.getElementById('fechaReporte').value = new Date().toISOString().split('T')[0];
-                buscarEstadisticasPersonal();
-
-                // Scroll a la sección
-                document.getElementById('seccionReportes').scrollIntoView({ behavior: 'smooth' });
-            }
 
             // ===== UTILIDADES =====
 
@@ -756,43 +604,7 @@
             </div>
         </div>
 
-        <!-- Sección de Reportes por Personal -->
-        <div id="seccionReportes" class="bg-white rounded-xl shadow-lg p-6">
-            <div class="flex items-center gap-2 mb-6">
-                <span class="material-icons text-indigo-600 text-3xl">assignment</span>
-                <h2 class="text-2xl font-bold text-gray-900">Reportes por Personal</h2>
-            </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Personal de Imagen <span class="text-red-600">*</span>
-                    </label>
-                    <select id="selectPersonal"
-                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
-                        <option value="">Seleccione...</option>
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-semibold text-gray-700 mb-2">
-                        Fecha <span class="text-red-600">*</span>
-                    </label>
-                    <input type="date" id="fechaReporte"
-                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 p-3 transition">
-                </div>
-
-                <div class="flex items-end">
-                    <button onclick="buscarEstadisticasPersonal()"
-                        class="w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-lg hover:shadow-xl font-medium">
-                        <span class="material-icons mr-2">search</span>
-                        Buscar
-                    </button>
-                </div>
-            </div>
-
-            <div id="resultadosPersonal" class="hidden"></div>
-        </div>
     </div>
 
 @endsection

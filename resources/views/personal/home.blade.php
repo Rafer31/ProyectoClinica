@@ -17,51 +17,11 @@
                 </div>
 
                 <!-- Botón Generar Reporte -->
-                <div class="relative">
-                    <button id="btn-menu-reporte"
-                        class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-xl hover:from-rose-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
-                        <span class="material-icons">picture_as_pdf</span>
-                        <span class="font-semibold">Generar Reporte</span>
-                        <span class="material-icons text-sm">expand_more</span>
-                    </button>
-
-                    <!-- Menú Desplegable -->
-                    <div id="menu-reporte"
-                        class="hidden absolute right-0 mt-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 z-50 overflow-hidden">
-                        <div class="py-2">
-                            <a href="{{ route('personal.reportes.dia') }}" target="_blank"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors group">
-                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-blue-200 transition-colors">
-                                    <span class="material-icons text-blue-600">today</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900">Reporte del Día</p>
-                                    <p class="text-xs text-gray-500">{{ now()->format('d/m/Y') }}</p>
-                                </div>
-                            </a>
-                            <a href="{{ route('personal.reportes.semana') }}" target="_blank"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors group">
-                                <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center group-hover:bg-emerald-200 transition-colors">
-                                    <span class="material-icons text-emerald-600">date_range</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900">Reporte Semanal</p>
-                                    <p class="text-xs text-gray-500">Últimos 7 días</p>
-                                </div>
-                            </a>
-                            <a href="{{ route('personal.reportes.mes') }}" target="_blank"
-                                class="flex items-center gap-3 px-4 py-3 hover:bg-emerald-50 transition-colors group">
-                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200 transition-colors">
-                                    <span class="material-icons text-purple-600">calendar_month</span>
-                                </div>
-                                <div class="flex-1">
-                                    <p class="text-sm font-semibold text-gray-900">Reporte Mensual</p>
-                                    <p class="text-xs text-gray-500">{{ now()->format('F Y') }}</p>
-                                </div>
-                            </a>
-                        </div>
-                    </div>
-                </div>
+                <button onclick="abrirModalReporte()"
+                    class="flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-rose-500 to-red-600 text-white rounded-xl hover:from-rose-600 hover:to-red-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105">
+                    <span class="material-icons">picture_as_pdf</span>
+                    <span class="font-semibold">Generar Reporte</span>
+                </button>
             </div>
         </div>
 
@@ -231,17 +191,93 @@
         </div>
     </div>
 
-    <script>
-        // Menú desplegable de reportes
-        document.getElementById('btn-menu-reporte').addEventListener('click', function (e) {
-            e.stopPropagation();
-            document.getElementById('menu-reporte').classList.toggle('hidden');
-        });
+    <!-- Modal Reporte Personal -->
+    <div id="modalReportePersonal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="relative mx-auto p-6 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
+            <div class="flex justify-center mb-4">
+                <div class="rounded-full bg-gradient-to-br from-emerald-100 to-teal-100 p-4 shadow-lg">
+                    <span class="material-icons text-emerald-600 text-5xl">print</span>
+                </div>
+            </div>
 
-        // Cerrar menú al hacer clic fuera
-        document.addEventListener('click', function () {
-            document.getElementById('menu-reporte').classList.add('hidden');
-        });
+            <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Generar Reporte</h3>
+            <p class="text-sm text-gray-600 text-center mb-6">Selecciona la fecha que deseas reportar</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <span class="material-icons text-sm mr-1 align-middle">event</span>
+                        Seleccionar Fecha <span class="text-red-600">*</span>
+                    </label>
+                    <input type="date" id="inputFechaReportePersonal" required
+                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 p-3 transition">
+                    <p class="text-xs text-gray-500 mt-2">
+                        <span class="material-icons text-xs align-middle">info</span>
+                        Se generará el reporte de la fecha seleccionada
+                    </p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="cerrarModalReportePersonal()"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <span class="material-icons text-base mr-1">close</span>
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="generarReportePersonal()"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-emerald-600 to-teal-600 rounded-xl hover:from-emerald-700 hover:to-teal-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <span class="material-icons text-base mr-1">picture_as_pdf</span>
+                        Generar PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== MODAL DE REPORTES =====
+        function abrirModalReporte() {
+            const modal = document.getElementById('modalReportePersonal');
+            const inputFecha = document.getElementById('inputFechaReportePersonal');
+            
+            if (inputFecha) {
+                // Establecer fecha actual por defecto
+                const hoy = new Date().toISOString().split('T')[0];
+                inputFecha.value = hoy;
+            }
+            
+            // Abrir modal
+            if (modal) {
+                modal.classList.remove('hidden');
+            }
+        }
+
+        function cerrarModalReportePersonal() {
+            const modal = document.getElementById('modalReportePersonal');
+            if (modal) {
+                modal.classList.add('hidden');
+            }
+        }
+
+        function generarReportePersonal() {
+            const inputFecha = document.getElementById('inputFechaReportePersonal');
+            
+            if (!inputFecha) {
+                console.error('No se encontró el input de fecha');
+                return;
+            }
+            
+            const fecha = inputFecha.value;
+            
+            if (!fecha) {
+                alert('Por favor selecciona una fecha');
+                return;
+            }
+            
+            const url = `/personal/reportes/dia?fecha=${fecha}`;
+            window.open(url, '_blank');
+            cerrarModalReportePersonal();
+        }
 
         // Cargar estadísticas
         async function cargarEstadisticas() {

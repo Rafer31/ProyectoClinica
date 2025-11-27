@@ -330,4 +330,28 @@ class PacienteController extends Controller
             ], 500);
         }
     }
+    /**
+     * Obtener historial de servicios del paciente
+     */
+    public function historial($id)
+    {
+        try {
+            $servicios = \App\Models\Servicio::where('codPa', $id)
+                ->with(['medico', 'tipoEstudio', 'diagnosticos'])
+                ->orderBy('fechaAten', 'desc')
+                ->orderBy('horaAten', 'desc')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'data' => $servicios,
+                'message' => 'Historial obtenido correctamente'
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener el historial: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

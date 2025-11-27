@@ -149,6 +149,32 @@
                         @endif
                     </a>
                 </li>
+
+                <!-- Pacientes -->
+                <li>
+                    <a href="{{ route('enfermera.pacientes.pacientes') }}"
+                        class="sidebar-item flex items-center p-3 rounded-xl hover:bg-purple-50 group {{ request()->routeIs('enfermera.pacientes.*') ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' : 'text-gray-700 hover:text-purple-600' }}">
+                        <span
+                            class="material-icons {{ request()->routeIs('enfermera.pacientes.*') ? 'text-white' : 'text-purple-600' }}">people</span>
+                        <span class="ms-3 font-semibold">Pacientes</span>
+                        @if(request()->routeIs('enfermera.pacientes.*'))
+                            <span class="material-icons ms-auto text-sm">chevron_right</span>
+                        @endif
+                    </a>
+                </li>
+
+                <!-- Médicos -->
+                <li>
+                    <a href="{{ route('enfermera.medicos.medicos') }}"
+                        class="sidebar-item flex items-center p-3 rounded-xl hover:bg-purple-50 group {{ request()->routeIs('enfermera.medicos.*') ? 'bg-gradient-to-r from-purple-500 to-pink-600 text-white shadow-lg' : 'text-gray-700 hover:text-purple-600' }}">
+                        <span
+                            class="material-icons {{ request()->routeIs('enfermera.medicos.*') ? 'text-white' : 'text-purple-600' }}">medical_services</span>
+                        <span class="ms-3 font-semibold">Médicos</span>
+                        @if(request()->routeIs('enfermera.medicos.*'))
+                            <span class="material-icons ms-auto text-sm">chevron_right</span>
+                        @endif
+                    </a>
+                </li>
             </ul>
         </div>
     </aside>

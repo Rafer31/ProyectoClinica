@@ -115,12 +115,14 @@ class HomeController extends Controller
     /**
      * Generar reporte PDF del día
      */
-    public function reporteDia()
+    public function reporteDia(Request $request)
     {
         try {
             $user = Auth::user();
             $codPer = $user->codPer;
-            $hoy = Carbon::today();
+            $fecha = $request->input('fecha');
+            $hoy = $fecha ? Carbon::parse($fecha) : Carbon::today();
+            Carbon::setLocale('es');
 
             $servicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
@@ -150,13 +152,16 @@ class HomeController extends Controller
     /**
      * Generar reporte PDF semanal
      */
-    public function reporteSemana()
+    public function reporteSemana(Request $request)
     {
         try {
             $user = Auth::user();
             $codPer = $user->codPer;
-            $inicioSemana = Carbon::now()->startOfWeek();
-            $finSemana = Carbon::now()->endOfWeek();
+            $fecha = $request->input('fecha');
+            $fechaBase = $fecha ? Carbon::parse($fecha) : Carbon::now();
+            Carbon::setLocale('es');
+            $inicioSemana = $fechaBase->copy()->startOfWeek();
+            $finSemana = $fechaBase->copy()->endOfWeek();
 
             $servicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
@@ -170,7 +175,7 @@ class HomeController extends Controller
 
             $data = [
                 'titulo' => 'Reporte Semanal de Servicios',
-                'fecha' => Carbon::now()->format('d/m/Y'),
+                'fecha' => $fechaBase->format('d/m/Y'),
                 'personal' => $user->nomPer . ' ' . $user->paternoPer,
                 'servicios' => $servicios,
                 'total' => $servicios->count(),
@@ -178,7 +183,7 @@ class HomeController extends Controller
             ];
 
             $pdf = Pdf::loadView('personal.reportes.home-pdf', $data);
-            return $pdf->download('reporte-semanal-' . Carbon::now()->format('Y-m-d') . '.pdf');
+            return $pdf->download('reporte-semanal-' . $inicioSemana->format('Y-m-d') . '.pdf');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar reporte: ' . $e->getMessage());
         }
@@ -187,13 +192,16 @@ class HomeController extends Controller
     /**
      * Generar reporte PDF mensual
      */
-    public function reporteMes()
+    public function reporteMes(Request $request)
     {
         try {
             $user = Auth::user();
             $codPer = $user->codPer;
-            $inicioMes = Carbon::now()->startOfMonth();
-            $finMes = Carbon::now()->endOfMonth();
+            $fecha = $request->input('fecha');
+            $fechaBase = $fecha ? Carbon::parse($fecha) : Carbon::now();
+            Carbon::setLocale('es');
+            $inicioMes = $fechaBase->copy()->startOfMonth();
+            $finMes = $fechaBase->copy()->endOfMonth();
 
             $servicios = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
@@ -207,15 +215,15 @@ class HomeController extends Controller
 
             $data = [
                 'titulo' => 'Reporte Mensual de Servicios',
-                'fecha' => Carbon::now()->format('d/m/Y'),
+                'fecha' => $fechaBase->format('d/m/Y'),
                 'personal' => $user->nomPer . ' ' . $user->paternoPer,
                 'servicios' => $servicios,
                 'total' => $servicios->count(),
-                'periodo' => 'Mes de ' . Carbon::now()->isoFormat('MMMM [de] YYYY')
+                'periodo' => 'Mes de ' . $fechaBase->isoFormat('MMMM [de] YYYY')
             ];
 
             $pdf = Pdf::loadView('personal.reportes.home-pdf', $data);
-            return $pdf->download('reporte-mensual-' . Carbon::now()->format('Y-m') . '.pdf');
+            return $pdf->download('reporte-mensual-' . $fechaBase->format('Y-m') . '.pdf');
         } catch (\Exception $e) {
             return back()->with('error', 'Error al generar reporte: ' . $e->getMessage());
         }

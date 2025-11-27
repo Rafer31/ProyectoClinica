@@ -63,6 +63,39 @@ Route::get('/servicios/{id}/pdf-requisitos', [ServicioController::class, 'genera
         Route::get('/agregar-medico', function () {
             return view('enfermera.calendario.form-agregar-medico');
         })->name('agregar-medico');
+
+        Route::get('/servicio/{id}/pdf', [App\Http\Controllers\FichaCitaController::class, 'generarPDF'])
+            ->name('servicio.pdf');
+    });
+
+    // Gestión de Pacientes
+    Route::prefix('pacientes')->name('pacientes.')->group(function () {
+        Route::get('/', function () {
+            return view('enfermera.pacientes.pacientes');
+        })->name('pacientes');
+        Route::get('/agregar', function () {
+            return view('enfermera.pacientes.form-paciente')
+                ->with('paciente', null);
+        })->name('agregar');
+        Route::get('/editar/{id}', function ($id) {
+            $paciente = App\Models\Paciente::findOrFail($id);
+            return view('enfermera.pacientes.form-paciente', compact('paciente'));
+        })->name('editar');
+    });
+
+    // Gestión de Médicos
+    Route::prefix('medicos')->name('medicos.')->group(function () {
+        Route::get('/', function () {
+            return view('enfermera.medicos.medicos');
+        })->name('medicos');
+        Route::get('/agregar', function () {
+            return view('enfermera.medicos.form-medicos')
+                ->with('medico', null);
+        })->name('agregar');
+        Route::get('/editar/{id}', function ($id) {
+            $medico = App\Models\Medico::findOrFail($id);
+            return view('enfermera.medicos.form-medicos', compact('medico'));
+        })->name('editar');
     });
 });
 
@@ -314,6 +347,7 @@ Route::get('/servicios/{id}/pdf-requisitos', [ServicioController::class, 'genera
                 Route::get('/', [PacienteController::class, 'index'])->name('index');
                 Route::post('/', [PacienteController::class, 'store'])->name('store');
                 Route::get('/{id}', [PacienteController::class, 'show'])->name('show');
+                Route::get('/{id}/historial', [PacienteController::class, 'historial'])->name('historial');
                 Route::put('/{id}', [PacienteController::class, 'update'])->name('update');
                 Route::delete('/{id}', [PacienteController::class, 'cambiarEstado'])->name('cambiarEstado');
             });

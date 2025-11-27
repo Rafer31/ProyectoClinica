@@ -157,10 +157,6 @@
             <span class="info-value">{{ $personal }}</span>
         </div>
         <div class="info-row">
-            <span class="info-label">Periodo:</span>
-            <span class="info-value">{{ $periodo }}</span>
-        </div>
-        <div class="info-row">
             <span class="info-label">Total de Servicios:</span>
             <span class="info-value">{{ $total }}</span>
         </div>

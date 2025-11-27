@@ -240,12 +240,20 @@
                                                         <span class="material-icons text-sm mr-1">edit</span>
                                                         Editar
                                                     </a>
-                                                    <button onclick="abrirModalAsignacion(${p.codPer})"
+                                                     <button onclick="abrirModalAsignacion(${p.codPer})"
                                                         class="inline-flex items-center px-3 py-2 text-xs font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 hover:shadow-md transition-all duration-200 border border-indigo-200"
                                                         title="Asignar Consultorio">
                                                         <span class="material-icons text-sm mr-1">meeting_room</span>
                                                         Asignar
                                                     </button>
+                                                    ${p.codRol === 2 ? `
+                                                    <button onclick="imprimirReportePersonal(${p.codPer})"
+                                                        class="inline-flex items-center px-3 py-2 text-xs font-medium text-purple-700 bg-purple-50 rounded-lg hover:bg-purple-100 hover:shadow-md transition-all duration-200 border border-purple-200"
+                                                        title="Imprimir Reporte">
+                                                        <span class="material-icons text-sm mr-1">print</span>
+                                                        Reporte
+                                                    </button>
+                                                    ` : ''}
                                                     ${!esSupervisor ? `
                                                     <button onclick="cambiarEstado(${p.codPer}, '${p.estado}')"
                                                         class="inline-flex items-center px-3 py-2 text-xs font-medium ${p.estado === 'activo' ? 'text-red-700 bg-red-50 hover:bg-red-100 border-red-200' : 'text-green-700 bg-green-50 hover:bg-green-100 border-green-200'} rounded-lg hover:shadow-md transition-all duration-200 border"
@@ -900,6 +908,7 @@
             }
 
 
+
             function mostrarLoader(mostrar) {
                 const loader = document.getElementById('loader');
                 if (mostrar) {
@@ -908,6 +917,46 @@
                     loader.classList.add('hidden');
                 }
             }
+
+            function imprimirReportePersonal(codPer) {
+                const personal = personalData.find(p => p.codPer === codPer);
+                if (!personal) return;
+
+                const nombreCompleto = `${personal.nomPer || ''} ${personal.paternoPer || ''} ${personal.maternoPer || ''}`.trim();
+                
+                document.getElementById('nombrePersonalReporte').textContent = nombreCompleto;
+                document.getElementById('codPerReporte').value = codPer;
+                
+                // Establecer fecha actual por defecto
+                const hoy = new Date().toISOString().split('T')[0];
+                document.getElementById('fechaReporte').value = hoy;
+                
+                const modal = document.getElementById('modalReportePersonal');
+                modal.classList.remove('hidden');
+            }
+
+            function cerrarModalReporte() {
+                const modal = document.getElementById('modalReportePersonal');
+                modal.classList.add('hidden');
+                document.getElementById('formReporte').reset();
+            }
+
+            function generarReportePersonal() {
+                const codPer = document.getElementById('codPerReporte').value;
+                const fecha = document.getElementById('fechaReporte').value;
+
+                if (!fecha) {
+                    mostrarAlerta('error', 'Por favor seleccione una fecha');
+                    return;
+                }
+
+                const url = `/api/supervisor/estadisticas/personal/reporte-pdf?codPer=${codPer}&fecha=${fecha}&periodo=mes`;
+                window.open(url, '_blank');
+                
+                cerrarModalReporte();
+            }
+
+
 
             function limpiarFiltros() {
                 document.getElementById('busqueda').value = '';
@@ -1268,6 +1317,60 @@
                     Cancelar
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modal Reporte Personal -->
+    <div id="modalReportePersonal"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-60 overflow-y-auto h-full w-full z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="relative mx-auto p-6 border-0 w-full max-w-md shadow-2xl rounded-2xl bg-white">
+            <div class="flex justify-center mb-4">
+                <div class="rounded-full bg-gradient-to-br from-purple-100 to-pink-100 p-4 shadow-lg">
+                    <span class="material-icons text-purple-600 text-5xl">print</span>
+                </div>
+            </div>
+
+            <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Generar Reporte de Personal</h3>
+
+            <form id="formReporte" class="space-y-4 mt-6">
+                <input type="hidden" id="codPerReporte">
+                
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div class="flex items-start gap-2">
+                        <span class="material-icons text-blue-600 text-sm mt-0.5">person</span>
+                        <div>
+                            <p class="text-xs font-medium text-blue-600 uppercase mb-1">Personal Seleccionado</p>
+                            <p class="text-sm font-semibold text-gray-900" id="nombrePersonalReporte"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <span class="material-icons text-sm mr-1 align-middle">event</span>
+                        Seleccionar Fecha <span class="text-red-600">*</span>
+                    </label>
+                    <input type="date" id="fechaReporte" required
+                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 p-3 transition">
+                    <p class="text-xs text-gray-500 mt-2">
+                        <span class="material-icons text-xs align-middle">info</span>
+                        Se generará el reporte del mes de la fecha seleccionada
+                    </p>
+                </div>
+
+                <div class="flex gap-3 pt-4">
+                    <button type="button" onclick="cerrarModalReporte()"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-xl hover:bg-gray-50 hover:shadow-md transition-all duration-200">
+                        <span class="material-icons text-base mr-1">close</span>
+                        Cancelar
+                    </button>
+                    <button type="button" onclick="generarReportePersonal()"
+                        class="flex-1 inline-flex justify-center items-center px-4 py-3 text-sm font-medium text-white bg-gradient-to-r from-purple-600 to-pink-600 rounded-xl hover:from-purple-700 hover:to-pink-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+                        <span class="material-icons text-base mr-1">picture_as_pdf</span>
+                        Generar PDF
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 

@@ -685,6 +685,69 @@
                 </div>
             </div>
         </div>
+
+    </div>
+    <div id="modal-confirmar-entrega"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-0 border w-full max-w-lg shadow-2xl rounded-xl bg-white">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-t-xl p-6">
+                <div class="flex items-center">
+                    <div
+                        class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4 backdrop-blur-sm">
+                        <span class="material-icons text-white text-3xl">assignment_turned_in</span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">Marcar como Entregado</h3>
+                        <p class="text-sm text-purple-100">Confirme la entrega del servicio al paciente</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-4">
+                <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
+                    <p class="text-gray-800 font-semibold mb-2">Está a punto de marcar este servicio como entregado:</p>
+                    <div class="bg-white p-4 rounded-lg mt-3">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-icons text-purple-600">receipt</span>
+                            <div>
+                                <p class="text-xs text-gray-500">Nro. Servicio</p>
+                                <p class="font-bold text-gray-900" id="entregar-nro-servicio">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-icons text-purple-600">person</span>
+                            <div>
+                                <p class="text-xs text-gray-500">Paciente</p>
+                                <p class="font-bold text-gray-900" id="entregar-paciente">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                    <p class="text-sm text-blue-800 font-medium flex items-start gap-2">
+                        <span class="material-icons text-blue-600 text-lg">info</span>
+                        <span>Al confirmar, el estado cambiará a <strong>"Entregado"</strong> y se registrará la fecha y
+                            hora de entrega automáticamente.</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex gap-3">
+                <button type="button" onclick="cerrarModal('modal-confirmar-entrega')"
+                    class="flex-1 px-5 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirmar-entrega-calendario"
+                    class="flex-1 px-5 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-semibold flex items-center justify-center gap-2">
+                    <span class="material-icons">check_circle</span>
+                    <span>Confirmar Entrega</span>
+                </button>
+            </div>
+        </div>
     </div>
     @push('scripts')
         <script>
@@ -697,6 +760,7 @@
             let tiposEstudio = [];
             let servicioArrastrado = null;
             let horarioDestino = null;
+            let servicioActual = null;
 
             document.addEventListener('DOMContentLoaded', function () {
                 cargarCronogramas();
@@ -714,6 +778,38 @@
                 document.getElementById('form-asignar-cita').addEventListener('submit', guardarCita);
                 document.getElementById('form-nuevo-paciente').addEventListener('submit', guardarNuevoPaciente);
                 document.getElementById('form-nuevo-medico').addEventListener('submit', guardarNuevoMedico);
+                document.getElementById('btn-confirmar-entrega-calendario').addEventListener('click', async function () {
+                    if (!servicioActual) return;
+
+                    try {
+                        const response = await fetch(`/api/personal/servicios/${servicioActual.codServ}/entregar`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                            }
+                        });
+
+                        const data = await response.json();
+
+                        if (data.success) {
+                            mostrarAlerta('✅ Servicio marcado como entregado exitosamente', 'success');
+                            cerrarModal('modal-confirmar-entrega');
+
+                            // Recargar servicios si estamos viendo el cronograma
+                            if (cronogramaSeleccionado) {
+                                await cargarServiciosPorFecha(cronogramaSeleccionado.fechaCrono);
+                            }
+
+                            servicioActual = null;
+                        } else {
+                            mostrarAlerta(data.message || 'Error al marcar como entregado', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        mostrarAlerta('Error al marcar como entregado', 'error');
+                    }
+                });
             });
             document.getElementById('fechaCrono-modal').addEventListener('change', async function () {
                 await calcularNroFicha();
@@ -957,26 +1053,26 @@
                 const atendidos = total - disponibles;
 
                 infoDiv.innerHTML = `
-                                                                                                                                                                                                                                                    <div class="flex items-center justify-between">
-                                                                                                                                                                                                                                                        <div class="flex items-center gap-3">
-                                                                                                                                                                                                                                                            <div class="text-center">
-                                                                                                                                                                                                                                                                <p class="text-2xl font-bold text-pink-600">${disponibles}</p>
-                                                                                                                                                                                                                                                                <p class="text-xs text-gray-600 font-medium">Disponibles</p>
+                                                                                                                                                                                                                                                            <div class="flex items-center justify-between">
+                                                                                                                                                                                                                                                                <div class="flex items-center gap-3">
+                                                                                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                                                                                        <p class="text-2xl font-bold text-pink-600">${disponibles}</p>
+                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-medium">Disponibles</p>
+                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                                                                                        <p class="text-2xl font-bold text-blue-600">${atendidos}</p>
+                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-medium">Atendidos</p>
+                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                    <div class="text-center">
+                                                                                                                                                                                                                                                                        <p class="text-2xl font-bold text-red-600">${emergencia}</p>
+                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-medium">Emergencias</p>
+                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                <div class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-bold text-sm shadow-md">
+                                                                                                                                                                                                                                                                    ${cronograma.estado === 'activo' ? 'Activo' : 'Programado'}
+                                                                                                                                                                                                                                                                </div>
                                                                                                                                                                                                                                                             </div>
-                                                                                                                                                                                                                                                            <div class="text-center">
-                                                                                                                                                                                                                                                                <p class="text-2xl font-bold text-blue-600">${atendidos}</p>
-                                                                                                                                                                                                                                                                <p class="text-xs text-gray-600 font-medium">Atendidos</p>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                            <div class="text-center">
-                                                                                                                                                                                                                                                                <p class="text-2xl font-bold text-red-600">${emergencia}</p>
-                                                                                                                                                                                                                                                                <p class="text-xs text-gray-600 font-medium">Emergencias</p>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                        <div class="px-4 py-2 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-lg font-bold text-sm shadow-md">
-                                                                                                                                                                                                                                                            ${cronograma.estado === 'activo' ? 'Activo' : 'Programado'}
-                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                        `;
             }
 
             function renderizarCalendario() {
@@ -1012,29 +1108,29 @@
                 div.addEventListener('dragleave', handleDragLeave);
 
                 let contenidoHTML = `
-                                                                                                                                                                                                                                                <div class="mb-2 pb-2 border-b border-gray-100 text-center">
-                                                                                                                                                                                                                                                    <p class="text-lg font-bold text-gray-800">${horarioKey}</p>
-                                                                                                                                                                                                                                                    <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1
-                                                                                                                                                                                                                                                        ${estaDisponible
+                                                                                                                                                                                                                                                        <div class="mb-2 pb-2 border-b border-gray-100 text-center">
+                                                                                                                                                                                                                                                            <p class="text-lg font-bold text-gray-800">${horarioKey}</p>
+                                                                                                                                                                                                                                                            <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1
+                                                                                                                                                                                                                                                                ${estaDisponible
                         ? 'bg-emerald-50 text-emerald-600'
                         : 'bg-amber-50 text-amber-600'}">
-                                                                                                                                                                                                                                                        <span class="material-icons" style="font-size: 11px;">
-                                                                                                                                                                                                                                                            ${estaDisponible ? 'check_circle' : 'event_busy'}
-                                                                                                                                                                                                                                                        </span>
-                                                                                                                                                                                                                                                        ${estaDisponible ? 'Disponible' : 'Ocupado'}
-                                                                                                                                                                                                                                                    </span>
-                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                <div class="slots-container">
-                                                                                                                                                                                                                                            `;
+                                                                                                                                                                                                                                                                <span class="material-icons" style="font-size: 11px;">
+                                                                                                                                                                                                                                                                    ${estaDisponible ? 'check_circle' : 'event_busy'}
+                                                                                                                                                                                                                                                                </span>
+                                                                                                                                                                                                                                                                ${estaDisponible ? 'Disponible' : 'Ocupado'}
+                                                                                                                                                                                                                                                            </span>
+                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                        <div class="slots-container">
+                                                                                                                                                                                                                                                    `;
 
                 if (servicioMostrar === null) {
                     contenidoHTML += `
-                                                                                                                                                                                                                                                    <div class="slot-disponible" onclick="asignarCitaEnHorario('${horarioKey}')">
-                                                                                                                                                                                                                                                        <span class="material-icons text-gray-400 text-xl">add</span>
-                                                                                                                                                                                                                                                        <p class="text-xs text-gray-500 font-medium mt-1">Asignar Cita</p>
-                                                                                                                                                                                                                                                        <p class="text-xs text-gray-400">o arrastra aquí</p>
-                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                `;
+                                                                                                                                                                                                                                                            <div class="slot-disponible" onclick="asignarCitaEnHorario('${horarioKey}')">
+                                                                                                                                                                                                                                                                <span class="material-icons text-gray-400 text-xl">add</span>
+                                                                                                                                                                                                                                                                <p class="text-xs text-gray-500 font-medium mt-1">Asignar Cita</p>
+                                                                                                                                                                                                                                                                <p class="text-xs text-gray-400">o arrastra aquí</p>
+                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                        `;
                 } else {
                     contenidoHTML += crearTarjetaServicio(servicioMostrar);
                 }
@@ -1079,39 +1175,39 @@
                 const cursorClass = draggable ? 'cursor-move' : 'cursor-pointer';
 
                 return `
-                                                                                                                                                                                                                                        <div class="servicio-card ${colorClass} ${cursorClass}"
-                                                                                                                                                                                                                                             ${draggableAttr}
-                                                                                                                                                                                                                                             data-servicio-id="${servicio.codServ}"
-                                                                                                                                                                                                                                             data-horario-actual="${servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : ''}"
-                                                                                                                                                                                                                                             onclick="verDetalleServicio(${servicio.codServ})"
-                                                                                                                                                                                                                                             ondragstart="handleDragStart(event, ${servicio.codServ})"
-                                                                                                                                                                                                                                             ondragend="handleDragEnd(event)">
+                                                                                                                                                                                                                                                <div class="servicio-card ${colorClass} ${cursorClass}"
+                                                                                                                                                                                                                                                     ${draggableAttr}
+                                                                                                                                                                                                                                                     data-servicio-id="${servicio.codServ}"
+                                                                                                                                                                                                                                                     data-horario-actual="${servicio.horaCrono ? servicio.horaCrono.substring(0, 5) : ''}"
+                                                                                                                                                                                                                                                     onclick="verDetalleServicio(${servicio.codServ})"
+                                                                                                                                                                                                                                                     ondragstart="handleDragStart(event, ${servicio.codServ})"
+                                                                                                                                                                                                                                                     ondragend="handleDragEnd(event)">
 
-                                                                                                                                                                                                                                            <!-- Header: Ficha e Icono -->
-                                                                                                                                                                                                                                            <div class="flex items-center justify-between mb-1">
-                                                                                                                                                                                                                                                <span class="text-xs font-semibold text-gray-500">#${servicio.nroFicha || 'N/A'}</span>
-                                                                                                                                                                                                                                                <span class="material-icons estado-texto" style="font-size: 16px;">${iconoEstado}</span>
-                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                    <!-- Header: Ficha e Icono -->
+                                                                                                                                                                                                                                                    <div class="flex items-center justify-between mb-1">
+                                                                                                                                                                                                                                                        <span class="text-xs font-semibold text-gray-500">#${servicio.nroFicha || 'N/A'}</span>
+                                                                                                                                                                                                                                                        <span class="material-icons estado-texto" style="font-size: 16px;">${iconoEstado}</span>
+                                                                                                                                                                                                                                                    </div>
 
-                                                                                                                                                                                                                                            <!-- Paciente -->
-                                                                                                                                                                                                                                            <p class="titulo-paciente font-semibold text-sm truncate leading-snug" title="${paciente}">
-                                                                                                                                                                                                                                                ${paciente}
-                                                                                                                                                                                                                                            </p>
+                                                                                                                                                                                                                                                    <!-- Paciente -->
+                                                                                                                                                                                                                                                    <p class="titulo-paciente font-semibold text-sm truncate leading-snug" title="${paciente}">
+                                                                                                                                                                                                                                                        ${paciente}
+                                                                                                                                                                                                                                                    </p>
 
-                                                                                                                                                                                                                                            <!-- Estudio -->
-                                                                                                                                                                                                                                            <p class="subtexto text-xs truncate opacity-75 mt-0.5" title="${tipoEstudio}">
-                                                                                                                                                                                                                                                ${tipoEstudio}
-                                                                                                                                                                                                                                            </p>
+                                                                                                                                                                                                                                                    <!-- Estudio -->
+                                                                                                                                                                                                                                                    <p class="subtexto text-xs truncate opacity-75 mt-0.5" title="${tipoEstudio}">
+                                                                                                                                                                                                                                                        ${tipoEstudio}
+                                                                                                                                                                                                                                                    </p>
 
-                                                                                                                                                                                                                                            <!-- Footer: Código y Estado -->
-                                                                                                                                                                                                                                            <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-200/50">
-                                                                                                                                                                                                                                                <span class="text-xs text-gray-500 truncate max-w-[55%]" title="${servicio.nroServ || ''}">
-                                                                                                                                                                                                                                                    ${servicio.nroServ || 'N/A'}
-                                                                                                                                                                                                                                                </span>
-                                                                                                                                                                                                                                                <span class="estado-texto text-xs font-medium">${textoEstado}</span>
-                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                    `;
+                                                                                                                                                                                                                                                    <!-- Footer: Código y Estado -->
+                                                                                                                                                                                                                                                    <div class="flex items-center justify-between mt-auto pt-2 border-t border-gray-200/50">
+                                                                                                                                                                                                                                                        <span class="text-xs text-gray-500 truncate max-w-[55%]" title="${servicio.nroServ || ''}">
+                                                                                                                                                                                                                                                            ${servicio.nroServ || 'N/A'}
+                                                                                                                                                                                                                                                        </span>
+                                                                                                                                                                                                                                                        <span class="estado-texto text-xs font-medium">${textoEstado}</span>
+                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                            `;
             }
             // ==========================================
             // FUNCIONES DE DRAG & DROP
@@ -1263,56 +1359,92 @@
 
                         const horaCrono = s.horaCrono ? s.horaCrono.substring(0, 5) : 'Sin hora';
 
+                        // Determinar si puede marcar como entregado
+                        const puedeEntregar = s.estado === 'Atendido';
+                        const estaEntregado = s.estado === 'Entregado';
+
                         document.getElementById('contenido-detalle-servicio').innerHTML = `
-                                                                                                                                                                                                                                                            <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-5 border border-pink-200">
-                                                                                                                                                                                                                                                                <div class="grid grid-cols-2 gap-4">
-                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-semibold mb-1">Número de Servicio</p>
-                                                                                                                                                                                                                                                                        <p class="text-lg font-bold text-pink-600">${s.nroServ}</p>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-semibold mb-1">Número de Ficha</p>
-                                                                                                                                                                                                                                                                        <p class="text-lg font-bold text-gray-900">${s.nroFicha || 'N/A'}</p>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-semibold mb-1">Estado</p>
-                                                                                                                                                                                                                                                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${estadoBadge}">${s.estado}</span>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                    <div>
-                                                                                                                                                                                                                                                                        <p class="text-xs text-gray-600 font-semibold mb-1">Horario</p>
-                                                                                                                                                                                                                                                                        <p class="text-lg font-bold text-pink-600">${horaCrono}</p>
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                            <div class="grid grid-cols-2 gap-4">
-                                                                                                                                                                                                                                                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
-                                                                                                                                                                                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs text-blue-600">person</span> Paciente</p>
-                                                                                                                                                                                                                                                                    <p class="font-bold text-gray-900">${paciente}</p>
-                                                                                                                                                                                                                                                                    <p class="text-sm text-blue-700 mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
-                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                                <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
-                                                                                                                                                                                                                                                                    <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs text-purple-600">medical_services</span> Médico</p>
-                                                                                                                                                                                                                                                                    <p class="font-bold text-gray-900">${medico}</p>
-                                                                                                                                                                                                                                                                    <p class="text-sm text-purple-700 mt-1">${s.medico?.tipoMed || ''}</p>
-                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
-                                                                                                                                                                                                                                                                <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs text-purple-600">science</span> Tipo de Estudio</p>
-                                                                                                                                                                                                                                                                <p class="font-bold text-gray-900 text-lg">${s.tipo_estudio?.descripcion || 'N/A'}</p>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                                                                                                                                                                                                                                                                <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs">security</span> Tipo de Seguro</p>
-                                                                                                                                                                                                                                                                <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
-                                                                                                                                                                                                                                                            </div>
-                                                                                                                                                                                                                                                            ${(s.estado === 'Programado' || s.estado === 'EnProceso') ? `
-                                                                                                                                                                                                                                                            <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
-                                                                                                                                                                                                                                                                <p class="text-sm font-bold text-amber-900 mb-1"><span class="material-icons text-amber-600">info</span> Cambio de Horario</p>
-                                                                                                                                                                                                                                                                <p class="text-xs text-amber-800">Puedes arrastrar y soltar esta tarjeta para cambiar su horario</p>
-                                                                                                                                                                                                                                                            </div>` : ''}
-                                                                                                                                                                                                                                                            <button onclick="cerrarModalDetalle()" class="w-full px-5 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-xl hover:from-pink-600 hover:to-rose-700 transition-all font-semibold shadow-lg">
-                                                                                                                                                                                                                                                                Cerrar
-                                                                                                                                                                                                                                                            </button>
-                                                                                                                                                                                                                                                        `;
+                        <div class="space-y-4">
+                            <div class="bg-gradient-to-r from-pink-50 to-rose-50 rounded-xl p-5 border border-pink-200">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <p class="text-xs text-gray-600 font-semibold mb-1">Número de Servicio</p>
+                                        <p class="text-lg font-bold text-pink-600">${s.nroServ}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-600 font-semibold mb-1">Número de Ficha</p>
+                                        <p class="text-lg font-bold text-gray-900">${s.nroFicha || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-600 font-semibold mb-1">Estado</p>
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold ${estadoBadge}">${s.estado}</span>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-600 font-semibold mb-1">Horario</p>
+                                        <p class="text-lg font-bold text-pink-600">${horaCrono}</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="bg-blue-50 p-4 rounded-xl border border-blue-200">
+                                    <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs text-blue-600">person</span> Paciente</p>
+                                    <p class="font-bold text-gray-900">${paciente}</p>
+                                    <p class="text-sm text-blue-700 mt-1">${s.paciente?.nroHCI || 'Sin HCI'}</p>
+                                </div>
+                                <div class="bg-purple-50 p-4 rounded-xl border border-purple-200">
+                                    <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs text-purple-600">medical_services</span> Médico</p>
+                                    <p class="font-bold text-gray-900">${medico}</p>
+                                    <p class="text-sm text-purple-700 mt-1">${s.medico?.tipoMed || ''}</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-5 rounded-xl border border-purple-200">
+                                <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs text-purple-600">science</span> Tipo de Estudio</p>
+                                <p class="font-bold text-gray-900 text-lg">${s.tipo_estudio?.descripcion || 'N/A'}</p>
+                            </div>
+
+                            <div class="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                                <p class="text-xs text-gray-600 font-semibold mb-2"><span class="material-icons text-xs">security</span> Tipo de Seguro</p>
+                                <p class="font-bold text-gray-900">${s.tipoAseg?.replace('Aseg', 'Aseg. ').replace('NoAseg', 'No Aseg. ')}</p>
+                            </div>
+
+                            ${estaEntregado && s.fechaEnt ? `
+                                <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
+                                    <p class="text-sm font-bold text-purple-900 mb-2"><span class="material-icons text-purple-600 text-sm">done_all</span> Entregado</p>
+                                    <p class="text-xs text-purple-800">Fecha de entrega: ${formatearFecha(s.fechaEnt)}</p>
+                                </div>
+                            ` : ''}
+
+                            ${(s.estado === 'Programado' || s.estado === 'EnProceso') ? `
+                                <div class="bg-amber-50 border-l-4 border-amber-500 p-4 rounded-lg">
+                                    <p class="text-sm font-bold text-amber-900 mb-1"><span class="material-icons">info</span> Cambio de Horario</p>
+                                    <p class="text-xs text-amber-800">Puedes arrastrar y soltar esta tarjeta para cambiar su horario</p>
+                                </div>
+                            ` : ''}
+
+                            <div class="flex flex-col gap-3 mt-4">
+                                <a href="/enfermera/calendario/servicio/${s.codServ}/pdf" target="_blank"
+                                   class="w-full px-5 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl hover:from-red-600 hover:to-red-700 transition-all font-semibold shadow-lg flex items-center justify-center gap-2">
+                                    <span class="material-icons">picture_as_pdf</span>
+                                    Exportar Ficha de Cita (PDF)
+                                </a>
+
+                                ${puedeEntregar ? `
+                                    <button onclick="confirmarEntregaDesdeDetalle(${s.codServ})"
+                                            class="w-full px-5 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all font-semibold shadow-lg flex items-center justify-center gap-2">
+                                        <span class="material-icons">assignment_turned_in</span>
+                                        Marcar como Entregado
+                                    </button>
+                                ` : ''}
+
+                                <button onclick="cerrarModalDetalle()"
+                                        class="w-full px-5 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-xl hover:from-pink-600 hover:to-rose-700 transition-all font-semibold shadow-lg">
+                                    Cerrar
+                                </button>
+                            </div>
+                        </div>
+                    `;
 
                         document.getElementById('modal-detalle-servicio').classList.remove('hidden');
                     }
@@ -1321,244 +1453,269 @@
                 }
             }
 
-            function cerrarModalDetalle() {
-                document.getElementById('modal-detalle-servicio').classList.add('hidden');
+            function cerrarModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+
+        function confirmarEntregaDesdeDetalle(codServ) {
+            // Cerrar modal de detalle
+            cerrarModalDetalle();
+
+            // Buscar el servicio
+            const servicio = Object.values(serviciosPorHorario)
+                .flat()
+                .find(s => s.codServ === codServ);
+
+            if (!servicio) {
+                mostrarAlerta('No se encontró el servicio', 'error');
+                return;
             }
 
-            function ocultarCalendario() {
-                document.getElementById('calendario-container').classList.add('hidden');
-                document.getElementById('sin-seleccion').classList.remove('hidden');
-                document.getElementById('info-cronograma').innerHTML = 'Seleccione un cronograma para ver la información';
-            }
+            servicioActual = servicio;
+            const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''} ${servicio.paciente?.maternoPa || ''}`.trim();
 
-            function abrirModalAsignarCita() {
-                document.getElementById('form-asignar-cita').reset();
-                horarioSeleccionado = null;
-                horarioPreseleccionado = null;
-
-                const ahora = new Date();
-                document.getElementById('fechaSol').valueAsDate = ahora;
-                document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
-
-                // Mostrar selector de horarios (viene del botón principal)
-                document.getElementById('horarios-container-modal').classList.remove('hidden');
-                document.getElementById('horario-preseleccionado-info').classList.add('hidden');
-
-                document.getElementById('modal-asignar-cita').classList.remove('hidden');
-            }
-
-
-            function asignarCitaEnHorario(horario) {
-                // Reset formularios
-                document.getElementById('form-asignar-cita').reset();
-                document.getElementById('form-nuevo-paciente').reset();
-                document.getElementById('form-nuevo-medico').reset();
-
-                const ahora = new Date();
-                document.getElementById('fechaSol').valueAsDate = ahora;
-                document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
-
-                // Guardar horario
-                horarioSeleccionado = horario.length === 5 ? horario + ':00' : horario;
-                document.getElementById('horaCrono').value = horarioSeleccionado;
-                document.getElementById('horario-preseleccionado-texto').textContent = horario.substring(0, 5);
-
-                // Fecha del cronograma
-                if (cronogramaSeleccionado) {
-                    document.getElementById('fechaCrono-modal').value = cronogramaSeleccionado.fechaCrono;
-                    calcularNroFicha();
-                }
-
-                // Mostrar vista de cita
-                mostrarVista('cita');
-                document.getElementById('modal-asignar-cita').classList.remove('hidden');
-            }
-            function cerrarModalAsignarCita() {
-                document.getElementById('modal-asignar-cita').classList.add('hidden');
-                horarioSeleccionado = null;
-            }
-
-            async function calcularNroFicha() {
-                const fechaCrono = document.getElementById('fechaCrono-modal').value;
-                const displayFicha = document.getElementById('nroFicha-display');
-
-                if (!fechaCrono) {
-                    displayFicha.textContent = '-';
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/api/enfermera/servicios/calcular-ficha/${fechaCrono}`);
-                    const data = await response.json();
-                    if (data.success) {
-                        displayFicha.textContent = data.data.nroFicha;
+            document.getElementById('entregar-nro-servicio').textContent = servicio.nroServ;
+            document.getElementById('entregar-paciente').textContent = paciente;
+            document.getElementById('modal-confirmar-entrega').classList.remove('hidden');
+        }
+                    function cerrarModalDetalle() {
+                        document.getElementById('modal-detalle-servicio').classList.add('hidden');
                     }
-                } catch (error) {
-                    console.error('Error al calcular ficha:', error);
-                    displayFicha.textContent = '-';
-                }
-            }
-            async function cargarHorariosDisponiblesModal() {
-                const fechaCrono = document.getElementById('fechaCrono-modal').value;
-                if (!fechaCrono) return;
 
-                try {
-                    const response = await fetch(`/api/enfermera/servicios/horarios-disponibles/${fechaCrono}`);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        const horariosDisponibles = data.data.disponibles || [];
-                        const espaciosPorHora = data.data.espacios_por_hora || {};
-
-                        renderizarHorariosModal('horarios-manana-modal', horariosDisponibles, espaciosPorHora, 8, 13);
-                        renderizarHorariosModal('horarios-tarde-modal', horariosDisponibles, espaciosPorHora, 14, 20);
+                    function ocultarCalendario() {
+                        document.getElementById('calendario-container').classList.add('hidden');
+                        document.getElementById('sin-seleccion').classList.remove('hidden');
+                        document.getElementById('info-cronograma').innerHTML = 'Seleccione un cronograma para ver la información';
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                }
-            }
 
-            function renderizarHorariosModal(containerId, horariosDisponibles, espaciosPorHora, horaInicio, horaFin) {
-                const container = document.getElementById(containerId);
-                container.innerHTML = '';
+                    function abrirModalAsignarCita() {
+                        document.getElementById('form-asignar-cita').reset();
+                        horarioSeleccionado = null;
+                        horarioPreseleccionado = null;
 
-                for (let hora = horaInicio; hora <= horaFin; hora++) {
-                    renderizarSlotHorarioModal(container, hora, 0, espaciosPorHora);
-                    if (!(hora === horaFin && horaFin === 20)) {
-                        renderizarSlotHorarioModal(container, hora, 30, espaciosPorHora);
+                        const ahora = new Date();
+                        document.getElementById('fechaSol').valueAsDate = ahora;
+                        document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
+
+                        // Mostrar selector de horarios (viene del botón principal)
+                        document.getElementById('horarios-container-modal').classList.remove('hidden');
+                        document.getElementById('horario-preseleccionado-info').classList.add('hidden');
+
+                        document.getElementById('modal-asignar-cita').classList.remove('hidden');
                     }
-                }
-            }
 
-            function renderizarSlotHorarioModal(container, hora, minutos, espaciosPorHora) {
-                const horario = `${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`;
-                const horarioFormateado = horario.substring(0, 5);
 
-                const espacios = espaciosPorHora[horario];
-                const espaciosDisponibles = espacios ? espacios.disponibles : 1;
-                const estaDisponible = espaciosDisponibles > 0;
+                    function asignarCitaEnHorario(horario) {
+                        // Reset formularios
+                        document.getElementById('form-asignar-cita').reset();
+                        document.getElementById('form-nuevo-paciente').reset();
+                        document.getElementById('form-nuevo-medico').reset();
 
-                const button = document.createElement('button');
-                button.type = 'button';
-                button.className = `horario-btn px-3 py-2 rounded-lg border-2 font-semibold text-sm ${!estaDisponible
-                    ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
-                    : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500 hover:bg-pink-50'
-                    }`;
+                        const ahora = new Date();
+                        document.getElementById('fechaSol').valueAsDate = ahora;
+                        document.getElementById('horaSol').value = ahora.toTimeString().slice(0, 5);
 
-                button.innerHTML = `
-                                                                                                                                                                                                                                                    <div class="font-bold text-base">${horarioFormateado}</div>
-                                                                                                                                                                                                                                                    <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
-                                                                                                                                                                                                                                                        ${estaDisponible ? '✓ Libre' : '✗ Ocupado'}
-                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                `;
+                        // Guardar horario
+                        horarioSeleccionado = horario.length === 5 ? horario + ':00' : horario;
+                        document.getElementById('horaCrono').value = horarioSeleccionado;
+                        document.getElementById('horario-preseleccionado-texto').textContent = horario.substring(0, 5);
 
-                button.disabled = !estaDisponible;
-
-                if (estaDisponible) {
-                    button.onclick = () => seleccionarHorarioModal(horario, button);
-                }
-
-                container.appendChild(button);
-            }
-
-            function seleccionarHorarioModal(horario, botonElement) {
-                document.querySelectorAll('#horarios-manana-modal button, #horarios-tarde-modal button').forEach(btn => {
-                    btn.classList.remove('selected', 'bg-pink-500', 'text-white', 'border-pink-600');
-                    if (!btn.disabled) {
-                        btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
-                    }
-                });
-
-                if (botonElement) {
-                    botonElement.classList.add('selected');
-                }
-
-                horarioSeleccionado = horario;
-                document.getElementById('horaCrono').value = horario;
-            }
-
-            async function guardarCita(e) {
-                e.preventDefault();
-
-                if (!horarioSeleccionado) {
-                    mostrarAlerta('Error: No hay horario seleccionado', 'error');
-                    return;
-                }
-
-                const fechaCronoModal = document.getElementById('fechaCrono-modal').value;
-                if (!fechaCronoModal) {
-                    mostrarAlerta('Error: No hay fecha de cronograma', 'error');
-                    return;
-                }
-
-                const datos = {
-                    fechaSol: document.getElementById('fechaSol').value,
-                    horaSol: document.getElementById('horaSol').value,
-                    tipoAseg: document.getElementById('tipoAseg').value,
-                    codPa: document.getElementById('codPa').value,
-                    codMed: document.getElementById('codMed').value,
-                    codTest: document.getElementById('codTest').value,
-                    fechaCrono: fechaCronoModal,
-                    horaCrono: horarioSeleccionado
-                };
-
-                try {
-                    const response = await fetch('/api/enfermera/servicios', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-                        },
-                        body: JSON.stringify(datos)
-                    });
-
-                    const data = await response.json();
-
-                    if (data.success) {
-                        mostrarAlerta('✅ Cita asignada exitosamente', 'success');
-                        cerrarModalAsignarCita();
-
-                        if (cronogramaSeleccionado && datos.fechaCrono === cronogramaSeleccionado.fechaCrono) {
-                            cargarServiciosPorFecha(datos.fechaCrono);
+                        // Fecha del cronograma
+                        if (cronogramaSeleccionado) {
+                            document.getElementById('fechaCrono-modal').value = cronogramaSeleccionado.fechaCrono;
+                            calcularNroFicha();
                         }
-                        cargarCronogramas();
-                    } else {
-                        mostrarAlerta(data.message || 'Error al asignar la cita', 'error');
+
+                        // Mostrar vista de cita
+                        mostrarVista('cita');
+                        document.getElementById('modal-asignar-cita').classList.remove('hidden');
                     }
-                } catch (error) {
-                    console.error('Error:', error);
-                    mostrarAlerta('Error al asignar la cita', 'error');
-                }
-            }
+                    function cerrarModalAsignarCita() {
+                        document.getElementById('modal-asignar-cita').classList.add('hidden');
+                        horarioSeleccionado = null;
+                    }
+
+                    async function calcularNroFicha() {
+                        const fechaCrono = document.getElementById('fechaCrono-modal').value;
+                        const displayFicha = document.getElementById('nroFicha-display');
+
+                        if (!fechaCrono) {
+                            displayFicha.textContent = '-';
+                            return;
+                        }
+
+                        try {
+                            const response = await fetch(`/api/enfermera/servicios/calcular-ficha/${fechaCrono}`);
+                            const data = await response.json();
+                            if (data.success) {
+                                displayFicha.textContent = data.data.nroFicha;
+                            }
+                        } catch (error) {
+                            console.error('Error al calcular ficha:', error);
+                            displayFicha.textContent = '-';
+                        }
+                    }
+                    async function cargarHorariosDisponiblesModal() {
+                        const fechaCrono = document.getElementById('fechaCrono-modal').value;
+                        if (!fechaCrono) return;
+
+                        try {
+                            const response = await fetch(`/api/enfermera/servicios/horarios-disponibles/${fechaCrono}`);
+                            const data = await response.json();
+
+                            if (data.success) {
+                                const horariosDisponibles = data.data.disponibles || [];
+                                const espaciosPorHora = data.data.espacios_por_hora || {};
+
+                                renderizarHorariosModal('horarios-manana-modal', horariosDisponibles, espaciosPorHora, 8, 13);
+                                renderizarHorariosModal('horarios-tarde-modal', horariosDisponibles, espaciosPorHora, 14, 20);
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                        }
+                    }
+
+                    function renderizarHorariosModal(containerId, horariosDisponibles, espaciosPorHora, horaInicio, horaFin) {
+                        const container = document.getElementById(containerId);
+                        container.innerHTML = '';
+
+                        for (let hora = horaInicio; hora <= horaFin; hora++) {
+                            renderizarSlotHorarioModal(container, hora, 0, espaciosPorHora);
+                            if (!(hora === horaFin && horaFin === 20)) {
+                                renderizarSlotHorarioModal(container, hora, 30, espaciosPorHora);
+                            }
+                        }
+                    }
+
+                    function renderizarSlotHorarioModal(container, hora, minutos, espaciosPorHora) {
+                        const horario = `${String(hora).padStart(2, '0')}:${String(minutos).padStart(2, '0')}:00`;
+                        const horarioFormateado = horario.substring(0, 5);
+
+                        const espacios = espaciosPorHora[horario];
+                        const espaciosDisponibles = espacios ? espacios.disponibles : 1;
+                        const estaDisponible = espaciosDisponibles > 0;
+
+                        const button = document.createElement('button');
+                        button.type = 'button';
+                        button.className = `horario-btn px-3 py-2 rounded-lg border-2 font-semibold text-sm ${!estaDisponible
+                            ? 'bg-gray-100 text-gray-400 border-gray-300 cursor-not-allowed'
+                            : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500 hover:bg-pink-50'
+                            }`;
+
+                        button.innerHTML = `
+                                                                                                                                                                                                                                                            <div class="font-bold text-base">${horarioFormateado}</div>
+                                                                                                                                                                                                                                                            <div class="text-xs mt-1 ${estaDisponible ? 'text-emerald-600' : 'text-red-600'}">
+                                                                                                                                                                                                                                                                ${estaDisponible ? '✓ Libre' : '✗ Ocupado'}
+                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                        `;
+
+                        button.disabled = !estaDisponible;
+
+                        if (estaDisponible) {
+                            button.onclick = () => seleccionarHorarioModal(horario, button);
+                        }
+
+                        container.appendChild(button);
+                    }
+
+                    function seleccionarHorarioModal(horario, botonElement) {
+                        document.querySelectorAll('#horarios-manana-modal button, #horarios-tarde-modal button').forEach(btn => {
+                            btn.classList.remove('selected', 'bg-pink-500', 'text-white', 'border-pink-600');
+                            if (!btn.disabled) {
+                                btn.classList.add('bg-white', 'text-gray-700', 'border-gray-300');
+                            }
+                        });
+
+                        if (botonElement) {
+                            botonElement.classList.add('selected');
+                        }
+
+                        horarioSeleccionado = horario;
+                        document.getElementById('horaCrono').value = horario;
+                    }
+
+                    async function guardarCita(e) {
+                        e.preventDefault();
+
+                        if (!horarioSeleccionado) {
+                            mostrarAlerta('Error: No hay horario seleccionado', 'error');
+                            return;
+                        }
+
+                        const fechaCronoModal = document.getElementById('fechaCrono-modal').value;
+                        if (!fechaCronoModal) {
+                            mostrarAlerta('Error: No hay fecha de cronograma', 'error');
+                            return;
+                        }
+
+                        const datos = {
+                            fechaSol: document.getElementById('fechaSol').value,
+                            horaSol: document.getElementById('horaSol').value,
+                            tipoAseg: document.getElementById('tipoAseg').value,
+                            codPa: document.getElementById('codPa').value,
+                            codMed: document.getElementById('codMed').value,
+                            codTest: document.getElementById('codTest').value,
+                            fechaCrono: fechaCronoModal,
+                            horaCrono: horarioSeleccionado
+                        };
+
+                        try {
+                            const response = await fetch('/api/enfermera/servicios', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify(datos)
+                            });
+
+                            const data = await response.json();
+
+                            if (data.success) {
+                                mostrarAlerta('✅ Cita asignada exitosamente', 'success');
+                                cerrarModalAsignarCita();
+
+                                if (cronogramaSeleccionado && datos.fechaCrono === cronogramaSeleccionado.fechaCrono) {
+                                    cargarServiciosPorFecha(datos.fechaCrono);
+                                }
+                                cargarCronogramas();
+                            } else {
+                                mostrarAlerta(data.message || 'Error al asignar la cita', 'error');
+                            }
+                        } catch (error) {
+                            console.error('Error:', error);
+                            mostrarAlerta('Error al asignar la cita', 'error');
+                        }
+                    }
 
 
-            function abrirModalNuevoPaciente() {
-                window.open('{{ route("enfermera.calendario.agregar-paciente") }}', '_blank', 'width=900,height=700');
-            }
+                    function abrirModalNuevoPaciente() {
+                        window.open('{{ route("enfermera.calendario.agregar-paciente") }}', '_blank', 'width=900,height=700');
+                    }
 
-            function abrirModalNuevoMedico() {
-                window.open('{{ route("enfermera.calendario.agregar-medico") }}', '_blank', 'width=900,height=600');
-            }
+                    function abrirModalNuevoMedico() {
+                        window.open('{{ route("enfermera.calendario.agregar-medico") }}', '_blank', 'width=900,height=600');
+                    }
 
-            function mostrarAlerta(mensaje, tipo = 'success') {
-                const alerta = document.getElementById('alerta');
-                const iconos = { success: 'check_circle', error: 'error', info: 'info' };
-                const colores = {
-                    success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
-                    error: 'bg-red-50 border-red-300 text-red-800',
-                    info: 'bg-blue-50 border-blue-300 text-blue-800'
-                };
+                    function mostrarAlerta(mensaje, tipo = 'success') {
+                        const alerta = document.getElementById('alerta');
+                        const iconos = { success: 'check_circle', error: 'error', info: 'info' };
+                        const colores = {
+                            success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
+                            error: 'bg-red-50 border-red-300 text-red-800',
+                            info: 'bg-blue-50 border-blue-300 text-blue-800'
+                        };
 
-                alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-md`;
-                alerta.innerHTML = `
-                                                                                                                                                                                                                                                    <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
-                                                                                                                                                                                                                                                    <span class="font-semibold">${mensaje}</span>
-                                                                                                                                                                                                                                                `;
-                alerta.classList.remove('hidden');
+                        alerta.className = `p-4 rounded-xl border-2 flex items-center ${colores[tipo]} mb-4 shadow-md`;
+                        alerta.innerHTML = `
+                                                                                                                                                                                                                                                            <span class="material-icons mr-2 text-xl">${iconos[tipo]}</span>
+                                                                                                                                                                                                                                                            <span class="font-semibold">${mensaje}</span>
+                                                                                                                                                                                                                                                        `;
+                        alerta.classList.remove('hidden');
 
-                setTimeout(() => alerta.classList.add('hidden'), 5000);
-            }
-        </script>
+                        setTimeout(() => alerta.classList.add('hidden'), 5000);
+                    }
+                </script>
     @endpush
 
 @endsection
