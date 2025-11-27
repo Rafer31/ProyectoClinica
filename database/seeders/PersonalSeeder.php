@@ -15,7 +15,8 @@ class PersonalSeeder extends Seeder
         $supervisor = Rol::create(['nombreRol' => 'Supervisor']);
         $personalImagen = Rol::create(['nombreRol' => 'PersonalImagen']);
         $enfermera = Rol::create(['nombreRol' => 'Enfermera']);
-        // Crear usuario Supervisor
+
+        // Supervisor
         PersonalSalud::create([
             'usuarioPer' => 'supervisor',
             'clavePer' => Hash::make('12345678'),
@@ -26,7 +27,7 @@ class PersonalSeeder extends Seeder
             'codRol' => $supervisor->codRol,
         ]);
 
-        // Crear usuario Personal de Imagen
+        // Personal de Imagen
         PersonalSalud::create([
             'usuarioPer' => 'personal1',
             'clavePer' => Hash::make('12345678'),
@@ -36,13 +37,74 @@ class PersonalSeeder extends Seeder
             'estado' => 'activo',
             'codRol' => $personalImagen->codRol,
         ]);
-        // Crear usuario Supervisor
+
+        PersonalSalud::create([
+            'usuarioPer' => 'personal2',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Carlos',
+            'paternoPer' => 'Rodríguez',
+            'maternoPer' => 'Flores',
+            'estado' => 'activo',
+            'codRol' => $personalImagen->codRol,
+        ]);
+
+        PersonalSalud::create([
+            'usuarioPer' => 'personal3',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Ana',
+            'paternoPer' => 'Martínez',
+            'maternoPer' => 'Vargas',
+            'estado' => 'activo',
+            'codRol' => $personalImagen->codRol,
+        ]);
+
+        PersonalSalud::create([
+            'usuarioPer' => 'personal4',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Luis',
+            'paternoPer' => 'Sánchez',
+            'maternoPer' => 'Condori',
+            'estado' => 'inactivo',
+            'codRol' => $personalImagen->codRol,
+        ]);
+
+        // Enfermeras
         PersonalSalud::create([
             'usuarioPer' => 'enfermera',
             'clavePer' => Hash::make('12345678'),
             'nomPer' => 'Vanesa',
             'paternoPer' => 'Quispe',
             'maternoPer' => 'López',
+            'estado' => 'activo',
+            'codRol' => $enfermera->codRol,
+        ]);
+
+        PersonalSalud::create([
+            'usuarioPer' => 'enfermera2',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Patricia',
+            'paternoPer' => 'Huanca',
+            'maternoPer' => 'Apaza',
+            'estado' => 'activo',
+            'codRol' => $enfermera->codRol,
+        ]);
+
+        PersonalSalud::create([
+            'usuarioPer' => 'enfermera3',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Rosa',
+            'paternoPer' => 'Choque',
+            'maternoPer' => 'Nina',
+            'estado' => 'activo',
+            'codRol' => $enfermera->codRol,
+        ]);
+
+        PersonalSalud::create([
+            'usuarioPer' => 'enfermera4',
+            'clavePer' => Hash::make('12345678'),
+            'nomPer' => 'Elena',
+            'paternoPer' => 'Mamani',
+            'maternoPer' => 'Ticona',
             'estado' => 'activo',
             'codRol' => $enfermera->codRol,
         ]);
