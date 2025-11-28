@@ -1697,6 +1697,12 @@
                         window.open('{{ route("enfermera.calendario.agregar-medico") }}', '_blank', 'width=900,height=600');
                     }
 
+                    function formatearFecha(fecha) {
+                        if (!fecha) return 'N/A';
+                        const d = new Date(fecha);
+                        return d.toLocaleDateString('es-ES', { day: '2-digit', month: 'long', year: 'numeric' });
+                    }
+
                     function mostrarAlerta(mensaje, tipo = 'success') {
                         const alerta = document.getElementById('alerta');
                         const iconos = { success: 'check_circle', error: 'error', info: 'info' };

@@ -90,7 +90,7 @@
 
                     pacientesPagina.forEach((p) => {
                         const nombreCompleto = `${p.nomPa || ''} ${p.paternoPa || ''} ${p.maternoPa || ''}`.trim();
-                        const estadoClass = p.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-red-100 text-red-700 border-red-300';
+                        const estadoClass = p.estado === 'activo' ? 'bg-pink-100 text-pink-700 border-pink-300' : 'bg-red-100 text-red-700 border-red-300';
                         const tipoClass = p.tipoPac === 'SUS' ? 'bg-blue-100 text-blue-700 border-blue-300' : 'bg-gray-100 text-gray-700 border-gray-300';
 
                         const edad = p.fechaNac ? calcularEdad(p.fechaNac) : '-';
@@ -99,7 +99,7 @@
                         const sexoColor = p.sexo === 'M' ? 'text-blue-600' : 'text-pink-600';
 
                         const fila = `
-                            <tr class="bg-white border-b hover:bg-emerald-50 transition-colors">
+                            <tr class="bg-white border-b hover:bg-pink-50 transition-colors">
                                 <td class="px-6 py-4">
                                     <div class="flex items-center">
                                         <div class="flex-shrink-0 h-12 w-12">
@@ -109,7 +109,7 @@
                                         </div>
                                         <div class="ml-4">
                                             <div class="text-sm font-bold text-gray-900">${nombreCompleto}</div>
-                                            <div class="text-xs text-emerald-600 font-medium">${p.nroHCI || 'Sin HCI'}</div>
+                                            <div class="text-xs text-pink-600 font-medium">${p.nroHCI || 'Sin HCI'}</div>
                                         </div>
                                     </div>
                                 </td>
@@ -142,13 +142,13 @@
                                             Ver
                                         </button>
                                         <a href="/enfermera/pacientes/editar/${p.codPa}"
-                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-all border border-emerald-200 hover:shadow-md"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold text-pink-700 bg-pink-50 rounded-lg hover:bg-pink-100 transition-all border border-pink-200 hover:shadow-md"
                                             title="Editar">
                                             <span class="material-icons text-base mr-1">edit</span>
                                             Editar
                                         </a>
                                         <button onclick="cambiarEstado(${p.codPa}, '${p.estado}')"
-                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold ${p.estado === 'activo' ? 'text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-200' : 'text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border-emerald-200'} rounded-lg transition-all border hover:shadow-md"
+                                            class="inline-flex items-center px-3 py-2 text-sm font-semibold ${p.estado === 'activo' ? 'text-orange-700 bg-orange-50 hover:bg-orange-100 border-orange-200' : 'text-pink-700 bg-pink-50 hover:bg-pink-100 border-pink-200'} rounded-lg transition-all border hover:shadow-md"
                                             title="${p.estado === 'activo' ? 'Desactivar' : 'Activar'}">
                                             <span class="material-icons text-base mr-1">${p.estado === 'activo' ? 'block' : 'check_circle'}</span>
                                             ${p.estado === 'activo' ? 'Desactivar' : 'Activar'}
@@ -182,7 +182,7 @@
                         class="px-4 py-2 text-sm font-semibold rounded-lg border transition-all
                             ${paginaActual === 1
                                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:shadow-md'}">
+                                : 'bg-white text-pink-700 border-pink-300 hover:bg-pink-50 hover:shadow-md'}">
                         <span class="material-icons text-sm">chevron_left</span>
                     </button>
                 `;
@@ -196,8 +196,8 @@
                             <button onclick="cambiarPagina(${i})"
                                 class="px-4 py-2 text-sm font-bold rounded-lg border transition-all
                                     ${i === paginaActual
-                                        ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white border-emerald-600 shadow-md'
-                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-emerald-50 hover:border-emerald-300 hover:shadow-md'}">
+                                        ? 'bg-gradient-to-r from-pink-500 to-rose-600 text-white border-pink-600 shadow-md'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:bg-pink-50 hover:border-pink-300 hover:shadow-md'}">
                                 ${i}
                             </button>
                         `;
@@ -213,7 +213,7 @@
                         class="px-4 py-2 text-sm font-semibold rounded-lg border transition-all
                             ${paginaActual === totalPaginas
                                 ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                                : 'bg-white text-emerald-700 border-emerald-300 hover:bg-emerald-50 hover:shadow-md'}">
+                                : 'bg-white text-pink-700 border-pink-300 hover:bg-pink-50 hover:shadow-md'}">
                         <span class="material-icons text-sm">chevron_right</span>
                     </button>
                 `;
@@ -278,7 +278,7 @@
 
                 if (nuevoEstado === 'activo') {
                     iconoEstado.textContent = 'check_circle';
-                    headerModal.className = 'bg-gradient-to-r from-emerald-500 to-teal-600 rounded-t-xl p-4';
+                    headerModal.className = 'bg-gradient-to-r from-pink-500 to-rose-600 rounded-t-xl p-4';
                 } else {
                     iconoEstado.textContent = 'block';
                     headerModal.className = 'bg-gradient-to-r from-orange-500 to-red-600 rounded-t-xl p-4';
@@ -348,7 +348,7 @@
                             </div>
                             <div>
                                 <h3 class="text-2xl font-bold text-gray-900">${nombreCompleto}</h3>
-                                <p class="text-emerald-600 font-semibold">${paciente.nroHCI || 'Sin HCI'}</p>
+                                <p class="text-pink-600 font-semibold">${paciente.nroHCI || 'Sin HCI'}</p>
                             </div>
                         </div>
 
@@ -371,7 +371,7 @@
                             </div>
                             <div class="p-3 bg-gray-50 rounded-lg col-span-2">
                                 <p class="text-xs font-semibold text-gray-500 uppercase mb-2">Estado</p>
-                                <span class="px-3 py-1.5 text-sm font-bold rounded-full border ${paciente.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 border-emerald-300' : 'bg-red-100 text-red-700 border-red-300'}">
+                                <span class="px-3 py-1.5 text-sm font-bold rounded-full border ${paciente.estado === 'activo' ? 'bg-pink-100 text-pink-700 border-pink-300' : 'bg-red-100 text-red-700 border-red-300'}">
                                     ${paciente.estado}
                                 </span>
                             </div>
@@ -382,7 +382,7 @@
                                 <span class="material-icons text-base mr-1">close</span>
                                 Cerrar
                             </button>
-                            <a href="/enfermera/pacientes/editar/${paciente.codPa}" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-emerald-500 to-teal-600 rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md">
+                            <a href="/enfermera/pacientes/editar/${paciente.codPa}" class="inline-flex items-center px-5 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-pink-500 to-rose-600 rounded-lg hover:from-pink-600 hover:to-teal-700 transition-all shadow-md">
                                 <span class="material-icons text-base mr-1">edit</span>
                                 Editar
                             </a>
@@ -474,7 +474,7 @@
                     
                     let estadoClass = '';
                     switch(s.estado) {
-                        case 'Atendido': estadoClass = 'bg-emerald-100 text-emerald-700 border-emerald-300'; break;
+                        case 'Atendido': estadoClass = 'bg-pink-100 text-pink-700 border-pink-300'; break;
                         case 'Programado': estadoClass = 'bg-amber-100 text-amber-700 border-amber-300'; break;
                         case 'EnProceso': estadoClass = 'bg-blue-100 text-blue-700 border-blue-300'; break;
                         default: estadoClass = 'bg-gray-100 text-gray-700 border-gray-300';
@@ -514,7 +514,7 @@
                     info: 'info'
                 };
                 const colores = {
-                    success: 'bg-emerald-50 border-emerald-300 text-emerald-800',
+                    success: 'bg-pink-50 border-pink-300 text-emerald-800',
                     error: 'bg-red-50 border-red-300 text-red-800',
                     info: 'bg-blue-50 border-blue-300 text-blue-800'
                 };
@@ -567,7 +567,7 @@
                 </div>
             </div>
 
-            <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
+            <div class="bg-gradient-to-br from-pink-500 to-pink-600 rounded-xl shadow-lg p-6 text-white transform transition-all hover:scale-105">
                 <div class="flex items-center justify-between">
                     <div class="flex-shrink-0 bg-white bg-opacity-20 rounded-xl p-4 backdrop-blur-sm">
                         <span class="material-icons text-4xl">check_circle</span>
@@ -597,15 +597,15 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
                 <div>
                     <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                        <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
                             <span class="material-icons text-white text-2xl">people</span>
                         </div>
                         Lista de Pacientes
                     </h1>
-                    <p class="text-emerald-600 font-medium ml-15" id="resultados-count">Cargando...</p>
+                    <p class="text-pink-600 font-medium ml-15" id="resultados-count">Cargando...</p>
                 </div>
                 <a href="{{ route('enfermera.pacientes.agregar') }}"
-                    class="mt-4 md:mt-0 inline-flex items-center px-5 py-3 bg-gradient-to-r from-emerald-500 to-teal-600 text-white rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105">
+                    class="mt-4 md:mt-0 inline-flex items-center px-5 py-3 bg-gradient-to-r from-pink-500 to-rose-600 text-white rounded-xl hover:from-pink-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg font-semibold transform hover:scale-105">
                     <span class="material-icons mr-2">add</span>
                     Agregar Paciente
                 </a>
@@ -618,14 +618,14 @@
                     <div class="relative">
                         <span class="material-icons absolute left-3 top-3 text-gray-400">search</span>
                         <input type="text" id="busqueda" placeholder="Buscar por nombre o HCI..."
-                            class="pl-10 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-all">
+                            class="pl-10 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-pink-500 focus:border-pink-500 p-3 transition-all">
                     </div>
                 </div>
 
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Estado</label>
                     <select id="filtroEstado"
-                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-all">
+                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-pink-500 focus:border-pink-500 p-3 transition-all">
                         <option value="">Todos</option>
                         <option value="activo">Activo</option>
                         <option value="inactivo">Inactivo</option>
@@ -635,7 +635,7 @@
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">Tipo</label>
                     <select id="filtroTipo"
-                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-emerald-500 focus:border-emerald-500 p-3 transition-all">
+                        class="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-pink-500 focus:border-pink-500 p-3 transition-all">
                         <option value="">Todos</option>
                         <option value="SUS">SUS</option>
                         <option value="SINSUS">SIN SUS</option>
@@ -644,7 +644,7 @@
             </div>
 
             <div class="mt-4">
-                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-emerald-600 hover:text-emerald-800 font-semibold transition-colors">
+                <button onclick="limpiarFiltros()" class="inline-flex items-center text-sm text-pink-600 hover:text-emerald-800 font-semibold transition-colors">
                     <span class="material-icons text-sm mr-1">clear</span>
                     Limpiar filtros
                 </button>
@@ -654,7 +654,7 @@
         <!-- Loader -->
         <div id="loader" class="flex justify-center items-center py-12">
             <div class="flex flex-col items-center gap-3">
-                <div class="animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
+                <div class="animate-spin rounded-full h-12 w-12 border-4 border-pink-200 border-t-pink-600"></div>
                 <span class="text-sm font-medium text-gray-600">Cargando pacientes...</span>
             </div>
         </div>
@@ -699,7 +699,7 @@
         <div class="relative mx-auto p-0 border w-full max-w-2xl shadow-2xl rounded-xl bg-white">
             <div class="flex justify-between items-center p-6 border-b border-gray-200">
                 <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
-                    <span class="material-icons text-emerald-600">badge</span>
+                    <span class="material-icons text-pink-600">badge</span>
                     Detalle del Paciente
                 </h3>
                 <button onclick="cerrarModal()" class="text-gray-400 hover:text-gray-600 transition-colors">

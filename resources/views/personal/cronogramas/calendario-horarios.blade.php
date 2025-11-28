@@ -448,7 +448,7 @@
                 const infoDiv = document.getElementById('info-cronograma');
                 const disponibles = cronograma.cantDispo || 0;
                 const emergencia = cronograma.cantEmergencia || 0;
-                const total = cronograma.cantFijo || 15;
+                const total = cronograma.cantFijo || 20;
                 const atendidos = total - disponibles;
 
                 infoDiv.innerHTML = `

@@ -298,7 +298,7 @@ class EstadisticasSupervisorController extends Controller
                 ->get();
 
             $data = [
-                'titulo' => 'Reporte de Servicios - ' . ucfirst($periodo),
+                'titulo' => 'Reporte de Servicios - ' . $tituloFecha,
                 'fecha' => Carbon::now()->format('d/m/Y'),
                 'personal' => $personal->nomPer . ' ' . $personal->paternoPer . ' ' . ($personal->maternoPer ?? ''),
                 'servicios' => $servicios,

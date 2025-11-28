@@ -18,7 +18,7 @@ return new class extends Migration {
             $table->time('horaEnt')->nullable();
             $table->enum('tipoAseg', ['AsegEmergencia','AsegRegular','NoAsegEmergencia','NoAsegRegular'])->nullable();
             $table->string('nroFicha', 50)->nullable();
-            $table->enum('estado', ['Programado','Atendido','Entregado','EnProceso','Cancelado'])->nullable();
+            $table->enum('estado', ['Programado','Atendido','Entregado','EnProceso','Cancelado','Archivado'])->nullable();
 
             $table->unsignedInteger('codPa')->nullable();
             $table->unsignedInteger('codMed')->nullable();

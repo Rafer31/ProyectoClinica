@@ -597,7 +597,13 @@ class ServicioController extends Controller
                 ], 422);
             }
 
-            $servicio->estado = 'Entregado';
+            // Determinar el estado final basado en el tipo de aseguramiento
+            // Si el paciente tiene seguro (Aseg*), archivamos
+            // Si no tiene seguro (NoAseg*), entregamos
+            $tieneSeguro = str_starts_with($servicio->tipoAseg ?? '', 'Aseg');
+            $nuevoEstado = $tieneSeguro ? 'Archivado' : 'Entregado';
+            
+            $servicio->estado = $nuevoEstado;
             $servicio->fechaEnt = Carbon::now()->toDateString();
             $servicio->horaEnt = Carbon::now()->toTimeString();
             $servicio->save();
@@ -607,12 +613,14 @@ class ServicioController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $servicio,
-                'message' => 'Servicio marcado como entregado exitosamente'
+                'message' => $tieneSeguro 
+                    ? 'Servicio archivado exitosamente' 
+                    : 'Servicio marcado como entregado exitosamente'
             ], 200);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al marcar como entregado: ' . $e->getMessage()
+                'message' => 'Error al procesar: ' . $e->getMessage()
             ], 500);
         }
     }

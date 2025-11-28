@@ -194,8 +194,8 @@
                         <span class="material-icons text-white text-3xl">assignment_turned_in</span>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold text-white">Marcar como Entregado</h3>
-                        <p class="text-sm text-purple-100">Confirme la entrega del servicio al paciente</p>
+                    <h3 class="text-2xl font-bold text-white" id="modal-title">Marcar como Entregado</h3>
+                        <p class="text-sm text-purple-100" id="modal-subtitle">Confirme la entrega del servicio al paciente</p>
                     </div>
                 </div>
             </div>
@@ -212,11 +212,18 @@
                                 <p class="font-bold text-gray-900" id="entregar-nro-servicio">-</p>
                             </div>
                         </div>
-                        <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-3 mb-3">
                             <span class="material-icons text-purple-600">person</span>
                             <div>
                                 <p class="text-xs text-gray-500">Paciente</p>
                                 <p class="font-bold text-gray-900" id="entregar-paciente">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-icons text-purple-600">shield</span>
+                            <div>
+                                <p class="text-xs text-gray-500">Tipo de Seguro</p>
+                                <p class="font-bold text-gray-900" id="entregar-tipo-seguro">-</p>
                             </div>
                         </div>
                     </div>
@@ -225,8 +232,7 @@
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
                     <p class="text-sm text-blue-800 font-medium flex items-start gap-2">
                         <span class="material-icons text-blue-600 text-lg">info</span>
-                        <span>Al confirmar, el estado cambiará a <strong>"Entregado"</strong> y se registrará la fecha y
-                            hora de entrega automáticamente.</span>
+                        <span>El paciente <strong>NO cuenta con seguro</strong>. Al confirmar, el estado cambiará a <strong>"Entregado"</strong> y se registrará la fecha y hora de entrega automáticamente.</span>
                     </p>
                 </div>
             </div>
@@ -241,6 +247,76 @@
                     class="flex-1 px-5 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-semibold flex items-center justify-center gap-2">
                     <span class="material-icons">check_circle</span>
                     <span>Confirmar Entrega</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Archivado -->
+    <div id="modal-archivar"
+        class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+        <div class="relative mx-auto p-0 border w-full max-w-lg shadow-2xl rounded-xl bg-white">
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-orange-500 to-amber-600 rounded-t-xl p-6">
+                <div class="flex items-center">
+                    <div
+                        class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4 backdrop-blur-sm">
+                        <span class="material-icons text-white text-3xl">archive</span>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-white">Archivar Servicio</h3>
+                        <p class="text-sm text-orange-100">El reporte se archivará y no se entregará al paciente</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Body -->
+            <div class="p-6 space-y-4">
+                <div class="bg-orange-50 border-l-4 border-orange-500 p-4 rounded-lg">
+                    <p class="text-gray-800 font-semibold mb-2">Está a punto de archivar este servicio:</p>
+                    <div class="bg-white p-4 rounded-lg mt-3">
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-icons text-orange-600">receipt</span>
+                            <div>
+                                <p class="text-xs text-gray-500">Nro. Servicio</p>
+                                <p class="font-bold text-gray-900" id="archivar-nro-servicio">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="material-icons text-orange-600">person</span>
+                            <div>
+                                <p class="text-xs text-gray-500">Paciente</p>
+                                <p class="font-bold text-gray-900" id="archivar-paciente">-</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <span class="material-icons text-orange-600">shield</span>
+                            <div>
+                                <p class="text-xs text-gray-500">Tipo de Seguro</p>
+                                <p class="font-bold text-gray-900" id="archivar-tipo-seguro">-</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-r from-yellow-50 to-amber-50 border border-orange-200 rounded-lg p-4">
+                    <p class="text-sm text-orange-800 font-medium flex items-start gap-2">
+                        <span class="material-icons text-orange-600 text-lg">info</span>
+                        <span>El paciente <strong>SÍ cuenta con seguro</strong>. Al confirmar, el estado cambiará a <strong>"Archivado"</strong> y el reporte se guardará sin entregar al paciente.</span>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="bg-gray-50 px-6 py-4 rounded-b-xl flex gap-3">
+                <button type="button" onclick="cerrarModal('modal-archivar')"
+                    class="flex-1 px-5 py-3 bg-white border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-all font-semibold">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirmar-archivado"
+                    class="flex-1 px-5 py-3 bg-gradient-to-r from-orange-500 to-amber-600 text-white rounded-lg hover:from-orange-600 hover:to-amber-700 transition-all shadow-md font-semibold flex items-center justify-center gap-2">
+                    <span class="material-icons">archive</span>
+                    <span>Confirmar Archivado</span>
                 </button>
             </div>
         </div>
@@ -270,9 +346,9 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // FILTRAR: Incluir SOLO servicios con estado "Atendido" o "Entregado"
+                        // FILTRAR: Incluir servicios con estado "Atendido", "Entregado" o "Archivado"
                         serviciosData = data.data.filter(s =>
-                            s.estado === 'Atendido' || s.estado === 'Entregado'
+                            s.estado === 'Atendido' || s.estado === 'Entregado' || s.estado === 'Archivado'
                         );
 
                         if (serviciosData.length > 0) {
@@ -332,16 +408,22 @@
                         ? (servicio.diagnosticos[0].pivot?.tipo === 'sol' ? 'Solicitado' : 'Ecográfico')
                         : '';
 
-                    // Determinar si está entregado
-                    const estaEntregado = servicio.estado === 'Entregado';
-
                     // Badge de estado
-                    const badgeEstado = estaEntregado
-                        ? `<span class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-full border bg-purple-100 text-purple-700 border-purple-300">
+                    const estaEntregado = servicio.estado === 'Entregado';
+                    const estaArchivado = servicio.estado === 'Archivado';
+
+                    let badgeEstado = '';
+                    if (estaEntregado) {
+                        badgeEstado = `<span class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-full border bg-purple-100 text-purple-700 border-purple-300">
                                 <span class="material-icons text-xs">done_all</span>
                                 Entregado
-                              </span>`
-                        : '';
+                              </span>`;
+                    } else if (estaArchivado) {
+                        badgeEstado = `<span class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-full border bg-gray-100 text-gray-700 border-gray-300">
+                                <span class="material-icons text-xs">archive</span>
+                                Archivado
+                              </span>`;
+                    }
 
                     const fila = `
                             <tr class="border-b hover:bg-emerald-50 transition-colors">
@@ -387,18 +469,27 @@
                                             PDF
                                         </a>
 
-                                        ${!estaEntregado ? `
-                                            <button onclick="confirmarEntrega(${servicio.codServ})"
-                                                class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
-                                                title="Marcar como entregado">
-                                                <span class="material-icons text-base mr-1">description</span>
-                                                Entregar
-                                            </button>
-                                        ` : `
-                                            <span class="inline-flex items-center px-3 py-2 text-sm font-semibold text-purple-700 bg-purple-50 rounded-lg border border-purple-200"
-                                                title="Ya fue entregado">
-                                                <span class="material-icons text-base mr-1">check</span>
-                                                Entregado
+                                        ${!estaEntregado && !estaArchivado ? (
+                                            servicio.tipoAseg?.startsWith('Aseg') ? `
+                                                <button onclick="confirmarArchivado(${servicio.codServ})" 
+                                                    class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-gradient-to-r from-orange-500 to-amber-600 rounded-lg hover:from-orange-600 hover:to-amber-700 transition-all shadow-md hover:shadow-lg"
+                                                    title="Marcar como archivado">
+                                                    <span class="material-icons text-base mr-1">archive</span>
+                                                    Archivar
+                                                </button>
+                                            ` : `
+                                                <button onclick="confirmarEntrega(${servicio.codServ})" 
+                                                    class="inline-flex items-center px-3 py-2 text-sm font-semibold text-white bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                                                    title="Marcar como entregado">
+                                                    <span class="material-icons text-base mr-1">description</span>
+                                                    Entregar
+                                                </button>
+                                            `
+                                        ) : `
+                                            <span class="inline-flex items-center px-3 py-2 text-sm font-semibold ${estaArchivado ? 'text-gray-700 bg-gray-50 border-gray-200' : 'text-purple-700 bg-purple-50 border-purple-200'} rounded-lg border"
+                                                title="${estaArchivado ? 'Ya fue archivado' : 'Ya fue entregado'}">
+                                                <span class="material-icons text-base mr-1">${estaArchivado ? 'archive' : 'check'}</span>
+                                                ${estaArchivado ? 'Archivado' : 'Entregado'}
                                             </span>
                                         `}
                                     </div>
@@ -467,9 +558,8 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        // Filtrar servicios atendidos y entregados
                         const serviciosAtendidos = data.data.filter(s =>
-                            s.estado === 'Atendido' || s.estado === 'Entregado'
+                            s.estado === 'Atendido' || s.estado === 'Entregado' || s.estado === 'Archivado'
                         );
 
                         const hoy = new Date().toISOString().split('T')[0];
@@ -493,10 +583,26 @@
 
                 servicioActual = servicio;
                 const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''} ${servicio.paciente?.maternoPa || ''}`.trim();
+                const tipoSeguro = servicio.tipoAseg?.replace('Aseg', 'Con Seguro - ').replace('NoAseg', 'Sin Seguro - ') || 'No especificado';
 
                 document.getElementById('entregar-nro-servicio').textContent = servicio.nroServ;
                 document.getElementById('entregar-paciente').textContent = paciente;
+                document.getElementById('entregar-tipo-seguro').textContent = tipoSeguro;
                 document.getElementById('modal-entregar').classList.remove('hidden');
+            }
+
+            function confirmarArchivado(codServ) {
+                const servicio = serviciosData.find(s => s.codServ === codServ);
+                if (!servicio) return;
+
+                servicioActual = servicio;
+                const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''} ${servicio.paciente?.maternoPa || ''}`.trim();
+                const tipoSeguro = servicio.tipoAseg?.replace('Aseg', 'Con Seguro - ').replace('NoAseg', 'Sin Seguro - ') || 'No especificado';
+
+                document.getElementById('archivar-nro-servicio').textContent = servicio.nroServ;
+                document.getElementById('archivar-paciente').textContent = paciente;
+                document.getElementById('archivar-tipo-seguro').textContent = tipoSeguro;
+                document.getElementById('modal-archivar').classList.remove('hidden');
             }
 
             document.getElementById('btn-confirmar-entrega').addEventListener('click', async function () {
@@ -514,7 +620,7 @@
                     const data = await response.json();
 
                     if (data.success) {
-                        mostrarAlerta('Servicio marcado como entregado exitosamente', 'success');
+                        mostrarAlerta(data.message, 'success');
                         cerrarModal('modal-entregar');
                         cargarServiciosAtendidos();
                         cargarEstadisticas();
@@ -525,6 +631,35 @@
                 } catch (error) {
                     console.error('Error:', error);
                     mostrarAlerta('Error al marcar como entregado', 'error');
+                }
+            });
+
+            document.getElementById('btn-confirmar-archivado').addEventListener('click', async function () {
+                if (!servicioActual) return;
+
+                try {
+                    const response = await fetch(`/api/personal/servicios/${servicioActual.codServ}/entregar`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                        }
+                    });
+
+                    const data = await response.json();
+
+                    if (data.success) {
+                        mostrarAlerta(data.message, 'success');
+                        cerrarModal('modal-archivar');
+                        cargarServiciosAtendidos();
+                        cargarEstadisticas();
+                        servicioActual = null;
+                    } else {
+                        mostrarAlerta(data.message || 'Error al archivar', 'error');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('Error al archivar el servicio', 'error');
                 }
             });
 

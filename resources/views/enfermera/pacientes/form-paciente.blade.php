@@ -87,9 +87,9 @@ $breadcrumbs = [
         });
 
         if (res.success) {
-            alerta.className = "p-4 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-300 text-emerald-800 flex items-center shadow-md";
+            alerta.className = "p-4 rounded-xl bg-gradient-to-r from-pink-50 to-teal-50 border-2 border-pink-300 text-emerald-800 flex items-center shadow-md";
             alerta.innerHTML = `
-                <div class="w-10 h-10 bg-emerald-500 rounded-lg flex items-center justify-center mr-3">
+                <div class="w-10 h-10 bg-pink-500 rounded-lg flex items-center justify-center mr-3">
                     <span class="material-icons text-white">check_circle</span>
                 </div>
                 <div>
@@ -176,7 +176,7 @@ $breadcrumbs = [
         const edadSpan = document.getElementById('edadCalculada');
         if (edad >= 0) {
             edadSpan.innerText = `✓ ${edad} años`;
-            edadSpan.className = 'text-sm text-emerald-600 font-semibold mt-1 flex items-center gap-1';
+            edadSpan.className = 'text-sm text-pink-600 font-semibold mt-1 flex items-center gap-1';
             edadSpan.classList.remove('hidden');
         } else {
             edadSpan.classList.add('hidden');
@@ -204,7 +204,7 @@ $breadcrumbs = [
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                    <div class="w-14 h-14 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <div class="w-14 h-14 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
                         <span class="material-icons text-white text-3xl">
                             {{ isset($paciente) ? 'edit' : 'person_add' }}
                         </span>
@@ -218,8 +218,8 @@ $breadcrumbs = [
             @if(isset($paciente))
             <div class="text-right">
                 <span class="inline-flex items-center px-4 py-2 rounded-xl text-sm font-bold border-2 shadow-sm
-                    {{ $paciente->estado === 'activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-300' : 'bg-red-50 text-red-700 border-red-300' }}">
-                    <span class="w-2.5 h-2.5 rounded-full mr-2 {{ $paciente->estado === 'activo' ? 'bg-emerald-500' : 'bg-red-500' }}"></span>
+                    {{ $paciente->estado === 'activo' ? 'bg-pink-50 text-pink-700 border-pink-300' : 'bg-red-50 text-red-700 border-red-300' }}">
+                    <span class="w-2.5 h-2.5 rounded-full mr-2 {{ $paciente->estado === 'activo' ? 'bg-pink-500' : 'bg-red-500' }}"></span>
                     {{ ucfirst($paciente->estado) }}
                 </span>
             </div>
@@ -239,7 +239,7 @@ $breadcrumbs = [
             <!-- Información Personal -->
             <div>
                 <div class="flex items-center gap-3 mb-6 pb-3 border-b-2 border-gray-200">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center">
                         <span class="material-icons text-white">person</span>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-800">Información Personal</h2>
@@ -254,7 +254,7 @@ $breadcrumbs = [
                         <input type="text" name="nomPa" id="nomPa"
                             value="{{ old('nomPa', $paciente->nomPa ?? '') }}"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium"
                             placeholder="Ej: Juan"
                             required>
@@ -268,7 +268,7 @@ $breadcrumbs = [
                         <input type="text" name="paternoPa" id="paternoPa"
                             value="{{ old('paternoPa', $paciente->paternoPa ?? '') }}"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium"
                             placeholder="Ej: Pérez">
                     </div>
@@ -281,7 +281,7 @@ $breadcrumbs = [
                         <input type="text" name="maternoPa" id="maternoPa"
                             value="{{ old('maternoPa', $paciente->maternoPa ?? '') }}"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium"
                             placeholder="Ej: García">
                     </div>
@@ -293,7 +293,7 @@ $breadcrumbs = [
                         </label>
                         <select name="sexo" id="sexo"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium"
                             required>
                             <option value="M" {{ old('sexo', $paciente->sexo ?? '') === 'M' ? 'selected' : '' }}>
@@ -314,7 +314,7 @@ $breadcrumbs = [
                             value="{{ old('fechaNac', isset($paciente->fechaNac) ? \Carbon\Carbon::parse($paciente->fechaNac)->format('Y-m-d') : '') }}"
                             max="{{ date('Y-m-d') }}"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium">
                         <span id="edadCalculada" class="hidden"></span>
                     </div>
@@ -324,7 +324,7 @@ $breadcrumbs = [
             <!-- Información Clínica -->
             <div>
                 <div class="flex items-center gap-3 mb-6 pb-3 border-b-2 border-gray-200">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center">
+                    <div class="w-10 h-10 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center">
                         <span class="material-icons text-white">medical_services</span>
                     </div>
                     <h2 class="text-2xl font-bold text-gray-800">Información Clínica</h2>
@@ -339,7 +339,7 @@ $breadcrumbs = [
                         <input type="text" name="nroHCI" id="nroHCI"
                             value="{{ old('nroHCI', $paciente->nroHCI ?? '') }}"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium"
                             placeholder="Ej: HCI-2024-001">
                         <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
@@ -355,7 +355,7 @@ $breadcrumbs = [
                         </label>
                         <select name="tipoPac" id="tipoPac"
                             class="bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-lg
-                                   focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                   focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                    transition-all font-medium"
                             required>
 
@@ -380,8 +380,8 @@ $breadcrumbs = [
                 </a>
 
                 <button type="submit"
-                    class="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600
-                           rounded-lg hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105">
+                    class="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600
+                           rounded-lg hover:from-pink-600 hover:to-teal-700 transition-all flex items-center gap-2 shadow-md hover:shadow-lg transform hover:scale-105">
                     <span class="material-icons text-lg">{{ isset($paciente) ? 'save' : 'add' }}</span>
                     {{ isset($paciente) ? 'Actualizar Paciente' : 'Guardar Paciente' }}
                 </button>

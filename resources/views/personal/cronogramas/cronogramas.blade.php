@@ -137,7 +137,7 @@
                                 <ul class="space-y-2">
                                     <li class="flex items-center gap-2 text-sm text-emerald-800">
                                         <span class="material-icons text-emerald-600 text-base">check_circle</span>
-                                        <span><strong class="font-semibold">15 turnos</strong> disponibles</span>
+                                        <span><strong class="font-semibold">20 turnos</strong> disponibles</span>
                                     </li>
                                     <li class="flex items-center gap-2 text-sm text-emerald-800">
                                         <span class="material-icons text-emerald-600 text-base">schedule</span>
@@ -539,7 +539,7 @@
                         badgeColor = 'bg-gradient-to-r from-gray-400 to-gray-500 text-white';
                     }
 
-                    const totalFichas = cronograma.cantFijo || 15;
+                    const totalFichas = cronograma.cantFijo || 20;
                     const atendidos = totalFichas - cronograma.cantDispo;
                     const porcentaje = Math.round((atendidos / totalFichas) * 100);
                     const fichasEmergencia = cronograma.cantEmergencia || 0;
@@ -709,7 +709,7 @@
                 estadoBadge.textContent = 'Finalizado';
             }
 
-            const totalFichas = cronograma.cantFijo || 15;
+            const totalFichas = cronograma.cantFijo || 20;
             const disponibles = cronograma.cantDispo;
             const atendidos = totalFichas - disponibles;
             const porcentajeOcupado = Math.round((atendidos / totalFichas) * 100);
@@ -811,8 +811,8 @@
 
             const datos = {
                 fechaCrono: fechaCrono,
-                cantDispo: 15,
-                cantFijo: 15
+                cantDispo: 20,
+                cantFijo: 20
             };
 
             console.log('Enviando datos:', datos);

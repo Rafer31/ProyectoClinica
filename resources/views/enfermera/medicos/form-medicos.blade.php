@@ -81,9 +81,9 @@ $breadcrumbs = [
         });
 
         if (res.success) {
-            alerta.className = "p-5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border-2 border-emerald-400 text-emerald-800 flex items-center shadow-lg";
+            alerta.className = "p-5 rounded-xl bg-gradient-to-r from-pink-50 to-teal-50 border-2 border-emerald-400 text-emerald-800 flex items-center shadow-lg";
             alerta.innerHTML = `
-                <div class="w-10 h-10 bg-emerald-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
+                <div class="w-10 h-10 bg-pink-500 rounded-xl flex items-center justify-center mr-3 shadow-md">
                     <span class="material-icons text-white">check_circle</span>
                 </div>
                 <span class="font-bold">${res.message}</span>
@@ -159,7 +159,7 @@ $breadcrumbs = [
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-800 mb-2 flex items-center gap-3">
-                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg">
+                    <div class="w-12 h-12 bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl flex items-center justify-center shadow-lg">
                         <span class="material-icons text-white text-2xl">
                             {{ isset($medico) ? 'edit' : 'person_add' }}
                         </span>
@@ -184,8 +184,8 @@ $breadcrumbs = [
 
             <!-- Información Personal -->
             <div>
-                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 border-b-2 border-emerald-200 pb-3">
-                    <div class="w-8 h-8 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-lg flex items-center justify-center shadow-md">
+                <h2 class="text-xl font-bold text-gray-800 mb-6 flex items-center gap-2 border-b-2 border-pink-200 pb-3">
+                    <div class="w-8 h-8 bg-gradient-to-br from-pink-500 to-rose-600 rounded-lg flex items-center justify-center shadow-md">
                         <span class="material-icons text-white text-lg">badge</span>
                     </div>
                     Información del Médico
@@ -198,11 +198,11 @@ $breadcrumbs = [
                             Nombre <span class="text-red-600">*</span>
                         </label>
                         <div class="relative">
-                            <span class="material-icons absolute left-3 top-3 text-emerald-600">person</span>
+                            <span class="material-icons absolute left-3 top-3 text-pink-600">person</span>
                             <input type="text" name="nomMed" id="nomMed"
                                 value="{{ old('nomMed', $medico->nomMed ?? '') }}"
                                 class="pl-11 bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-xl
-                                       focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                       focus:ring-2 focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                        transition-all shadow-sm font-medium"
                                 placeholder="Ej: Juan Carlos"
                                 required>
@@ -215,11 +215,11 @@ $breadcrumbs = [
                             Apellido <span class="text-red-600">*</span>
                         </label>
                         <div class="relative">
-                            <span class="material-icons absolute left-3 top-3 text-emerald-600">badge</span>
+                            <span class="material-icons absolute left-3 top-3 text-pink-600">badge</span>
                             <input type="text" name="paternoMed" id="paternoMed"
                                 value="{{ old('paternoMed', $medico->paternoMed ?? '') }}"
                                 class="pl-11 bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-xl
-                                       focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                       focus:ring-2 focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                        transition-all shadow-sm font-medium"
                                 placeholder="Ej: Pérez García"
                                 required>
@@ -232,10 +232,10 @@ $breadcrumbs = [
                             Tipo de Médico <span class="text-red-600">*</span>
                         </label>
                         <div class="relative">
-                            <span class="material-icons absolute left-3 top-3 text-emerald-600">category</span>
+                            <span class="material-icons absolute left-3 top-3 text-pink-600">category</span>
                             <select name="tipoMed" id="tipoMed"
                                 class="pl-11 bg-white border-2 border-gray-300 text-gray-900 text-sm rounded-xl
-                                       focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 block w-full p-3
+                                       focus:ring-2 focus:ring-pink-500 focus:border-pink-500 block w-full p-3
                                        transition-all shadow-sm font-medium appearance-none"
                                 required>
                                 <option value="">Seleccione un tipo...</option>
@@ -262,8 +262,8 @@ $breadcrumbs = [
                 </a>
 
                 <button type="submit"
-                    class="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-emerald-500 to-teal-600
-                           rounded-xl hover:from-emerald-600 hover:to-teal-700 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105">
+                    class="px-6 py-3 text-sm font-bold text-white bg-gradient-to-r from-pink-500 to-rose-600
+                           rounded-xl hover:from-pink-600 hover:to-teal-700 transition-all flex items-center gap-2 shadow-lg hover:shadow-xl transform hover:scale-105">
                     <span class="material-icons text-sm">{{ isset($medico) ? 'save' : 'add_circle' }}</span>
                     {{ isset($medico) ? 'Actualizar Médico' : 'Guardar Médico' }}
                 </button>
@@ -272,7 +272,7 @@ $breadcrumbs = [
     </div>
 
     <!-- Información Adicional -->
-    <div class="bg-gradient-to-br from-teal-50 to-emerald-50 border-l-4 border-teal-500 rounded-xl p-6 shadow-lg">
+    <div class="bg-gradient-to-br from-teal-50 to-pink-50 border-l-4 border-teal-500 rounded-xl p-6 shadow-lg">
         <div class="flex items-start gap-4">
             <div class="w-10 h-10 bg-teal-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
                 <span class="material-icons text-white text-xl">info</span>
@@ -283,7 +283,7 @@ $breadcrumbs = [
                     <li>Los campos <strong>Nombre</strong>, <strong>Apellido</strong> y <strong>Tipo de Médico</strong> son obligatorios</li>
                     <li>El tipo de médico puede ser:
                         <ul class="ml-6 mt-2 space-y-1">
-                            <li><strong class="text-emerald-700">Interno:</strong> Personal médico de la clínica</li>
+                            <li><strong class="text-pink-700">Interno:</strong> Personal médico de la clínica</li>
                             <li><strong class="text-orange-700">Externo:</strong> Médico visitante o colaborador externo</li>
                         </ul>
                     </li>

@@ -950,7 +950,7 @@
                     return;
                 }
 
-                const url = `/api/supervisor/estadisticas/personal/reporte-pdf?codPer=${codPer}&fecha=${fecha}&periodo=mes`;
+                const url = `/api/supervisor/estadisticas/personal/reporte-pdf?codPer=${codPer}&fecha=${fecha}&periodo=dia`;
                 window.open(url, '_blank');
                 
                 cerrarModalReporte();
