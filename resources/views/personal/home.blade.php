@@ -202,19 +202,69 @@
             </div>
 
             <h3 class="text-2xl font-bold text-gray-900 text-center mb-2">Generar Reporte</h3>
-            <p class="text-sm text-gray-600 text-center mb-6">Selecciona la fecha que deseas reportar</p>
+            <p class="text-sm text-gray-600 text-center mb-6">Selecciona el periodo que deseas reportar</p>
 
             <div class="space-y-4">
+                <!-- Selector de Periodo -->
                 <div>
                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                         <span class="material-icons text-sm mr-1 align-middle">event</span>
-                        Seleccionar Fecha <span class="text-red-600">*</span>
+                        Tipo de Reporte <span class="text-red-600">*</span>
+                    </label>
+                    <select id="selectTipoReporte" onchange="cambiarTipoReporte()"
+                        class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 p-3 transition">
+                        <option value="dia">Reporte Diario</option>
+                        <option value="semana">Reporte Semanal</option>
+                        <option value="mes">Reporte Mensual</option>
+                    </select>
+                </div>
+
+                <!-- Selector de Fecha (para día y semana) -->
+                <div id="contenedorFecha">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <span class="material-icons text-sm mr-1 align-middle">calendar_today</span>
+                        <span id="labelFecha">Seleccionar Fecha</span> <span class="text-red-600">*</span>
                     </label>
                     <input type="date" id="inputFechaReportePersonal" required
                         class="w-full bg-gray-50 border-2 border-gray-300 text-gray-900 text-sm rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 p-3 transition">
+                    <p class="text-xs text-gray-500 mt-2" id="infoFecha">
+                        <span class="material-icons text-xs align-middle">info</span>
+                        <span id="textoInfo">Se generará el reporte del día seleccionado</span>
+                    </p>
+                </div>
+
+                <!-- Selector de Mes y Año (solo para reporte mensual) -->
+                <div id="contenedorMesAnio" class="hidden">
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">
+                        <span class="material-icons text-sm mr-1 align-middle">calendar_month</span>
+                        Seleccionar Mes y Año <span class="text-red-600">*</span>
+                    </label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <select id="mesSelectPersonal"
+                            class="px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                            <option value="01">Enero</option>
+                            <option value="02">Febrero</option>
+                            <option value="03">Marzo</option>
+                            <option value="04">Abril</option>
+                            <option value="05">Mayo</option>
+                            <option value="06">Junio</option>
+                            <option value="07">Julio</option>
+                            <option value="08">Agosto</option>
+                            <option value="09">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                        <select id="anioSelectPersonal"
+                            class="px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                            @for ($year = date('Y'); $year >= 2020; $year--)
+                                <option value="{{ $year }}">{{ $year }}</option>
+                            @endfor
+                        </select>
+                    </div>
                     <p class="text-xs text-gray-500 mt-2">
                         <span class="material-icons text-xs align-middle">info</span>
-                        Se generará el reporte de la fecha seleccionada
+                        Se generará el reporte del mes completo seleccionado
                     </p>
                 </div>
 
@@ -239,6 +289,9 @@
         function abrirModalReporte() {
             const modal = document.getElementById('modalReportePersonal');
             const inputFecha = document.getElementById('inputFechaReportePersonal');
+            const selectTipo = document.getElementById('selectTipoReporte');
+            const mesSelect = document.getElementById('mesSelectPersonal');
+            const anioSelect = document.getElementById('anioSelectPersonal');
             
             if (inputFecha) {
                 // Establecer fecha actual por defecto
@@ -246,9 +299,48 @@
                 inputFecha.value = hoy;
             }
             
+            if (mesSelect && anioSelect) {
+                mesSelect.value = '{{ date("m") }}';
+                anioSelect.value = '{{ date("Y") }}';
+            }
+            
+            if (selectTipo) {
+                selectTipo.value = 'dia';
+                cambiarTipoReporte();
+            }
+            
             // Abrir modal
             if (modal) {
                 modal.classList.remove('hidden');
+            }
+        }
+
+        function cambiarTipoReporte() {
+            const tipoReporte = document.getElementById('selectTipoReporte').value;
+            const labelFecha = document.getElementById('labelFecha');
+            const textoInfo = document.getElementById('textoInfo');
+            const contenedorFecha = document.getElementById('contenedorFecha');
+            const contenedorMesAnio = document.getElementById('contenedorMesAnio');
+            
+            if (tipoReporte === 'mes') {
+                // Mostrar selector de mes/año, ocultar fecha
+                contenedorFecha.classList.add('hidden');
+                contenedorMesAnio.classList.remove('hidden');
+            } else {
+                // Mostrar fecha, ocultar mes/año
+                contenedorFecha.classList.remove('hidden');
+                contenedorMesAnio.classList.add('hidden');
+                
+                switch(tipoReporte) {
+                    case 'dia':
+                        labelFecha.textContent = 'Seleccionar Fecha';
+                        textoInfo.textContent = 'Se generará el reporte del día seleccionado';
+                        break;
+                    case 'semana':
+                        labelFecha.textContent = 'Seleccionar Fecha (Semana)';
+                        textoInfo.textContent = 'Se generará el reporte de la semana que incluye esta fecha';
+                        break;
+                }
             }
         }
 
@@ -260,21 +352,45 @@
         }
 
         function generarReportePersonal() {
-            const inputFecha = document.getElementById('inputFechaReportePersonal');
+            const tipoReporte = document.getElementById('selectTipoReporte').value;
+            let fecha = '';
+            let url = '';
             
-            if (!inputFecha) {
-                console.error('No se encontró el input de fecha');
-                return;
+            if (tipoReporte === 'mes') {
+                // Obtener mes y año de los selects
+                const mes = document.getElementById('mesSelectPersonal').value;
+                const anio = document.getElementById('anioSelectPersonal').value;
+                // Crear fecha del primer día del mes
+                fecha = `${anio}-${mes}-01`;
+            } else {
+                // Obtener fecha del input
+                const inputFecha = document.getElementById('inputFechaReportePersonal');
+                
+                if (!inputFecha) {
+                    console.error('No se encontró el input de fecha');
+                    return;
+                }
+                
+                fecha = inputFecha.value;
             }
-            
-            const fecha = inputFecha.value;
             
             if (!fecha) {
-                alert('Por favor selecciona una fecha');
+                alert('Por favor selecciona una fecha o mes');
                 return;
             }
             
-            const url = `/personal/reportes/dia?fecha=${fecha}`;
+            switch(tipoReporte) {
+                case 'dia':
+                    url = `/personal/reportes/dia?fecha=${fecha}`;
+                    break;
+                case 'semana':
+                    url = `/personal/reportes/semana?fecha=${fecha}`;
+                    break;
+                case 'mes':
+                    url = `/personal/reportes/mes?fecha=${fecha}`;
+                    break;
+            }
+            
             window.open(url, '_blank');
             cerrarModalReportePersonal();
         }

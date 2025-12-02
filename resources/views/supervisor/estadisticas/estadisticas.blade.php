@@ -506,7 +506,7 @@
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <span class="material-icons text-indigo-600">donut_large</span>
-                    Por Estado
+                    Estado de Consulta
                 </h3>
                 <div class="chart-container">
                     <canvas id="chartEstados"></canvas>
@@ -517,7 +517,7 @@
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <span class="material-icons text-purple-600">pie_chart</span>
-                    Por Tipo Aseguramiento
+                    Tipo de Seguro
                 </h3>
                 <div class="chart-container">
                     <canvas id="chartTipoAseg"></canvas>
@@ -601,6 +601,108 @@
                         </tr>
                     </tbody>
                 </table>
+            </div>
+        </div>
+
+        <!-- Reporte Consolidado Mensual -->
+        <div class="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl shadow-lg p-6 border-2 border-indigo-200">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
+                        <span class="material-icons text-indigo-600 text-3xl">assessment</span>
+                        Reporte Consolidado Mensual
+                    </h3>
+                    <p class="text-sm text-gray-600 mt-2">Genera un reporte con todos los servicios del personal de imagen en un mes específico</p>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl p-6 shadow-md">
+                <form action="{{ route('supervisor.reportes.consolidado-mensual') }}" method="GET" target="_blank">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="mesConsolidado" class="block text-sm font-bold text-gray-700 mb-2">
+                                <span class="material-icons text-sm align-middle mr-1">calendar_month</span>
+                                Seleccionar Mes y Año
+                            </label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <select id="mesSelect" required
+                                    class="px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                    <option value="01">Enero</option>
+                                    <option value="02">Febrero</option>
+                                    <option value="03">Marzo</option>
+                                    <option value="04">Abril</option>
+                                    <option value="05">Mayo</option>
+                                    <option value="06">Junio</option>
+                                    <option value="07">Julio</option>
+                                    <option value="08">Agosto</option>
+                                    <option value="09">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                                <select id="anioSelect" required
+                                    class="px-4 py-3 bg-gray-50 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+                                    @for ($year = date('Y'); $year >= 2020; $year--)
+                                        <option value="{{ $year }}">{{ $year }}</option>
+                                    @endfor
+                                </select>
+                            </div>
+                            <input type="hidden" id="mesConsolidado" name="mes" value="{{ date('Y-m') }}">
+                            <p class="text-xs text-gray-500 mt-2">
+                                <span class="material-icons text-xs align-middle">info</span>
+                                El reporte incluirá servicios atendidos, entregados y cancelados
+                            </p>
+                            <script>
+                                // Actualizar el mes actual por defecto
+                                document.getElementById('mesSelect').value = '{{ date("m") }}';
+                                document.getElementById('anioSelect').value = '{{ date("Y") }}';
+                                
+                                // Actualizar campo hidden cuando cambien los selects
+                                function actualizarMesConsolidado() {
+                                    const mes = document.getElementById('mesSelect').value;
+                                    const anio = document.getElementById('anioSelect').value;
+                                    document.getElementById('mesConsolidado').value = `${anio}-${mes}`;
+                                }
+                                
+                                document.getElementById('mesSelect').addEventListener('change', actualizarMesConsolidado);
+                                document.getElementById('anioSelect').addEventListener('change', actualizarMesConsolidado);
+                                
+                                // Inicializar
+                                actualizarMesConsolidado();
+                            </script>
+                        </div>
+
+                        <div class="flex items-end">
+                            <button type="submit"
+                                class="w-full inline-flex justify-center items-center px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105">
+                                <span class="material-icons mr-2">picture_as_pdf</span>
+                                <span class="font-bold">Generar Reporte Consolidado</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+                        <h4 class="text-sm font-bold text-indigo-900 mb-2">El reporte incluye:</h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-indigo-700">
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-sm text-green-600">check_circle</span>
+                                <span>Total de servicios atendidos</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-sm text-purple-600">check_circle</span>
+                                <span>Total de servicios entregados</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-sm text-red-600">cancel</span>
+                                <span>Total de servicios cancelados</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="material-icons text-sm text-blue-600">groups</span>
+                                <span>Desglose por personal de imagen</span>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
 

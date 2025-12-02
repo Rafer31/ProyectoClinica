@@ -1100,6 +1100,15 @@
                 const servicioMostrar = servicios.length > 0 ? servicios[0] : null;
                 const estaDisponible = servicioMostrar === null;
 
+                // Verificar si la fecha es pasada
+                let esFechaPasada = false;
+                if (cronogramaSeleccionado) {
+                    const fechaCrono = new Date(cronogramaSeleccionado.fechaCrono + 'T00:00:00');
+                    const hoy = new Date();
+                    hoy.setHours(0, 0, 0, 0);
+                    esFechaPasada = fechaCrono < hoy;
+                }
+
                 div.className = 'hora-slot';
                 div.dataset.horario = horarioKey;
 
@@ -1124,13 +1133,24 @@
                                                                                                                                                                                                                                                     `;
 
                 if (servicioMostrar === null) {
-                    contenidoHTML += `
+                    if (esFechaPasada) {
+                        // Si es fecha pasada, mostrar mensaje de solo visualización
+                        contenidoHTML += `
+                                                                                                                                                                                                                                                            <div class="slot-disponible cursor-not-allowed opacity-60" style="pointer-events: none;">
+                                                                                                                                                                                                                                                                <span class="material-icons text-gray-400 text-xl">visibility</span>
+                                                                                                                                                                                                                                                                <p class="text-xs text-gray-500 font-medium mt-1">Solo lectura</p>
+                                                                                                                                                                                                                                                                <p class="text-xs text-gray-400">Fecha pasada</p>
+                                                                                                                                                                                                                                                            </div>
+                                                                                                                                                                                                                                                        `;
+                    } else {
+                        contenidoHTML += `
                                                                                                                                                                                                                                                             <div class="slot-disponible" onclick="asignarCitaEnHorario('${horarioKey}')">
                                                                                                                                                                                                                                                                 <span class="material-icons text-gray-400 text-xl">add</span>
                                                                                                                                                                                                                                                                 <p class="text-xs text-gray-500 font-medium mt-1">Asignar Cita</p>
                                                                                                                                                                                                                                                                 <p class="text-xs text-gray-400">o arrastra aquí</p>
                                                                                                                                                                                                                                                             </div>
                                                                                                                                                                                                                                                         `;
+                    }
                 } else {
                     contenidoHTML += crearTarjetaServicio(servicioMostrar);
                 }
@@ -1506,6 +1526,18 @@
 
 
                     function asignarCitaEnHorario(horario) {
+                        // Validar que la fecha del cronograma no sea pasada
+                        if (cronogramaSeleccionado) {
+                            const fechaCrono = new Date(cronogramaSeleccionado.fechaCrono + 'T00:00:00');
+                            const hoy = new Date();
+                            hoy.setHours(0, 0, 0, 0);
+                            
+                            if (fechaCrono < hoy) {
+                                mostrarAlerta('❌ No se puede crear una ficha para una fecha pasada. Solo es posible visualizar las fichas existentes.', 'error');
+                                return;
+                            }
+                        }
+
                         // Reset formularios
                         document.getElementById('form-asignar-cita').reset();
                         document.getElementById('form-nuevo-paciente').reset();

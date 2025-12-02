@@ -129,6 +129,10 @@ Route::get('/servicios/{id}/pdf-requisitos', [ServicioController::class, 'genera
         Route::get('/estadisticas', function () {
             return view('supervisor.estadisticas.estadisticas');
         })->name('estadisticas.estadisticas');
+
+        // Reportes
+        Route::get('/reportes/consolidado-mensual', [EstadisticasSupervisorController::class, 'reporteConsolidadoMensual'])
+            ->name('reportes.consolidado-mensual');
     });
 
     // Panel del personal de imagen

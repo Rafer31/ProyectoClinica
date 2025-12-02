@@ -346,4 +346,93 @@ class EstadisticasSupervisorController extends Controller
         ], 500);
     }
 }
+
+    /**
+     * Generar reporte consolidado mensual de todo el personal de imagen
+     */
+    public function reporteConsolidadoMensual(Request $request)
+    {
+        try {
+            $mesAnio = $request->input('mes'); // Formato: 2025-12
+            
+            if (!$mesAnio) {
+                return back()->with('error', 'Debe seleccionar un mes');
+            }
+
+            $fechaBase = Carbon::parse($mesAnio . '-01');
+            Carbon::setLocale('es');
+            $inicioMes = $fechaBase->copy()->startOfMonth();
+            $finMes = $fechaBase->copy()->endOfMonth();
+
+            // Obtener todo el personal de imagen (codRol = 2)
+            $personalImagen = PersonalSalud::where('codRol', 2)
+                ->where('estado', 'activo')
+                ->orderBy('nomPer')
+                ->get();
+
+            $datosPersonal = [];
+            $totalAtendidos = 0;
+            $totalEntregados = 0;
+            $totalCancelados = 0;
+
+            foreach ($personalImagen as $personal) {
+                // Servicios atendidos
+                $atendidos = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
+                    ->where('CronogramaAtencion.codPer', $personal->codPer)
+                    ->whereBetween('Servicio.fechaAten', [$inicioMes, $finMes])
+                    ->where('Servicio.estado', 'Atendido')
+                    ->count();
+
+                // Servicios entregados
+                $entregados = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
+                    ->where('CronogramaAtencion.codPer', $personal->codPer)
+                    ->whereBetween('Servicio.fechaAten', [$inicioMes, $finMes])
+                    ->where('Servicio.estado', 'Entregado')
+                    ->count();
+
+                // Servicios cancelados
+                $cancelados = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
+                    ->where('CronogramaAtencion.codPer', $personal->codPer)
+                    ->whereBetween('Servicio.fechaSol', [$inicioMes, $finMes])
+                    ->where('Servicio.estado', 'Cancelado')
+                    ->count();
+
+                $totalPersonal = $atendidos + $entregados;
+
+                // Solo incluir personal con al menos un servicio
+                if ($totalPersonal > 0 || $cancelados > 0) {
+                    $datosPersonal[] = [
+                        'nombre' => $personal->nomPer . ' ' . $personal->paternoPer . ' ' . ($personal->maternoPer ?? ''),
+                        'atendidos' => $atendidos,
+                        'entregados' => $entregados,
+                        'cancelados' => $cancelados,
+                        'total' => $totalPersonal
+                    ];
+
+                    $totalAtendidos += $atendidos;
+                    $totalEntregados += $entregados;
+                    $totalCancelados += $cancelados;
+                }
+            }
+
+            $data = [
+                'titulo' => 'Reporte Consolidado Mensual',
+                'mes' => $fechaBase->isoFormat('MMMM [de] YYYY'),
+                'mesAnio' => $mesAnio,
+                'fecha' => Carbon::now()->format('d/m/Y'),
+                'datosPersonal' => $datosPersonal,
+                'totalAtendidos' => $totalAtendidos,
+                'totalEntregados' => $totalEntregados,
+                'totalCancelados' => $totalCancelados,
+                'totalGeneral' => $totalAtendidos + $totalEntregados
+            ];
+
+            $pdf = Pdf::loadView('supervisor.reportes.reporte-consolidado-mensual-pdf', $data);
+            $nombreArchivo = 'reporte-consolidado-' . $mesAnio . '.pdf';
+
+            return $pdf->download($nombreArchivo);
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error al generar reporte: ' . $e->getMessage());
+        }
+    }
 }
