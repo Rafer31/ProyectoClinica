@@ -17,7 +17,6 @@ class ConsultorioController extends Controller
     {
         try {
             $consultorios = Consultorio::orderBy('numCons', 'asc')->get();
-
             return response()->json([
                 'success' => true,
                 'data' => $consultorios,

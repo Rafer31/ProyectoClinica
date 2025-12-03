@@ -55,25 +55,24 @@ return new class extends Migration
         ");
 
         // Crear evento diario (comillas simples)
-        DB::unprepared("
-            CREATE EVENT IF NOT EXISTS actualizar_estados_cronograma_event
-            ON SCHEDULE EVERY 1 DAY
-            STARTS CONCAT(CURDATE() + INTERVAL 1 DAY, ' 00:01:00')
-            ON COMPLETION PRESERVE
-            ENABLE
-            DO
-            BEGIN
-                UPDATE CronogramaAtencion
-                SET estado = 'inactivoPasado'
-                WHERE fechaCrono < CURDATE()
-                AND estado != 'inactivoPasado';
+      DB::unprepared("
+    CREATE EVENT IF NOT EXISTS actualizar_estados_cronograma_event
+    ON SCHEDULE EVERY 1 MINUTE
+    ON COMPLETION PRESERVE
+    ENABLE
+    DO
+    BEGIN
+        UPDATE CronogramaAtencion
+        SET estado = 'inactivoPasado'
+        WHERE fechaCrono < CURDATE()
+        AND estado != 'inactivoPasado';
 
-                UPDATE CronogramaAtencion
-                SET estado = 'activo'
-                WHERE fechaCrono = CURDATE()
-                AND estado = 'inactivoFut';
-            END
-        ");
+        UPDATE CronogramaAtencion
+        SET estado = 'activo'
+        WHERE fechaCrono = CURDATE()
+        AND estado = 'inactivoFut';
+    END
+");
 
         // Habilitar event scheduler
         DB::unprepared('SET GLOBAL event_scheduler = ON');

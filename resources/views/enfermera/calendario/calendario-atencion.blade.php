@@ -7,7 +7,6 @@
             ['label' => 'Calendario de Atención']
         ];
     @endphp
-
     <style>
         /* ===== SLOTS DE HORARIO ===== */
         .hora-slot {
@@ -1313,9 +1312,9 @@
 
             async function confirmarCambioHorario() {
                 document.getElementById('modal-confirmar-cambio').classList.add('hidden');
-
+                
                 if (!servicioArrastrado || !horarioDestino) return;
-
+                
                 try {
                     const response = await fetch(`/api/personal/servicios/${servicioArrastrado}/cambiar-horario`, {
                         method: 'PATCH',
@@ -1330,9 +1329,9 @@
                     });
 
                     const data = await response.json();
-
+                    
                     if (data.success) {
-                        mostrarAlerta('✅ Horario cambiado exitosamente', 'success');
+                        mostrarAlerta('Horario cambiado exitosamente', 'success');
                         setTimeout(() => {
                             cargarServiciosPorFecha(cronogramaSeleccionado.fechaCrono);
                         }, 1000);
