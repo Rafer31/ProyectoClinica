@@ -14,26 +14,26 @@
             font-size: 10px;
             line-height: 1.3;
             color: #333;
-            padding: 15px;
+            padding: 10px 15px 15px 15px; /* Menos padding arriba */
         }
         .header {
             text-align: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
             border-bottom: 3px solid #4F46E5;
         }
         .header h1 {
             color: #4F46E5;
-            font-size: 20px;
-            margin-bottom: 4px;
+            font-size: 18px; /* Reducido de 20px */
+            margin-bottom: 3px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
         .header .mes {
             color: #666;
-            font-size: 14px;
+            font-size: 13px; /* Reducido de 14px */
             font-weight: bold;
-            margin: 5px 0;
+            margin: 3px 0;
         }
         .header p {
             color: #666;

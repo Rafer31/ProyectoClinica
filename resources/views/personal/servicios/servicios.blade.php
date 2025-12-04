@@ -718,7 +718,7 @@
 
                     if (data.success) {
                         serviciosData = data.data.filter(s =>
-                            s.estado !== 'Atendido' && s.estado !== 'Entregado'
+                            s.estado !== 'Atendido' && s.estado !== 'Entregado' && s.estado !== 'Archivado'
                         );
 
                         renderServicios(serviciosData);

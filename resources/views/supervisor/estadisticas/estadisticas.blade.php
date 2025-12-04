@@ -352,6 +352,118 @@
                     loader.classList.add('hidden');
                 }
             }
+
+            async function verDetallesPersonal(codPer) {
+                const modal = document.getElementById('modal-detalles-personal');
+                const contenido = document.getElementById('detalles-personal-content');
+
+                try {
+                    modal.classList.remove('hidden');
+                    contenido.innerHTML = `
+                        <div class="text-center py-12">
+                            <div class="inline-block animate-spin rounded-full h-16 w-16 border-4 border-indigo-200 border-t-indigo-600"></div>
+                            <p class="mt-4 text-gray-600 font-medium">Cargando estadísticas detalladas...</p>
+                        </div>
+                    `;
+
+                    const response = await fetch(`/api/supervisor/estadisticas/personal?codPer=${codPer}`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        const p = data.data.personal;
+                        const r = data.data.resumen;
+
+                        // Generar HTML para tipos de estudio
+                        const tiposEstudioHTML = r.porTipoEstudio && r.porTipoEstudio.length > 0
+                            ? r.porTipoEstudio.map((te, idx) => `
+                                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold">
+                                            ${idx + 1}
+                                        </div>
+                                        <span class="font-semibold text-gray-900">${te.descripcion}</span>
+                                    </div>
+                                    <span class="px-4 py-2 bg-gradient-to-r from-indigo-500 to-purple-500 text-white rounded-lg font-bold text-lg shadow-md">
+                                        ${te.total}
+                                    </span>
+                                </div>
+                            `).join('')
+                            : '<p class="text-center text-gray-500 italic py-8">No hay tipos de estudios registrados</p>';
+
+                        contenido.innerHTML = `
+                            <div class="space-y-6">
+                                <!-- Encabezado con nombre -->
+                                <div class="bg-gradient-to-r from-indigo-50 to-purple-50 p-6 rounded-xl border-2 border-indigo-200">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center">
+                                            <span class="material-icons text-white text-3xl">person</span>
+                                        </div>
+                                        <div>
+                                            <h3 class="text-2xl font-bold text-gray-900">${p.nombre}</h3>
+                                            <p class="text-sm text-indigo-600 font-medium">Usuario: ${p.usuario}  |  ID: ${p.codPer}</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Estadísticas generales -->
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="bg-gradient-to-br from-blue-50 to-cyan-50 p-5 rounded-xl border-2 border-blue-200">
+                                        <p class="text-sm text-blue-600 font-semibold uppercase mb-2">Total Servicios</p>
+                                        <p class="text-4xl font-bold text-blue-700">${r.totalServicios}</p>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-green-50 to-emerald-50 p-5 rounded-xl border-2 border-green-200">
+                                        <p class="text-sm text-green-600 font-semibold uppercase mb-2">Atendidos</p>
+                                        <p class="text-4xl font-bold text-green-700">${r.atendidos}</p>
+                                    </div>
+                                    <div class="bg-gradient-to-br from-purple-50 to-pink-50 p-5 rounded-xl border-2 border-purple-200">
+                                        <p class="text-sm text-purple-600 font-semibold uppercase mb-2">Tasa Atención</p>
+                                        <p class="text-4xl font-bold text-purple-700">${r.totalServicios > 0 ? Math.round((r.atendidos / r.totalServicios) * 100) : 0}%</p>
+                                    </div>
+                                </div>
+
+                                <!-- Tipos de estudios más realizados -->
+                                <div class="bg-white p-6 rounded-xl border-2 border-gray-200">
+                                    <h4 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <span class="material-icons text-purple-600">science</span>
+                                        Tipos de Estudios Más Realizados (Este Mes)
+                                    </h4>
+                                    <div class="space-y-3">
+                                        ${tiposEstudioHTML}
+                                    </div>
+                                </div>
+
+                                <!-- Estados de servicios -->
+                                <div class="bg-white p-6 rounded-xl border-2 border-gray-200">
+                                    <h4 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
+                                        <span class="material-icons text-blue-600">pie_chart</span>
+                                        Servicios por Estado
+                                    </h4>
+                                    <div class="grid grid-cols-2 md:grid-cols-3 gap-3">
+                                        ${Object.entries(r.porEstado || {}).map(([estado, total]) => `
+                                            <div class="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                                                <p class="text-xs text-gray-600 font-semibold mb-1">${estado}</p>
+                                                <p class="text-2xl font-bold text-gray-900">${total}</p>
+                                            </div>
+                                        `).join('')}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        mostrarAlerta('error', data.message || 'Error al cargar los detalles');
+                        cerrarModal('modal-detalles-personal');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    mostrarAlerta('error', 'Error al cargar los detalles del personal');
+                    cerrarModal('modal-detalles-personal');
+                }
+            }
+
+            function cerrarModal(modalId) {
+                const modal = document.getElementById(modalId);
+                modal.classList.add('hidden');
+            }
         </script>
     @endpush
 
@@ -578,7 +690,7 @@
             <div class="flex items-center justify-between mb-6">
                 <h3 class="text-2xl font-bold text-gray-900 flex items-center gap-2">
                     <span class="material-icons text-yellow-500 text-3xl">emoji_events</span>
-                    Top 5 Personal Más Productivo del Mes
+                    Personal Más Productivo del Mes
                 </h3>
             </div>
             <div class="overflow-x-auto">
@@ -706,6 +818,36 @@
             </div>
         </div>
 
+
+        <!-- Modal Detalles de Personal -->
+        <div id="modal-detalles-personal"
+            class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
+            <div class="relative mx-auto p-0 border w-full max-w-4xl shadow-2xl rounded-xl bg-white max-h-[90vh] overflow-y-auto">
+                <!-- Header -->
+                <div class="sticky top-0 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-t-xl p-6 z-10">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+                                <span class="material-icons text-white text-3xl">analytics</span>
+                            </div>
+                            <div>
+                                <h3 class="text-2xl font-bold text-white">Estadísticas Detalladas</h3>
+                                <p class="text-sm text-indigo-100">Información del personal del mes actual</p>
+                            </div>
+                        </div>
+                        <button onclick="cerrarModal('modal-detalles-personal')"
+                            class="text-white hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-colors">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Body -->
+                <div id="detalles-personal-content" class="p-6">
+                    <!-- Contenido dinámico -->
+                </div>
+            </div>
+        </div>
 
     </div>
 

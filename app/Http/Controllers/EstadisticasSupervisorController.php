@@ -64,12 +64,12 @@ class EstadisticasSupervisorController extends Controller
             $totalPersonal = PersonalSalud::count();
             $personalActivo = PersonalSalud::where('estado', 'activo')->count();
 
-            // Personal más productivo del mes
+            // Personal más productivo del mes (todos)
             $personalProductivo = DB::table('Servicio')
                 ->join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->join('PersonalSalud', 'CronogramaAtencion.codPer', '=', 'PersonalSalud.codPer')
                 ->where('Servicio.fechaAten', '>=', $inicioMes)
-                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado', 'Archivado'])
                 ->select(
                     'PersonalSalud.codPer',
                     'PersonalSalud.nomPer',
@@ -79,7 +79,6 @@ class EstadisticasSupervisorController extends Controller
                 )
                 ->groupBy('PersonalSalud.codPer', 'PersonalSalud.nomPer', 'PersonalSalud.paternoPer', 'PersonalSalud.maternoPer')
                 ->orderByDesc('total_atendidos')
-                ->limit(5)
                 ->get();
 
             // Servicios por día de los últimos 30 días
@@ -153,7 +152,7 @@ class EstadisticasSupervisorController extends Controller
         try {
             $codPer = $request->input('codPer');
             $fecha = $request->input('fecha');
-            $periodo = $request->input('periodo', 'dia'); // dia, semana, mes
+            $periodo = $request->input('periodo', 'mes'); // Por defecto mes para vista de productividad
 
             $personal = PersonalSalud::find($codPer);
             if (!$personal) {
@@ -193,7 +192,7 @@ class EstadisticasSupervisorController extends Controller
             $atendidos = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
                 ->where('CronogramaAtencion.codPer', $codPer)
                 ->whereBetween('Servicio.fechaAten', [$fechaInicio, $fechaFin])
-                ->whereIn('Servicio.estado', ['Atendido', 'Entregado'])
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado', 'Archivado'])
                 ->count();
 
             // Por estado
@@ -214,6 +213,18 @@ class EstadisticasSupervisorController extends Controller
                 ->pluck('total', 'tipoAseg')
                 ->toArray();
 
+            // Por tipo de estudio (NUEVO)
+            $porTipoEstudio = Servicio::join('CronogramaAtencion', 'Servicio.fechaCrono', '=', 'CronogramaAtencion.fechaCrono')
+                ->join('TipoEstudio', 'Servicio.codTest', '=', 'TipoEstudio.codTest')
+                ->where('CronogramaAtencion.codPer', $codPer)
+                ->whereBetween('Servicio.fechaAten', [$fechaInicio, $fechaFin])
+                ->whereIn('Servicio.estado', ['Atendido', 'Entregado', 'Archivado'])
+                ->select('TipoEstudio.descripcion', DB::raw('count(*) as total'))
+                ->groupBy('TipoEstudio.descripcion')
+                ->orderByDesc('total')
+                ->get()
+                ->toArray();
+
             return response()->json([
                 'success' => true,
                 'data' => [
@@ -225,13 +236,14 @@ class EstadisticasSupervisorController extends Controller
                     'periodo' => [
                         'tipo' => $periodo,
                         'fechaInicio' => $fechaInicio->format('Y-m-d'),
-                        'fechaFin' => $fechaFin->format('Y-m-d')
+                        'fecha Fin' => $fechaFin->format('Y-m-d')
                     ],
                     'resumen' => [
                         'totalServicios' => $servicios->count(),
                         'atendidos' => $atendidos,
                         'porEstado' => $porEstado,
-                        'porTipoAseg' => $porTipoAseg
+                        'porTipoAseg' => $porTipoAseg,
+                        'porTipoEstudio' => $porTipoEstudio
                     ],
                     'servicios' => $servicios
                 ],

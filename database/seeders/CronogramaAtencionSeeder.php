@@ -9,52 +9,14 @@ class CronogramaAtencionSeeder extends Seeder
 {
     public function run()
     {
-        // Días pasados (con fichas atendidas)
+        // Días pasados (con fichas atendidas) - Diciembre 1-3
         CronogramaAtencion::create([
-            'fechaCrono' => '2025-11-20',
-            'cantDispo' => 4,
+            'fechaCrono' => '2025-12-01',
+            'cantDispo' => 5,
             'cantFijo' => 20,
             'cantEmergencia' => 5,
             'estado' => 'completado',
-            'codPer' => 2, // Personal de Imagen
-        ]);
-
-        CronogramaAtencion::create([
-            'fechaCrono' => '2025-11-22',
-            'cantDispo' => 6,
-            'cantFijo' => 20,
-            'cantEmergencia' => 5,
-            'estado' => 'completado',
-            'codPer' => 3, // Personal de Imagen
-        ]);
-
-        // Día de hoy
-        CronogramaAtencion::create([
-            'fechaCrono' => '2025-11-27',
-            'cantDispo' => 4,
-            'cantFijo' => 20,
-            'cantEmergencia' => 5,
-            'estado' => 'activo',
-            'codPer' => 2,
-        ]);
-
-        // Días futuros
-        CronogramaAtencion::create([
-            'fechaCrono' => '2025-11-28',
-            'cantDispo' => 6,
-            'cantFijo' => 20,
-            'cantEmergencia' => 5,
-            'estado' => 'activo',
-            'codPer' => 3,
-        ]);
-
-        CronogramaAtencion::create([
-            'fechaCrono' => '2025-11-29',
-            'cantDispo' => 13,
-            'cantFijo' => 20,
-            'cantEmergencia' => 5,
-            'estado' => 'activo',
-            'codPer' => 4,
+            'codPer' => 2, // Ana Martínez
         ]);
 
         CronogramaAtencion::create([
@@ -62,44 +24,56 @@ class CronogramaAtencionSeeder extends Seeder
             'cantDispo' => 8,
             'cantFijo' => 20,
             'cantEmergencia' => 5,
-            'estado' => 'activo',
-            'codPer' => 2,
+            'estado' => 'completado',
+            'codPer' => 3, // Carmen López
         ]);
 
         CronogramaAtencion::create([
             'fechaCrono' => '2025-12-03',
-            'cantDispo' => 12,
+            'cantDispo' => 6,
             'cantFijo' => 20,
             'cantEmergencia' => 5,
-            'estado' => 'activo',
-            'codPer' => 3,
+            'estado' => 'completado',
+            'codPer' => 2, // Ana Martínez
         ]);
 
+        // Día actual (preparación para defensa) - Diciembre 4
         CronogramaAtencion::create([
             'fechaCrono' => '2025-12-04',
             'cantDispo' => 10,
             'cantFijo' => 20,
             'cantEmergencia' => 5,
             'estado' => 'activo',
-            'codPer' => 4,
+            'codPer' => 3, // Carmen López
         ]);
 
+        // Día de defensa - Diciembre 5
         CronogramaAtencion::create([
             'fechaCrono' => '2025-12-05',
             'cantDispo' => 15,
             'cantFijo' => 20,
             'cantEmergencia' => 5,
             'estado' => 'activo',
-            'codPer' => 2,
+            'codPer' => 2, // Ana Martínez
+        ]);
+
+        // Días futuros - Diciembre 6-7
+        CronogramaAtencion::create([
+            'fechaCrono' => '2025-12-06',
+            'cantDispo' => 12,
+            'cantFijo' => 20,
+            'cantEmergencia' => 5,
+            'estado' => 'activo',
+            'codPer' => 3, // Carmen López
         ]);
 
         CronogramaAtencion::create([
-            'fechaCrono' => '2025-12-06',
+            'fechaCrono' => '2025-12-07',
             'cantDispo' => 14,
             'cantFijo' => 20,
             'cantEmergencia' => 5,
             'estado' => 'activo',
-            'codPer' => 3,
+            'codPer' => 2, // Ana Martínez
         ]);
     }
 }
