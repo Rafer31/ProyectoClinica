@@ -701,6 +701,16 @@
                     await calcularNroFicha.call(this);
                     await cargarHorariosDisponibles();
                 });
+
+                // Contador de caracteres para diagnóstico
+                const diagnosticoTextarea = document.getElementById('diagnostico-texto');
+                const contadorCaracteres = document.getElementById('caracteres-actuales');
+                
+                if (diagnosticoTextarea && contadorCaracteres) {
+                    diagnosticoTextarea.addEventListener('input', function() {
+                        contadorCaracteres.textContent = this.value.length;
+                    });
+                }
             });
 
             // ==========================================

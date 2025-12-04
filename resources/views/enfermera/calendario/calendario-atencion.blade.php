@@ -126,6 +126,24 @@
             color: #9333ea;
         }
 
+        .estado-archivado {
+            background: #f3f4f6;
+            border: 1px solid #9ca3af;
+            border-left: 4px solid #6b7280;
+        }
+
+        .estado-archivado .estado-texto {
+            color: #374151;
+        }
+
+        .estado-archivado .titulo-paciente {
+            color: #1f2937;
+        }
+
+        .estado-archivado .subtexto {
+            color: #4b5563;
+        }
+
         .estado-emergencia {
             background: #fef2f2;
             border: 1px solid #fca5a5;
@@ -690,23 +708,23 @@
         class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50 flex items-center justify-center">
         <div class="relative mx-auto p-0 border w-full max-w-lg shadow-2xl rounded-xl bg-white">
             <!-- Header -->
-            <div class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-t-xl p-6">
+            <div id="modal-entrega-header" class="bg-gradient-to-r from-purple-500 to-indigo-600 rounded-t-xl p-6">
                 <div class="flex items-center">
                     <div
                         class="w-14 h-14 bg-white bg-opacity-20 rounded-xl flex items-center justify-center mr-4 backdrop-blur-sm">
-                        <span class="material-icons text-white text-3xl">assignment_turned_in</span>
+                        <span class="material-icons text-white text-3xl" id="modal-entrega-icono">assignment_turned_in</span>
                     </div>
                     <div>
-                        <h3 class="text-2xl font-bold text-white">Marcar como Entregado</h3>
-                        <p class="text-sm text-purple-100">Confirme la entrega del servicio al paciente</p>
+                        <h3 class="text-2xl font-bold text-white" id="modal-entrega-titulo">Marcar como Entregado</h3>
+                        <p class="text-sm text-purple-100" id="modal-entrega-subtitulo">Confirme la entrega del servicio al paciente</p>
                     </div>
                 </div>
             </div>
 
             <!-- Body -->
             <div class="p-6 space-y-4">
-                <div class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
-                    <p class="text-gray-800 font-semibold mb-2">Está a punto de marcar este servicio como entregado:</p>
+                <div id="modal-entrega-alert" class="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg">
+                    <p class="text-gray-800 font-semibold mb-2" id="modal-entrega-texto">Está a punto de marcar este servicio como entregado:</p>
                     <div class="bg-white p-4 rounded-lg mt-3">
                         <div class="flex items-center gap-3 mb-3">
                             <span class="material-icons text-purple-600">receipt</span>
@@ -728,7 +746,7 @@
                 <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
                     <p class="text-sm text-blue-800 font-medium flex items-start gap-2">
                         <span class="material-icons text-blue-600 text-lg">info</span>
-                        <span>Al confirmar, el estado cambiará a <strong>"Entregado"</strong> y se registrará la fecha y
+                        <span id="modal-entrega-info">Al confirmar, el estado cambiará a <strong>"Entregado"</strong> y se registrará la fecha y
                             hora de entrega automáticamente.</span>
                     </p>
                 </div>
@@ -743,7 +761,7 @@
                 <button type="button" id="btn-confirmar-entrega-calendario"
                     class="flex-1 px-5 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-lg hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md font-semibold flex items-center justify-center gap-2">
                     <span class="material-icons">check_circle</span>
-                    <span>Confirmar Entrega</span>
+                    <span id="modal-entrega-boton">Confirmar Entrega</span>
                 </button>
             </div>
         </div>
@@ -1121,11 +1139,14 @@
                                                                                                                                                                                                                                                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1
                                                                                                                                                                                                                                                                 ${estaDisponible
                         ? 'bg-emerald-50 text-emerald-600'
-                        : 'bg-amber-50 text-amber-600'}">
+                        : (servicioMostrar?.estado === 'Atendido' ? 'bg-green-50 text-green-600' :
+                           servicioMostrar?.estado === 'Entregado' ? 'bg-purple-50 text-purple-600' :
+                           servicioMostrar?.estado === 'Archivado' ? 'bg-gray-50 text-gray-600' :
+                           'bg-amber-50 text-amber-600')}">
                                                                                                                                                                                                                                                                 <span class="material-icons" style="font-size: 11px;">
                                                                                                                                                                                                                                                                     ${estaDisponible ? 'check_circle' : 'event_busy'}
                                                                                                                                                                                                                                                                 </span>
-                                                                                                                                                                                                                                                                ${estaDisponible ? 'Disponible' : 'Ocupado'}
+                                                                                                                                                                                                                                                                ${estaDisponible ? 'Disponible' : (servicioMostrar?.estado || 'Ocupado')}
                                                                                                                                                                                                                                                             </span>
                                                                                                                                                                                                                                                         </div>
                                                                                                                                                                                                                                                         <div class="slots-container">
@@ -1182,12 +1203,19 @@
                     iconoEstado = 'inventory';
                     textoEstado = 'Entregado';
                     draggable = false;
+                } else if (servicio.estado === 'Archivado') {
+                    colorClass = 'estado-archivado';
+                    iconoEstado = 'archive';
+                    textoEstado = 'Archivado';
+                    draggable = false;
                 }
 
-                if (servicio.tipoAseg && servicio.tipoAseg.includes('Emergencia')) {
-                    colorClass = 'estado-emergencia';
+                // Manejar emergencias conservando el texto pero usando el color del estado
+                const esEmergencia = servicio.tipoAseg && servicio.tipoAseg.includes('Emergencia');
+                if (esEmergencia) {
                     iconoEstado = 'warning';
-                    textoEstado = 'Emergencia';
+                    textoEstado = textoEstado + ' (Emergencia)'; // Agregar indicador de emergencia al texto
+                    // NO cambiar colorClass, mantener el color del estado
                 }
 
                 const draggableAttr = draggable ? 'draggable="true"' : '';
@@ -1492,6 +1520,41 @@
 
             servicioActual = servicio;
             const paciente = `${servicio.paciente?.nomPa || ''} ${servicio.paciente?.paternoPa || ''} ${servicio.paciente?.maternoPa || ''}`.trim();
+
+            // Determinar si tiene seguro
+            const tieneSeguro = servicio.tipoAseg && servicio.tipoAseg.startsWith('Aseg');
+            
+            // Actualizar contenido del modal según el tipo de seguro
+            const modalHeader = document.getElementById('modal-entrega-header');
+            const modalTitulo = document.getElementById('modal-entrega-titulo');
+            const modalSubtitulo = document.getElementById('modal-entrega-subtitulo');
+            const modalIcono = document.getElementById('modal-entrega-icono');
+            const modalTexto = document.getElementById('modal-entrega-texto');
+            const modalInfo = document.getElementById('modal-entrega-info');
+            const modalBoton = document.getElementById('modal-entrega-boton');
+            const modalAlert = document.getElementById('modal-entrega-alert');
+
+            if (tieneSeguro) {
+                // Paciente con seguro - Archivar
+                modalHeader.className = 'bg-gradient-to-r from-gray-500 to-slate-600 rounded-t-xl p-6';
+                modalTitulo.textContent = 'Marcar como Archivado';
+                modalSubtitulo.textContent = 'Confirme el archivado del servicio';
+                modalIcono.textContent = 'archive';
+                modalTexto.textContent = 'Está a punto de marcar este servicio como archivado:';
+                modalInfo.innerHTML = 'Al confirmar, el estado cambiará a <strong>"Archivado"</strong> y se registrará la fecha y hora de archivado automáticamente.';
+                modalBoton.textContent = 'Confirmar Archivado';
+                modalAlert.className = 'bg-gray-50 border-l-4 border-gray-500 p-4 rounded-lg';
+            } else {
+                // Paciente sin seguro - Entregar
+                modalHeader.className = 'bg-gradient-to-r from-purple-500 to-indigo-600 rounded-t-xl p-6';
+                modalTitulo.textContent = 'Marcar como Entregado';
+                modalSubtitulo.textContent = 'Confirme la entrega del servicio al paciente';
+                modalIcono.textContent = 'assignment_turned_in';
+                modalTexto.textContent = 'Está a punto de marcar este servicio como entregado:';
+                modalInfo.innerHTML = 'Al confirmar, el estado cambiará a <strong>"Entregado"</strong> y se registrará la fecha y hora de entrega automáticamente.';
+                modalBoton.textContent = 'Confirmar Entrega';
+                modalAlert.className = 'bg-purple-50 border-l-4 border-purple-500 p-4 rounded-lg';
+            }
 
             document.getElementById('entregar-nro-servicio').textContent = servicio.nroServ;
             document.getElementById('entregar-paciente').textContent = paciente;

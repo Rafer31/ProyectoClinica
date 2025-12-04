@@ -68,7 +68,7 @@
 
                     <!-- Logo -->
                     <a href="{{ route('enfermera.home') }}" class="flex ms-2 md:me-24 items-center group">
-                        <img src="{{ asset('logo.jpg') }}" alt="Clínica Santa Lucía"
+                        <img src="{{ asset('logo_rosado.png') }}" alt="Clínica Santa Lucía"
                             class="w-12 h-12 rounded-xl object-cover logo-shadow">
                         <div class="ms-3">
                             <span

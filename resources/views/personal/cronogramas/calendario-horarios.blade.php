@@ -130,6 +130,24 @@
             color: #9333ea;
         }
 
+        .estado-archivado {
+            background: #f3f4f6;
+            border: 1px solid #9ca3af;
+            border-left: 4px solid #6b7280;
+        }
+
+        .estado-archivado .estado-texto {
+            color: #374151;
+        }
+
+        .estado-archivado .titulo-paciente {
+            color: #1f2937;
+        }
+
+        .estado-archivado .subtexto {
+            color: #4b5563;
+        }
+
         .estado-emergencia {
             background: #fef2f2;
             border: 1px solid #fca5a5;
@@ -282,6 +300,10 @@
                 <div class="flex items-center gap-2">
                     <div class="w-6 h-6 bg-gradient-to-br from-purple-500 to-purple-600 rounded shadow-sm"></div>
                     <span class="text-sm font-medium text-gray-700">Entregado (No movible)</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="w-6 h-6 bg-gradient-to-br from-gray-500 to-gray-600 rounded shadow-sm"></div>
+                    <span class="text-sm font-medium text-gray-700">Archivado (No movible)</span>
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="w-6 h-6 bg-gradient-to-br from-red-500 to-red-600 rounded shadow-sm"></div>
@@ -516,11 +538,14 @@
                             <span class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium mt-1
                                 ${estaDisponible
                         ? 'bg-emerald-50 text-emerald-600'
-                        : 'bg-amber-50 text-amber-600'}">
+                        : (servicioMostrar?.estado === 'Atendido' ? 'bg-green-50 text-green-600' :
+                           servicioMostrar?.estado === 'Entregado' ? 'bg-purple-50 text-purple-600' :
+                           servicioMostrar?.estado === 'Archivado' ? 'bg-gray-50 text-gray-600' :
+                           'bg-amber-50 text-amber-600')}">
                                 <span class="material-icons" style="font-size: 11px;">
                                     ${estaDisponible ? 'check_circle' : 'event_busy'}
                                 </span>
-                                ${estaDisponible ? 'Disponible' : 'Ocupado'}
+                                ${estaDisponible ? 'Disponible' : (servicioMostrar?.estado || 'Ocupado')}
                             </span>
                         </div>
                         <div class="slots-container">
@@ -567,12 +592,19 @@
                     iconoEstado = 'inventory';
                     textoEstado = 'Entregado';
                     draggable = false;
+                } else if (servicio.estado === 'Archivado') {
+                    colorClass = 'estado-archivado';
+                    iconoEstado = 'archive';
+                    textoEstado = 'Archivado';
+                    draggable = false;
                 }
 
-                if (servicio.tipoAseg && servicio.tipoAseg.includes('Emergencia')) {
-                    colorClass = 'estado-emergencia';
+                // Manejar emergencias conservando el texto pero usando el color del estado
+                const esEmergencia = servicio.tipoAseg && servicio.tipoAseg.includes('Emergencia');
+                if (esEmergencia) {
                     iconoEstado = 'warning';
-                    textoEstado = 'Emergencia';
+                    textoEstado = textoEstado + ' (Emergencia)'; // Agregar indicador de emergencia al texto
+                    // NO cambiar colorClass, mantener el color del estado
                 }
 
                 const draggableAttr = draggable ? 'draggable="true"' : '';
